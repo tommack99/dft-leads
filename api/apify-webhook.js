@@ -21,7 +21,7 @@ export default async function handler(req,res){
                 var hasOutreach=['dm me','dm us','message me','reach out','get in touch','contact me','email me','email us','apply','submit','inbox me'].some(function(k){return t.includes(k);});
                 var hasBudget=['paid','budget','sponsored','fee','rate','compensation','payment','paying','we pay','commission'].some(function(k){return t.includes(k);});
                 var hasCreator=['youtube creator','youtuber','youtube channel','youtube influencer'].some(function(k){return t.includes(k);});
-                return hasOutreach&&hasBudget&&hasCreator;
+                                return true; // keywords handle filtering
         }
         function getContact(text){
                 if(!text)return 'DM on LinkedIn';

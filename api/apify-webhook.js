@@ -37,7 +37,7 @@ export default async function handler(req,res){
                 if(source==="Reddit"){
                         text=post.body||"";
                         name=post.username||post.author||"Reddit User";
-                        title="r/"+(post.communityName||"reddit");
+                        title=post.communityName||"reddit";
                         postUrl=post.url||("https://reddit.com/"+(post.id||""));
                 }else{
                         text=post.text||post.content||post.description||"";

@@ -15,6 +15,18 @@ export default async function handler(req,res){
         if(!dataRes.ok)return res.status(500).json({error:"Failed to fetch dataset"});
         const posts=await dataRes.json();
         if(!posts||!posts.length)return res.status(200).json({message:"No posts"});
+        const existingRes=await fetch("https://api.monday.com/v2",{
+                method:"POST",
+                headers:{"Content-Type":"application/json","Authorization":MONDAY_API_KEY},
+                body:JSON.stringify({query:"{boards(ids:["+BOARD_ID+"]){items_page(limit:500){items{column_values(ids:[\"link_mm39r70s\"]){value}}}}}"})
+        });
+        const existingData=await existingRes.json();
+        const existingUrls=new Set();
+        const existingItems=existingData?.data?.boards?.[0]?.items_page?.items||[];
+        for(const item of existingItems){
+                const val=item.column_values?.[0]?.value;
+                if(val){try{existingUrls.add(JSON.parse(val).url);}catch(e){}}
+        }
         function detectSource(post){
                 if(post.communityName||(post.dataType==="post"&&post.id&&post.id.startsWith("t3_")))return "Reddit";
                 return "LinkedIn";
@@ -46,6 +58,7 @@ export default async function handler(req,res){
                         postUrl=post.url||post.linkedinUrl||"";
                 }
                 if(!name)name="Unknown";
+                if(postUrl&&existingUrls.has(postUrl)){skipped++;continue;}
                 var contact=getContact(text,source);
                 var colValues={
                         text_mm39wj8z:name.substring(0,100),
@@ -64,7 +77,7 @@ export default async function handler(req,res){
                                 body:JSON.stringify({query:mutation})
                         });
                         var mData=await mRes.json();
-                        if(mData.data&&mData.data.create_item){saved++;}else{skipped++;}
+                        if(mData.data&&mData.data.create_item){saved++;existingUrls.add(postUrl);}else{skipped++;}
                 }catch(e){skipped++;}
         }
         return res.status(200).json({message:"Done",saved:saved,skipped:skipped,total:posts.length});

@@ -30,11 +30,24 @@ export default async function handler(req,res){
   function extractSponsors(desc){
     if(!desc)return[];
     const sponsors=new Set();
-    for(const p of SPONSOR_PATTERNS){
-      for(const m of [...desc.matchAll(p)]){
-        const b=m[1]&&m[1].trim().replace(/\s+/g," ");
-        if(b&&b.length>2&&b.length<40&&!NOISE.some(n=>b.toLowerCase().includes(n.toLowerCase())))sponsors.add(b);
-      }
+    const NOISE_LOWER=NOISE.map(n=>n.toLowerCase());
+    // Method 1: Extract brand from sponsor URLs e.g. visit Zocdoc.com/channel or go to nordvpn.com
+    const urlPattern=/(?:visit|go to|check out|head to|at|download|try|sign up(?:\s+at)?|use)\s+(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9][a-zA-Z0-9-]+)\.[a-z]{2,}/gi;
+    for(const m of [...desc.matchAll(urlPattern)]){
+      const brand=m[1].charAt(0).toUpperCase()+m[1].slice(1);
+      if(brand.length>2&&brand.length<30&&!NOISE_LOWER.includes(brand.toLowerCase()))sponsors.add(brand);
+    }
+    // Method 2: "sponsored by X" patterns - look for capitalised brand after keyword
+    const byPattern=/(?:sponsored by|brought to you by|partner(?:ed)? with|in partnership with|thanks? to)\s+([A-Z][a-zA-Z0-9]+(?:\s[A-Z][a-zA-Z0-9]+)?)/g;
+    for(const m of [...desc.matchAll(byPattern)]){
+      const brand=m[1].trim();
+      if(brand.length>2&&brand.length<30&&!NOISE_LOWER.includes(brand.toLowerCase()))sponsors.add(brand);
+    }
+    // Method 3: "use code X at Brand" or "use code X for Brand"
+    const codePattern=/(?:use code|promo code|discount code)\s+\w+\s+(?:at|for|on)\s+([A-Z][a-zA-Z0-9]+)/gi;
+    for(const m of [...desc.matchAll(codePattern)]){
+      const brand=m[1].trim();
+      if(brand.length>2&&brand.length<30&&!NOISE_LOWER.includes(brand.toLowerCase()))sponsors.add(brand);
     }
     return[...sponsors];
   }

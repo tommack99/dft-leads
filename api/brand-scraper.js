@@ -2,7 +2,7 @@ export const config={maxDuration:60};
 export default async function handler(req,res){
   const YOUTUBE_API_KEY=process.env.YOUTUBE_API_KEY;
   if(!YOUTUBE_API_KEY)return res.status(500).json({error:"No API key"});
-  const channelId="UCFmYk0gJrHFLCqpYVSO8vkA";
+  const channelId="UCq3hT5JPPKy87JGbDls_5BQ";
   const chanRes=await fetch("https://www.googleapis.com/youtube/v3/channels?part=contentDetails,snippet&id="+channelId+"&key="+YOUTUBE_API_KEY);
   const chanData=await chanRes.json();
   if(!chanRes.ok||!chanData.items||!chanData.items.length)return res.json({step:"channel failed",data:chanData});

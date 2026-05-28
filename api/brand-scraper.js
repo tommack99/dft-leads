@@ -31,6 +31,7 @@ export default async function handler(req,res){
     if(!desc)return[];
     const sponsors=new Set();
     const NOISE_LOWER=NOISE.map(n=>n.toLowerCase());
+    const channelDomains=CHANNELS.map(function(c){return c.name.toLowerCase().replace(/\s+/g,"");});
     // Method 1: Extract brand from sponsor URLs e.g. visit Zocdoc.com/channel or go to nordvpn.com
     const urlPattern=/(?:visit|go to|check out|head to|at|download|try|sign up(?:\s+at)?|use)\s+(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9][a-zA-Z0-9-]+)\.[a-z]{2,}/gi;
     for(const m of [...desc.matchAll(urlPattern)]){

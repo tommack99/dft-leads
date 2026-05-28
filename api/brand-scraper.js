@@ -72,9 +72,9 @@ export default async function handler(req,res){
   for(const name of CHANNEL_NAMES){
     try{
       const channelId=await findChannelId(name);
-      if(!channelId){processed++;await new Promise(r=>setTimeout(r,200));continue;}
+      if(!channelId){processed++;await new Promise(r=>setTimeout(r,100));continue;}
       const vids=await getChannelVideos(channelId);
-      if(!vids.length){processed++;await new Promise(r=>setTimeout(r,200));continue;}
+      if(!vids.length){processed++;await new Promise(r=>setTimeout(r,100));continue;}
       const videos=await getVideoDetails(vids);
       for(const v of videos){
         const ch=v.snippet?.channelTitle||name;
@@ -87,7 +87,7 @@ export default async function handler(req,res){
         }
       }
       processed++;
-      await new Promise(r=>setTimeout(r,300));
+      await new Promise(r=>setTimeout(r,100));
     }catch(e){processed++;}
   }
 
@@ -99,7 +99,7 @@ export default async function handler(req,res){
 
   let saved=0;
   for(const[,data] of Object.entries(brandData)){
-    if(data.channels.size<2)continue;
+    if(data.channels.size<1)continue;
     const cols={
       text_mm3shz66:data.name,
       numeric_mm3swzsf:data.channels.size,

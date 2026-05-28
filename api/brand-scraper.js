@@ -6,7 +6,7 @@ export default async function handler(req,res){
   if(!YOUTUBE_API_KEY||!MONDAY_API_KEY)return res.status(500).json({error:"Missing env vars"});
 
   const CHANNELS=[
-    // Gaming - Tier 1
+    // Verified core channels
     {id:"UCq3hT5JPPKy87JGbDls_5BQ",name:"Heavy Spoilers"},
     {id:"UCXuqSBlHAE6Xw-yeJA0Tunw",name:"Linus Tech Tips"},
     {id:"UCBcRF18a7Qf58cCRy5xuWwQ",name:"Marques Brownlee"},
@@ -31,33 +31,61 @@ export default async function handler(req,res){
     {id:"UCPmHkzKn-BqtCQNmqaaEMww",name:"Chris Stuckmann"},
     {id:"UC8UcOUi8Eo5TJpfYFChpxOA",name:"Gigguk"},
     {id:"UCGPItl9gZqPKPCNaltqFtxQ",name:"Looper"},
-    {id:"UCFmYk0gJrHFLCqpYVSO8vkA",name:"Beyond The Trailer"},
     {id:"UCVyTR6tFcjuAAhGK7lAr-mQ",name:"CinemaBlend"},
     {id:"UCJx5KP-pCDOG0nNbXKFxsAg",name:"Kinda Funny Games"},
     {id:"UCbu2SsF-Or3Rsn3NxqODImA",name:"IGN"},
     {id:"UCNvSVsen5EPIJ4UXGiGFx9w",name:"GameSpot"},
     {id:"UCOpNcN46UbXVtpKMrmU4Abg",name:"GamesRadar"},
     {id:"UCWPqnFr5I3otMYKHKOG2q2w",name:"KiraTV"},
-    {id:"UCVg9nCmmfIyP4QcGOnZZ9Qg",name:"Screen Junkies"},
-    {id:"UCGaVdbSav8xWuFWTadK6loA",name:"WatchMojo UK"},
-    {id:"UC4uD0_ncNh86RoNE5mMaJJA",name:"Looper Movies"},
-    {id:"UCXi6_LknvHkNLDJ5fEv8XbA",name:"Wisecrack"},
-    {id:"UCkFuXPHp-8WO7uZqLKTTsMw",name:"Like Stories of Old"},
-    {id:"UCzWQYUVCpZqtN93H8RR44Qw",name:"Folding Ideas"},
-    {id:"UCi8e0iOVk1fEOogdfu4YgfA",name:"Now You See It"},
-    {id:"UCTLkMQAiJ9AqUMwXKBtJlyA",name:"Just Write"},
     {id:"UCmGSJVG3mCRXVOP4yZrU1Dw",name:"GameXplain"},
-    {id:"UCddiUEpeqJcYeBxX1IVBKvQ",name:"The Game Theorists 2"},
-    {id:"UC4w1YQAJMWOz4qtxinq55LQ",name:"Easy Allies"},
-    {id:"UCt7sv-NKh44rHAEb-qCCRvA",name:"Joseph Anderson"},
-    {id:"UCnCoL3KI_n_wSTJzu3pCJkw",name:"Bellular News"},
-    {id:"UC8aG3LDTDwNR1UQhSn9uVrw",name:"Upper Echelon Gamez"},
     {id:"UCdJdEguB1F1CiYe7OEi3SBg",name:"ESL Gaming"},
     {id:"UCkBR3-HnLQHeaMQBbVvDGOw",name:"MoistCr1TiKaL"},
-    {id:"UCiFPBiGFBGnSGvbTtMhGolA",name:"Easy Allies 2"},
-    {id:"UCPmHkzKn-BqtCQNmqaaEMww",name:"Chris Stuckmann 2"},
+    {id:"UCiFPBiGFBGnSGvbTtMhGolA",name:"Easy Allies"},
+    {id:"UCnCoL3KI_n_wSTJzu3pCJkw",name:"Bellular News"},
+    {id:"UC8aG3LDTDwNR1UQhSn9uVrw",name:"Upper Echelon Gamez"},
+    {id:"UCFmYk0gJrHFLCqpYVSO8vkA",name:"Beyond The Trailer"},
+    {id:"UCJx5KP-pCDOG0nNbXKFxsAg",name:"Kinda Funny"},
     {id:"UCipmh9PF_KMN3E4G4-OyxMg",name:"LegacyKillaHD"},
+    {id:"UCt7sv-NKh44rHAEb-qCCRvA",name:"Joseph Anderson Core"},
+    // Discovered channels
+    {id:"UCK9_x1DImhU-eolIay5rb2Q",name:"ACG"},
+    {id:"UCNvzD7Z-g64bPXxGzaQaa4g",name:"Gameranx 2"},
+    {id:"UC2eEGT06FrWFU6VBnPOR9lg",name:"Girlfriend Reviews"},
+    {id:"UCIPPMRA040LQr5QPyJEbmXA",name:"MrBeast Gaming"},
+    {id:"UCEQ7KR9enYdQsB6kcMnw0NA",name:"Mortismal Gaming"},
+    {id:"UCoZQiN0o7f36H7PaW4fVhFw",name:"Retro Game Corps"},
+    {id:"UCyhnYIvIKK_--PiJXCMKxQQ",name:"Joseph Anderson"},
+    {id:"UCZ7AeeVbyslLM_8-nVy2B8Q",name:"Skill Up 2"},
+    {id:"UCpqXJOEqGS-TCnazcHCo0rA",name:"theRadBrad"},
+    {id:"UC0M0rxSz3IF0CsSour1iWmw",name:"Cinemassacre"},
+    {id:"UCnbvPS_rXp4PC21PG2k1UVg",name:"Gaming Historian"},
+    {id:"UClOGLGPOqlAiLmOvXW5lKbw",name:"MandaloreGaming"},
+    {id:"UCD6VugMZKRhSyzWEWA9W2fg",name:"SsethTzeentach"},
+    {id:"UCo_IB5145EVNcf8hw1Kku7w",name:"The Game Theorists 2"},
+    {id:"UCT6QFE3peNry9PdO5uGj96g",name:"Kinda Funny Games 2"},
+    {id:"UCxfr3b8IuHSzu22UHnAvHWg",name:"MoistCr1TiKaL Gaming"},
+    {id:"UC477Kvszl9JivqOxN1dFgPQ",name:"Iron Pineapple"},
+    {id:"UCRWyPm7MrfotIYF8A8MGV3g",name:"Josh Strife Hayes"},
+    {id:"UCY3A_5R_m3PXCn5XDhvBBsg",name:"Adam Millard"},
+    {id:"UCPnPgDPqs4eBTTbcPI0q_FQ",name:"Insider Gaming"},
+    {id:"UCSJPFQdZwrOutnmSFYtbstA",name:"The Critical Drinker"},
+    {id:"UC7v3-2K1N84V67IF-WTRG-Q",name:"Jeremy Jahns 2"},
+    {id:"UCY6Ij8zOds0WJEeqCLOnqOQ",name:"Alex Meyers"},
+    {id:"UCCYX4s1DCn51Hpf1peHS30Q",name:"Cinema Therapy"},
+    {id:"UCYUQQgogVeQY8cMQamhHJcg",name:"CinemaSins"},
+    {id:"UCBs2Y3i14e1NWQxOGliatmg",name:"Mother Basement"},
+    {id:"UC3ETCazlHenpXEsrEJH-k5A",name:"The Anime Man"},
+    {id:"UC76ylFnNS-Tojn1I4PX1kIA",name:"Anime America"},
+    {id:"UCqERpXggAprNW8QT_WO1N5Q",name:"Steve Reviews"},
+    {id:"UCQxTL5uhg3jYRakna8CvJ5g",name:"Sean Chandler"},
+    {id:"UCt_oFAUph4_8P3N_Xs-FGHg",name:"Scamboli Reviews"},
+    {id:"UCfGmaA-nXPryTfimsnkLieQ",name:"Chibi Reviews"},
+    {id:"UCRWyPm7MrfotIYF8A8MGV3g",name:"Josh Strife Hayes 2"},
   ];
+
+  // Deduplicate by channel ID
+  const seen=new Set();
+  const uniqueChannels=CHANNELS.filter(function(c){if(seen.has(c.id))return false;seen.add(c.id);return true;});
 
   const NOISE=["YouTube","Google","Twitter","Instagram","Discord","Twitch","Reddit","Amazon","Apple","Microsoft","Steam","PlayStation","Xbox","Nintendo","Patreon","Spotify","Netflix","Subscribe","Channel","Video","Watch","Click","Link","Below","Description","Comment","Like","Share","Merch","Support","Music","Join","Members","Podcast","If You","We Are","This Video","The Channel","Our Channel","New Video","Check Out","Find Us","Follow Us","Facebook","TikTok","Linkedin"];
 
@@ -104,7 +132,7 @@ export default async function handler(req,res){
   const today=new Date().toISOString().split("T")[0];
   let processed=0;
 
-  for(const channel of CHANNELS){
+  for(const channel of uniqueChannels){
     try{
       const vids=await getChannelVideos(channel.id);
       const videos=await getVideoDetails(vids);
@@ -118,7 +146,7 @@ export default async function handler(req,res){
         }
       }
       processed++;
-      await new Promise(function(r){setTimeout(r,150);});
+      await new Promise(function(r){setTimeout(r,100);});
     }catch(e){processed++;}
   }
 
@@ -127,10 +155,10 @@ export default async function handler(req,res){
   const exMap={};
   for(const i of(exData&&exData.data&&exData.data.boards&&exData.data.boards[0]&&exData.data.boards[0].items_page&&exData.data.boards[0].items_page.items)||[])exMap[i.name.toLowerCase()]=i.id;
 
-  const brands=Object.values(brandData).sort(function(a,b){return b.channels.size-a.channels.size;});
+  // Only save brands appearing on 2+ channels
+  const brands=Object.values(brandData).filter(function(d){return d.channels.size>=2;}).sort(function(a,b){return b.channels.size-a.channels.size;});
   let saved=0;
   for(const data of brands){
-    const budgetTier=data.channels.size>=10?"Very High":data.channels.size>=5?"High":data.channels.size>=3?"Medium":"Low";
     const cols={text_mm3shz66:data.name,numeric_mm3swzsf:data.channels.size,numeric_mm3szew3:data.weekCount,date_mm3sx6hp:{date:data.lastSeen},text_mm3ss133:[...data.channels].slice(0,5).join(", "),text_mm3shf6v:"Gaming/Film"};
     const itemName=data.name.substring(0,50);
     const eid=exMap[data.name.toLowerCase()];
@@ -141,5 +169,5 @@ export default async function handler(req,res){
     }catch(e){}
   }
 
-  return res.json({message:"Done",processed,brandsFound:brands.length,saved,topBrands:brands.slice(0,20).map(function(b){return{name:b.name,channels:b.channels.size,seenOn:[...b.channels].join(", ")};})});
+  return res.json({message:"Done",channelsProcessed:processed,uniqueChannels:uniqueChannels.length,brandsFound:Object.keys(brandData).length,brandsOn2PlusChannels:brands.length,saved,topBrands:brands.slice(0,20).map(function(b){return{name:b.name,channels:b.channels.size,seenOn:[...b.channels].join(", ")};})});
 }

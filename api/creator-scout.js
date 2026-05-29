@@ -138,7 +138,7 @@ export default async function handler(req,res){
       const emailCol=ch.email?{email:ch.email,text:ch.email}:{email:"",text:"Check YouTube"};
       const outreachStatus=ch.email?"Not Started":"Email Needed";
       const cols={link_mm3t777s:{url:"https://youtube.com/channel/"+ch.id,text:ch.name},color_mm3tx56z:{label:ch.niche},numeric_mm3tmrdz:ch.subs,numeric_mm3tr6gy:avgViews,email_mm3t61sv:emailCol,color_mm3t8xqm:{label:freq},color_mm3ta1b0:{label:"No"},color_mm3t98cn:{label:"Unknown"},date_mm3tvd56:{date:today},color_mm3tzck8:{label:outreachStatus}};
-      const mutation="mutation{create_item(board_id:"+BOARD_ID+",item_name:"+JSON.stringify(ch.name.substring(0,50))+",column_values:"+JSON.stringify(JSON.stringify(cols))+"){id}}";
+      const mutation="mutation{create_item(board_id:"+BOARD_ID+",group_id:\"topics\",item_name:"+JSON.stringify(ch.name.substring(0,50))+",column_values:"+JSON.stringify(JSON.stringify(cols))+"){id}}";
       await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":MONDAY_API_KEY},body:JSON.stringify({query:mutation})});
       saved++;
       await new Promise(function(r){setTimeout(r,150);});

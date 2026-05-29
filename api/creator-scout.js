@@ -59,93 +59,15 @@ export default async function handler(req,res){
   const discoveredIds=new Set();
   const candidates=[];
 
-  for(const term of SEARCH_TERMS){
-    try{
-      const r=await fetch("https://www.googleapis.com/youtube/v3/search?part=snippet&q="+encodeURIComponent(term)+"&type=channel&maxResults=20&relevanceLanguage=en&key="+YOUTUBE_API_KEY);
-      const d=await r.json();
-      for(const item of(d.items||[])){
-        const id=item.id&&item.id.channelId;
-        if(id&&!discoveredIds.has(id)){
-          discoveredIds.add(id);
-          candidates.push({id,name:item.snippet&&item.snippet.channelTitle});
-        }
-      }
-      await new Promise(function(r){setTimeout(r,200);});
-    }catch(e){}
+  // Debug: test first search term only
+const testTerm=SEARCH_TERMS[0];
+try{
+  const testR=await fetch("https://www.googleapis.com/youtube/v3/search?part=snippet&q="+encodeURIComponent(testTerm)+"&type=channel&maxResults=5&relevanceLanguage=en&key="+YOUTUBE_API_KEY);
+  const testD=await testR.json();
+  if(testD.error)return res.json({debug:true,error:testD.error,apiKey:YOUTUBE_API_KEY?"set":"missing"});
+  for(const item of(testD.items||[])){
+    const id=item.id&&item.id.channelId;
+    if(id&&!discoveredIds.has(id)){discoveredIds.add(id);candidates.push({id,name:item.snippet&&item.snippet.channelTitle});}
   }
-
-  // Get detailed channel info in batches of 50
-  const qualified=[];
-  const BATCH=50;
-  for(let i=0;i<Math.min(candidates.length,300);i+=BATCH){
-    const batch=candidates.slice(i,i+BATCH);
-    const ids=batch.map(function(c){return c.id;}).join(",");
-    try{
-      const r=await fetch("https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,contentDetails&id="+ids+"&key="+YOUTUBE_API_KEY);
-      const d=await r.json();
-      for(const ch of(d.items||[])){
-        const subs=parseInt(ch.statistics&&ch.statistics.subscriberCount||0);
-        const desc=(ch.snippet&&ch.snippet.description)||"";
-        const niche=detectNiche(desc);
-        const email=extractEmail(desc);
-        const agency=hasAgency(desc);
-        // Must: have niche, have email, no agency, 100k-5M subs
-        if(!niche||agency||subs<100000||subs>5000000)continue;
-        const uploadsId=ch.contentDetails&&ch.contentDetails.relatedPlaylists&&ch.contentDetails.relatedPlaylists.uploads;
-        if(!uploadsId)continue;
-        qualified.push({id:ch.id,name:ch.snippet.title,desc,subs,email,niche,uploadsId});
-      }
-    }catch(e){}
-    await new Promise(function(r){setTimeout(r,200);});
-  }
-
-  // For qualified channels, get avg views of last 10 videos
-  let saved=0;
-  const today=new Date().toISOString().split("T")[0];
-
-  // Get existing items to avoid duplicates
-  const exRes=await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":MONDAY_API_KEY},body:JSON.stringify({query:"{boards(ids:["+BOARD_ID+"]){items_page(limit:500){items{id name}}}}"})});
-  const exData=await exRes.json();
-  const existingNames=new Set((exData&&exData.data&&exData.data.boards&&exData.data.boards[0]&&exData.data.boards[0].items_page&&exData.data.boards[0].items_page.items||[]).map(function(i){return i.name.toLowerCase();}));
-
-  for(const ch of qualified){
-    if(existingNames.has(ch.name.toLowerCase()))continue;
-    try{
-      // Get last 10 videos for avg views
-      const playRes=await fetch("https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&playlistId="+ch.uploadsId+"&maxResults=10&key="+YOUTUBE_API_KEY);
-      const playData=await playRes.json();
-      const videoIds=(playData.items||[]).map(function(i){return i.contentDetails&&i.contentDetails.videoId;}).filter(Boolean);
-      if(!videoIds.length)continue;
-      const vidRes=await fetch("https://www.googleapis.com/youtube/v3/videos?part=statistics&id="+videoIds.join(",")+"&key="+YOUTUBE_API_KEY);
-      const vidData=await vidRes.json();
-      const views=(vidData.items||[]).map(function(v){return parseInt(v.statistics&&v.statistics.viewCount||0);});
-      const avgViews=views.length?Math.round(views.reduce(function(a,b){return a+b;},0)/views.length):0;
-      if(avgViews<50000)continue;
-      // Estimate upload frequency from video dates
-      const pubDates=(playData.items||[]).map(function(i){return i.contentDetails&&i.contentDetails.videoPublishedAt;}).filter(Boolean);
-      let freq="Unknown";
-      if(pubDates.length>=2){
-        const first=new Date(pubDates[pubDates.length-1]);
-        const last=new Date(pubDates[0]);
-        const daysBetween=(last-first)/86400000;
-        const perMonth=daysBetween>0?(pubDates.length/(daysBetween/30)):0;
-        if(perMonth>=8)freq="Weekly+";
-        else if(perMonth>=3)freq="Weekly";
-        else if(perMonth>=1)freq="Monthly";
-        else freq="Infrequent";
-      }
-      // Save to Monday - only use safe column types
-      const emailVal=JSON.stringify(ch.email?{email:ch.email,text:ch.email}:{email:"",text:"Check YouTube"});
-      const notesVal=JSON.stringify({text:"Niche: "+ch.niche+"\nFrequency: "+freq+"\nHas Agency: No\nOn Camera: Unknown"+(ch.email?"":"\n\n EMAIL NEEDED - check YouTube About page")});
-      const linkVal=JSON.stringify({url:"https://youtube.com/channel/"+ch.id,text:ch.name});
-      const dateVal=JSON.stringify({date:today});
-      const colVals=JSON.stringify({"link_mm3t777s":JSON.parse(linkVal),"numeric_mm3tmrdz":ch.subs,"numeric_mm3tr6gy":avgViews,"email_mm3t61sv":JSON.parse(emailVal),"date_mm3tvd56":JSON.parse(dateVal),"long_text_mm3tqaqs":JSON.parse(notesVal)});
-      const mutation="mutation{create_item(board_id:"+BOARD_ID+",group_id:\"topics\",item_name:"+JSON.stringify(ch.name.substring(0,50))+",column_values:"+JSON.stringify(colVals)+"){id}}";
-      await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":MONDAY_API_KEY},body:JSON.stringify({query:mutation})});
-      saved++;
-      await new Promise(function(r){setTimeout(r,150);});
-    }catch(e){}
-  }
-
-  return res.json({message:"Creator scout complete",channelsDiscovered:discoveredIds.size,qualified:qualified.length,saved});
-}
+  if(!candidates.length)return res.json({debug:true,message:"Search returned no channels",term:testTerm,totalResults:testD.pageInfo&&testD.pageInfo.totalResults});
+}catch(e){return res.json({debug:true,catchError:e.message});}

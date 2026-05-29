@@ -3,6 +3,10 @@ export default async function handler(req,res){
   res.setHeader("Access-Control-Allow-Origin","*");
   if(req.method==="OPTIONS")return res.status(200).end();
 
+  // Handle Monday.com webhook verification challenge
+  const body=req.body||{};
+  if(body.challenge)return res.status(200).json({challenge:body.challenge});
+
   const MONDAY_API_KEY=process.env.MONDAY_API_KEY;
   const ANTHROPIC_API_KEY=process.env.ANTHROPIC_API_KEY;
   const RENEWAL_BOARD_ID="18415465266";

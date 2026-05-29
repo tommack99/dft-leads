@@ -1,11 +1,13 @@
 export const config={maxDuration:60};
 export default async function handler(req,res){
   res.setHeader("Access-Control-Allow-Origin","*");
-  if(req.method==="OPTIONS")return res.status(200).end();
-
-  // Handle Monday.com webhook verification challenge
+  // Handle GET requests and OPTIONS (Monday verification ping)
+  if(req.method==="GET"||req.method==="OPTIONS")return res.status(200).json({status:"ok"});
+  // Handle Monday.com webhook challenge verification
   const body=req.body||{};
   if(body.challenge)return res.status(200).json({challenge:body.challenge});
+  // Return 200 if no event data (health check)
+  if(!body.event&&!body.pulseId)return res.status(200).json({status:"ok"});
 
   const MONDAY_API_KEY=process.env.MONDAY_API_KEY;
   const ANTHROPIC_API_KEY=process.env.ANTHROPIC_API_KEY;

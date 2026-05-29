@@ -1,21 +1,21 @@
-export const config={maxDuration:120};
+export const config={maxDuration:300};
 export default async function handler(req,res){
   const MONDAY_API_KEY=process.env.MONDAY_API_KEY;
+  const ANTHROPIC_API_KEY=process.env.ANTHROPIC_API_KEY;
   const CAMPAIGNS_BOARD_ID="6162879609";
   const RENEWAL_BOARD_ID="18415465266";
-  const RENEWAL_GROUP_ID="group_mm3tj6eh"; // Ready to Renew
-  if(!MONDAY_API_KEY)return res.status(500).json({error:"Missing env vars"});
+  const RENEWAL_GROUP_ID="group_mm3tj6eh";
+  if(!MONDAY_API_KEY||!ANTHROPIC_API_KEY)return res.status(500).json({error:"Missing env vars"});
 
-  // Statuses that indicate a completed campaign
   const COMPLETE_STATUSES=["commission paid","complete","completed","done","live","invoiced"];
 
-  // Get all campaigns from the main board
+  // Fetch all campaigns
   let allItems=[];
   let cursor=null;
   do{
     const q=cursor
-      ?"{ boards(ids:["+CAMPAIGNS_BOARD_ID+"]){ items_page(limit:100,cursor:\""+cursor+"\"){ cursor items{ id name column_values(ids:[\"deal_value\",\"status\",\"date4\",\"text_mm1zsbnp\",\"connect_boards_mm1zna55\"]){ id text value } subitems{ id name column_values(ids:[\"numbers\",\"text_mm3ta8gs\",\"file_mm1zd4v9\"]){ id text value } } } } } }"
-      :"{ boards(ids:["+CAMPAIGNS_BOARD_ID+"]){ items_page(limit:100){ cursor items{ id name column_values(ids:[\"deal_value\",\"status\",\"date4\",\"text_mm1zsbnp\",\"connect_boards_mm1zna55\"]){ id text value } subitems{ id name column_values(ids:[\"numbers\",\"text_mm3ta8gs\",\"file_mm1zd4v9\"]){ id text value } } } } } }";
+      ?"{ boards(ids:["+CAMPAIGNS_BOARD_ID+"]){ items_page(limit:50,cursor:\""+cursor+"\"){ cursor items{ id name column_values(ids:[\"deal_value\",\"status\",\"date4\",\"text_mm1zsbnp\"]){ id text value } subitems{ id name column_values(ids:[\"numbers\",\"text_mm3ta8gs\",\"file_mm1zd4v9\"]){ id text value } } } } } }"
+      :"{ boards(ids:["+CAMPAIGNS_BOARD_ID+"]){ items_page(limit:50){ cursor items{ id name column_values(ids:[\"deal_value\",\"status\",\"date4\",\"text_mm1zsbnp\"]){ id text value } subitems{ id name column_values(ids:[\"numbers\",\"text_mm3ta8gs\",\"file_mm1zd4v9\"]){ id text value } } } } } }";
     const r=await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":MONDAY_API_KEY},body:JSON.stringify({query:q})});
     const d=await r.json();
     const page=d&&d.data&&d.data.boards&&d.data.boards[0]&&d.data.boards[0].items_page;
@@ -31,55 +31,76 @@ export default async function handler(req,res){
 
   const today=new Date();
   let added=0;
-  const skipped=[];
 
   for(const item of allItems){
-    function getCol(id){const c=item.column_values.find(function(x){return x.id===id;});return c?c.text||"":"";}
-
+    function getCol(id){const c=item.column_values.find(function(x){return x.id===id;});return c?c.text||"";}
     const status=getCol("status").toLowerCase();
     const isComplete=COMPLETE_STATUSES.some(function(s){return status.includes(s);});
     if(!isComplete)continue;
-
-    // Check live date - must be at least 1 week ago
     const liveDateStr=getCol("date4");
     if(!liveDateStr)continue;
-    const liveDate=new Date(liveDateStr);
-    const weeksSinceLive=(today-liveDate)/(1000*60*60*24*7);
+    const weeksSinceLive=(today-new Date(liveDateStr))/(1000*60*60*24*7);
     if(weeksSinceLive<1)continue;
-
-    const totalPrice=parseFloat(getCol("deal_value"))||0;
     const advertiser=getCol("text_mm1zsbnp")||item.name;
-    const renewalKey=(item.name+" renewal").toLowerCase();
-    if(existing.has(renewalKey))continue;
 
-    // Process each subitem (creator) separately
     for(const sub of(item.subitems||[])){
-      function getSubCol(id){const c=sub.column_values.find(function(x){return x.id===id;});return c?c.text||"":"";}
+      function getSubCol(id){const c=sub.column_values.find(function(x){return x.id===id;});return c?c.text||"";}
       const creatorCost=parseFloat(getSubCol("numbers"))||0;
       if(!creatorCost)continue;
       const creator=sub.name;
       const views=getSubCol("text_mm3ta8gs")||"";
       const videoUrl=getSubCol("file_mm1zd4v9")||"";
-      const renewalOffer=Math.round(creatorCost*1.3*0.5); // 30% margin then 50% off
+      const clientPrice=creatorCost*1.3;
+      const renewalOffer=Math.round(clientPrice*0.5);
       const itemName=(advertiser+" x "+creator).substring(0,50);
       if(existing.has(itemName.toLowerCase()))continue;
+      const viewNum=parseInt((views||"").replace(/,/g,""))||0;
+      const ecpm=viewNum>0?parseFloat(((clientPrice/viewNum)*1000).toFixed(2)):0;
 
-      // Calculate eCPM if views available
-      let ecpm="";
-      const viewNum=parseInt((views||"").replace(/,/g,""));
-      if(viewNum>0&&creatorCost>0){
-        ecpm=((creatorCost*1.3/viewNum)*1000).toFixed(2);
-      }
+      // Generate email draft with Claude
+      let emailDraft="";
+      try{
+        const promptLines=[
+          "You are drafting a renewal outreach email on behalf of Digital Fox Talent (DFT), a creator talent agency.",
+          "Write a short, warm, professional email from Margot at DFT to a brand contact.",
+          "Friendly and conversational tone - not overly salesy. Under 150 words. No em dashes.",
+          "",
+          "Campaign: "+item.name,
+          "Advertiser: "+advertiser,
+          "Creator: "+creator,
+          "Original client price: $"+clientPrice.toFixed(0),
+          "Renewal offer (50% off): $"+renewalOffer,
+          views?"Views: "+views:"",
+          ecpm?"eCPM: $"+ecpm:"",
+          "Live date: "+liveDateStr,
+          "",
+          "Pitch the 50% repost offer. Mention performance if views available.",
+          "Include a table: Creator | Original Price | Renewal Price | Views | eCPM",
+          "",
+          "Write only the email body. Start with Hi [first name],"
+        ];
+        const prompt=promptLines.filter(function(l){return l!==undefined;}).join("\n");
+        const cr=await fetch("https://api.anthropic.com/v1/messages",{
+          method:"POST",
+          headers:{"Content-Type":"application/json","x-api-key":ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01"},
+          body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:400,messages:[{role:"user",content:prompt}]})
+        });
+        const cd=await cr.json();
+        emailDraft=cd&&cd.content&&cd.content[0]&&cd.content[0].text||"";
+      }catch(e){}
+
+      const subject="Re: "+advertiser+" x "+creator+" - Renewal Opportunity";
+      const fullDraft=emailDraft?"SUBJECT: "+subject+"\n\n"+emailDraft:"SUBJECT: "+subject+"\n\n[Draft generation failed - please write manually]";
 
       const colVals=JSON.stringify({
         "text_mm3t6g60":advertiser,
         "text_mm3tacsw":creator,
-        "numeric_mm3tqsff":creatorCost*1.3,
+        "numeric_mm3tqsff":clientPrice,
         "numeric_mm3t15r1":renewalOffer,
-        "numeric_mm3tbpvz":viewNum||0,
-        "numeric_mm3ty8e":ecpm?parseFloat(ecpm):0,
+        "numeric_mm3tbpvz":viewNum,
+        "numeric_mm3ty8e":ecpm,
         "date_mm3t55tj":{"date":liveDateStr},
-        "link_mm3tzq3g":videoUrl?{"url":videoUrl,"text":creator+" video"}:{"url":"","text":""},
+        "long_text_mm3tm4wc":{"text":fullDraft}
       });
 
       try{
@@ -87,10 +108,10 @@ export default async function handler(req,res){
         const saveRes=await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":MONDAY_API_KEY},body:JSON.stringify({query:mutation})});
         const saveData=await saveRes.json();
         if(saveData&&saveData.data&&saveData.data.create_item&&saveData.data.create_item.id)added++;
-      }catch(e){skipped.push(itemName);}
-      await new Promise(function(r){setTimeout(r,150);});
+      }catch(e){}
+      await new Promise(function(r){setTimeout(r,200);});
     }
   }
 
-  return res.json({message:"Renewal scan complete",campaignsScanned:allItems.length,renewalsAdded:added,skipped});
+  return res.json({message:"Renewal scan complete",campaignsScanned:allItems.length,renewalsAdded:added});
 }

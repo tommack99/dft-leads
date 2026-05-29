@@ -7,6 +7,10 @@
     {
       "path": "/api/brand-scraper",
       "schedule": "0 8 * * 1"
+    },
+    {
+      "path": "/api/creator-scout",
+      "schedule": "0 9 * * 3"
     }
   ]
 }

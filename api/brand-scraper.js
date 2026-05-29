@@ -6,7 +6,7 @@ export default async function handler(req,res){
   if(!YOUTUBE_API_KEY||!MONDAY_API_KEY)return res.status(500).json({error:"Missing env vars"});
 
   const CHANNELS=[
-    // Verified core channels
+    // Gaming - Tier 1
     {id:"UCq3hT5JPPKy87JGbDls_5BQ",name:"Heavy Spoilers"},
     {id:"UCXuqSBlHAE6Xw-yeJA0Tunw",name:"Linus Tech Tips"},
     {id:"UCBcRF18a7Qf58cCRy5xuWwQ",name:"Marques Brownlee"},
@@ -31,12 +31,10 @@ export default async function handler(req,res){
     {id:"UCPmHkzKn-BqtCQNmqaaEMww",name:"Chris Stuckmann"},
     {id:"UC8UcOUi8Eo5TJpfYFChpxOA",name:"Gigguk"},
     {id:"UCGPItl9gZqPKPCNaltqFtxQ",name:"Looper"},
-    {id:"UCVyTR6tFcjuAAhGK7lAr-mQ",name:"CinemaBlend"},
     {id:"UCJx5KP-pCDOG0nNbXKFxsAg",name:"Kinda Funny Games"},
     {id:"UCbu2SsF-Or3Rsn3NxqODImA",name:"IGN"},
     {id:"UCNvSVsen5EPIJ4UXGiGFx9w",name:"GameSpot"},
     {id:"UCOpNcN46UbXVtpKMrmU4Abg",name:"GamesRadar"},
-    {id:"UCWPqnFr5I3otMYKHKOG2q2w",name:"KiraTV"},
     {id:"UCmGSJVG3mCRXVOP4yZrU1Dw",name:"GameXplain"},
     {id:"UCdJdEguB1F1CiYe7OEi3SBg",name:"ESL Gaming"},
     {id:"UCkBR3-HnLQHeaMQBbVvDGOw",name:"MoistCr1TiKaL"},
@@ -44,32 +42,48 @@ export default async function handler(req,res){
     {id:"UCnCoL3KI_n_wSTJzu3pCJkw",name:"Bellular News"},
     {id:"UC8aG3LDTDwNR1UQhSn9uVrw",name:"Upper Echelon Gamez"},
     {id:"UCFmYk0gJrHFLCqpYVSO8vkA",name:"Beyond The Trailer"},
-    {id:"UCJx5KP-pCDOG0nNbXKFxsAg",name:"Kinda Funny"},
     {id:"UCipmh9PF_KMN3E4G4-OyxMg",name:"LegacyKillaHD"},
-    {id:"UCt7sv-NKh44rHAEb-qCCRvA",name:"Joseph Anderson Core"},
-    // Discovered channels
+    // Discovered - Gaming
     {id:"UCK9_x1DImhU-eolIay5rb2Q",name:"ACG"},
-    {id:"UCNvzD7Z-g64bPXxGzaQaa4g",name:"Gameranx 2"},
     {id:"UC2eEGT06FrWFU6VBnPOR9lg",name:"Girlfriend Reviews"},
     {id:"UCIPPMRA040LQr5QPyJEbmXA",name:"MrBeast Gaming"},
     {id:"UCEQ7KR9enYdQsB6kcMnw0NA",name:"Mortismal Gaming"},
     {id:"UCoZQiN0o7f36H7PaW4fVhFw",name:"Retro Game Corps"},
     {id:"UCyhnYIvIKK_--PiJXCMKxQQ",name:"Joseph Anderson"},
-    {id:"UCZ7AeeVbyslLM_8-nVy2B8Q",name:"Skill Up 2"},
     {id:"UCpqXJOEqGS-TCnazcHCo0rA",name:"theRadBrad"},
     {id:"UC0M0rxSz3IF0CsSour1iWmw",name:"Cinemassacre"},
     {id:"UCnbvPS_rXp4PC21PG2k1UVg",name:"Gaming Historian"},
     {id:"UClOGLGPOqlAiLmOvXW5lKbw",name:"MandaloreGaming"},
     {id:"UCD6VugMZKRhSyzWEWA9W2fg",name:"SsethTzeentach"},
     {id:"UCo_IB5145EVNcf8hw1Kku7w",name:"The Game Theorists 2"},
-    {id:"UCT6QFE3peNry9PdO5uGj96g",name:"Kinda Funny Games 2"},
     {id:"UCxfr3b8IuHSzu22UHnAvHWg",name:"MoistCr1TiKaL Gaming"},
     {id:"UC477Kvszl9JivqOxN1dFgPQ",name:"Iron Pineapple"},
     {id:"UCRWyPm7MrfotIYF8A8MGV3g",name:"Josh Strife Hayes"},
     {id:"UCY3A_5R_m3PXCn5XDhvBBsg",name:"Adam Millard"},
     {id:"UCPnPgDPqs4eBTTbcPI0q_FQ",name:"Insider Gaming"},
+    {id:"UC8A3Zig-dNx2kZmy1FovTEA",name:"Video Game Animation Study"},
+    {id:"UCnGy4KIO0yAMa_JNaJZiPlw",name:"Skill Game Walkthrough"},
+    {id:"UCZMF14eNxvuReRTceX_mbqQ",name:"The Game Overanalyser"},
+    {id:"UCVdDUN69YsAXPxh2y71sMtQ",name:"I Finished A Video Game"},
+    {id:"UCjKSoJlPgcK6BmoSqXpj5xQ",name:"Action Button"},
+    {id:"UCeZLO2VgbZHeDcongKzzfOw",name:"8-bit Music Theory"},
+    {id:"UCDC7X5gNh2LxQ2PnN_OKD5g",name:"NeoGamer"},
+    {id:"UCJfJWct8jN1RpCuVWk3zHTA",name:"Daryl Talks Games"},
+    {id:"UCRW9giz4WKZSVssQWdd5pLg",name:"Video Game Analysis"},
+    {id:"UCBRdH7MGiy3EmNG1GndsdIg",name:"Avalanche Reviews"},
+    {id:"UCRyPm7MrfotIYF8A8MGV3g",name:"Josh Strife Hayes 2"},
+    {id:"UCt_oFAUph4_8P3N_Xs-FGHg",name:"Scamboli Reviews"},
+    {id:"UCfGmaA-nXPryTfimsnkLieQ",name:"Chibi Reviews"},
+    {id:"UC4jtzyM5YeRq_A2dbezV9Iw",name:"Jay RPG"},
+    {id:"UCAYF6ZY9gWBR1GW3R7PX7yw",name:"Majuular"},
+    {id:"UCFOlioIjE_FnKOrd9Ac-Iww",name:"Rye Games"},
+    {id:"UCY3A_5R_m3PXCn5XDhvBBsg",name:"Adam Millard Architect"},
+    {id:"UCMQMUN6tk9STkYHNrdhNouw",name:"The RPG Fanatic"},
+    {id:"UCs8lYkna2S6DkcHO9o2008A",name:"Roanoke Gaming"},
+    {id:"UCSCoziKHqjqbox3Fv3Pb4BA",name:"theScore esports"},
+    // Film & Entertainment
     {id:"UCSJPFQdZwrOutnmSFYtbstA",name:"The Critical Drinker"},
-    {id:"UC7v3-2K1N84V67IF-WTRG-Q",name:"Jeremy Jahns 2"},
+    {id:"UC7v3-2K1N84V67IF-WTRG-Q",name:"Jeremy Jahns Film"},
     {id:"UCY6Ij8zOds0WJEeqCLOnqOQ",name:"Alex Meyers"},
     {id:"UCCYX4s1DCn51Hpf1peHS30Q",name:"Cinema Therapy"},
     {id:"UCYUQQgogVeQY8cMQamhHJcg",name:"CinemaSins"},
@@ -77,24 +91,44 @@ export default async function handler(req,res){
     {id:"UC3ETCazlHenpXEsrEJH-k5A",name:"The Anime Man"},
     {id:"UC76ylFnNS-Tojn1I4PX1kIA",name:"Anime America"},
     {id:"UCqERpXggAprNW8QT_WO1N5Q",name:"Steve Reviews"},
+    {id:"UCq_LLiCjmHyAuk0SnKfjWlw",name:"Matt Movie Reviews"},
     {id:"UCQxTL5uhg3jYRakna8CvJ5g",name:"Sean Chandler"},
-    {id:"UCt_oFAUph4_8P3N_Xs-FGHg",name:"Scamboli Reviews"},
-    {id:"UCfGmaA-nXPryTfimsnkLieQ",name:"Chibi Reviews"},
-    {id:"UCRWyPm7MrfotIYF8A8MGV3g",name:"Josh Strife Hayes 2"},
+    {id:"UCbiOAho0h23IMInURiESx1w",name:"Dan Murrell"},
+    {id:"UCCCqEeDAUf4Mg0GgEN658tkA",name:"Chris Stuckmann Film"},
+    {id:"UCSJPFQdZwrOutnmSFYtbstA",name:"Critical Drinker"},
+    {id:"UCCyCYLy5nJvNfz4eiD2gn-g",name:"Cinema Prism"},
+    {id:"UCIWu-Sm1ywDVjqyHvku6peg",name:"Primms Hood Cinema"},
+    {id:"UCzRJ32scbEWL81e-eEIOh7Q",name:"Film Breakdown Channel"},
+    {id:"UCqjtc7Be4e8DCsTLPi46IKg",name:"Cinema Review"},
+    {id:"UCEMECcqKDyCvPGllKz_8Yug",name:"Breakdowns And Blockbusters"},
+    {id:"UCuIRv8rLfdagGkcyEJcMi6A",name:"Blockbuster Reviews"},
+    {id:"UCXi6_LknvHkNLDJ5fEv8XbA",name:"Wisecrack"},
+    {id:"UCkFuXPHp-8WO7uZqLKTTsMw",name:"Like Stories Of Old"},
+    {id:"UCzwQYUVCpZqtN93H8RR44Qw",name:"Folding Ideas"},
+    {id:"UCi8e0iOVk1fEOogdfu4YgfA",name:"Now You See It"},
+    {id:"UCTLkMQAiJ9AqUMwXKBtJlyA",name:"Just Write"},
+    {id:"UCGaVdbSav8xWuFWTadK6loA",name:"WatchMojo 2"},
+    {id:"UCGa9ISNr45w6MSjsHDcmZ_w",name:"Screen Culture"},
+    // Tech
+    {id:"UCVog_ork5bFbMDHmTorHdyg",name:"MKBHD Clips"},
+    {id:"UCddiUEpeqJcYeBxX1IVBKvQ",name:"The Game Theorists Clips"},
+    {id:"UC4w1YQAJMWOz4qtxinq55LQ",name:"Easy Allies 2"},
+    {id:"UCt7sv-NKh44rHAEb-qCCRvA",name:"Joseph Anderson Main"},
+    {id:"UCHZWtFQKVe2ddZ1xlTU3H9A",name:"Blockbuster Recaps"},
+    {id:"UCuqwxcPPPAYf6BAPiu5KIxg",name:"Blockbuster Reviews 2"},
   ];
 
-  // Deduplicate by channel ID
   const seen=new Set();
-  const uniqueChannels=CHANNELS.filter(function(c){if(seen.has(c.id))return false;seen.add(c.id);return true;});
+  const CHANNELS_DEDUPED=CHANNELS.filter(function(c){if(seen.has(c.id))return false;seen.add(c.id);return true;});
 
-  const NOISE=["YouTube","Google","Twitter","Instagram","Discord","Twitch","Reddit","Amazon","Apple","Microsoft","Steam","PlayStation","Xbox","Nintendo","Patreon","Spotify","Netflix","Subscribe","Channel","Video","Watch","Click","Link","Below","Description","Comment","Like","Share","Merch","Support","Music","Join","Members","Podcast","If You","We Are","This Video","The Channel","Our Channel","New Video","Check Out","Find Us","Follow Us","Facebook","TikTok","Linkedin"];
+  const NOISE=["YouTube","Google","Twitter","Instagram","Discord","Twitch","Reddit","Amazon","Apple","Microsoft","Steam","PlayStation","Xbox","Nintendo","Patreon","Spotify","Netflix","Subscribe","Channel","Video","Watch","Click","Link","Below","Description","Comment","Like","Share","Merch","Support","Music","Join","Members","Podcast","Facebook","TikTok","Linkedin","Check Out","Find Us","Follow Us"];
 
   function extractSponsors(desc,channelName){
     if(!desc)return[];
     const sponsors=new Set();
     const channelDomain=channelName.toLowerCase().replace(/\s+/g,"");
     const noiseLower=NOISE.map(function(n){return n.toLowerCase();});
-    const urlPattern=/(?:visit|go to|check out|head to|at|download|try|sign up(?:\s+at)?|use)\s+(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9][a-zA-Z0-9-]+)\.[a-z]{2,}/gi;
+    const urlPattern=/(?:visit|go to|check out|head to|download|try|sign up(?:\s+at)?|use)\s+(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9][a-zA-Z0-9-]+)\.[a-z]{2,}/gi;
     for(const m of [...desc.matchAll(urlPattern)]){
       const brand=m[1].charAt(0).toUpperCase()+m[1].slice(1);
       if(brand.length>3&&brand.length<30&&!noiseLower.includes(brand.toLowerCase())&&brand.toLowerCase()!==channelDomain)sponsors.add(brand);
@@ -132,7 +166,7 @@ export default async function handler(req,res){
   const today=new Date().toISOString().split("T")[0];
   let processed=0;
 
-  for(const channel of uniqueChannels){
+  for(const channel of CHANNELS_DEDUPED){
     try{
       const vids=await getChannelVideos(channel.id);
       const videos=await getVideoDetails(vids);
@@ -155,7 +189,7 @@ export default async function handler(req,res){
   const exMap={};
   for(const i of(exData&&exData.data&&exData.data.boards&&exData.data.boards[0]&&exData.data.boards[0].items_page&&exData.data.boards[0].items_page.items)||[])exMap[i.name.toLowerCase()]=i.id;
 
-  // Only save brands appearing on 2+ channels
+  // Only save brands on 2+ channels
   const brands=Object.values(brandData).filter(function(d){return d.channels.size>=2;}).sort(function(a,b){return b.channels.size-a.channels.size;});
   let saved=0;
   for(const data of brands){
@@ -169,5 +203,5 @@ export default async function handler(req,res){
     }catch(e){}
   }
 
-  return res.json({message:"Done",channelsProcessed:processed,uniqueChannels:uniqueChannels.length,brandsFound:Object.keys(brandData).length,brandsOn2PlusChannels:brands.length,saved,topBrands:brands.slice(0,20).map(function(b){return{name:b.name,channels:b.channels.size,seenOn:[...b.channels].join(", ")};})});
+  return res.json({message:"Done",channelsProcessed:processed,totalChannels:CHANNELS_DEDUPED.length,brandsFound:Object.keys(brandData).length,brandsOn2Plus:brands.length,saved,topBrands:brands.slice(0,20).map(function(b){return{name:b.name,channels:b.channels.size,seenOn:[...b.channels].join(", ")};})});
 }

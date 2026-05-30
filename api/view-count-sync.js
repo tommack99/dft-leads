@@ -10,8 +10,8 @@ export default async function handler(req,res){
   let cursor=null;
   do{
     const q=cursor
-      ?'{ boards(ids:['+SUBITEMS_BOARD_ID+']){ items_page(limit:100,cursor:"'+cursor+'"){ cursor items{ id name column_values(ids:["file_mm1zd4v9","text_mm3ta8gs"]){ id text value } } } } }'
-      :'{ boards(ids:['+SUBITEMS_BOARD_ID+']){ items_page(limit:100){ cursor items{ id name column_values(ids:["file_mm1zd4v9","text_mm3ta8gs"]){ id text value } } } } }';
+      ?'{ boards(ids: ['+SUBITEMS_BOARD_ID+']){ items_page(limit:100,cursor:"'+cursor+'"){ cursor items{ id name column_values(ids:["file_mm1zd4v9","numeric_mm3vg42g"]){ id text value } } } } }'
+      :'{ boards(ids: ['+SUBITEMS_BOARD_ID+']){ items_page(limit:100){ cursor items{ id name column_values(ids:["file_mm1zd4v9","numeric_mm3vg42g"]){ id text value } } } } }';
     const r=await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":MONDAY_API_KEY},body:JSON.stringify({query:q})});
     const d=await r.json();
     const page=d&&d.data&&d.data.boards&&d.data.boards[0]&&d.data.boards[0].items_page;
@@ -24,58 +24,51 @@ export default async function handler(req,res){
   function extractVideoIds(text){
     if(!text)return [];
     const matches=[...text.matchAll(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/g)];
-    const ids=[...new Set(matches.map(function(m){return m[1];}))];
+    const ids=[...new Set(matches.map(m=>m[1]))];
     return ids;
   }
 
   const toUpdate=[];
   for(const item of allSubitems){
-    const liveLinksCol=item.column_values.find(function(c){return c.id==="file_mm1zd4v9";});
-    const viewCountCol=item.column_values.find(function(c){return c.id==="text_mm3ta8gs";});
+    const liveLinksCol=item.column_values.find(c=>c.id==="file_mm1zd4v9");
+    const priceCol=item.column_values.find(c=>c.id==="numeric_mm3vg42g");
     const linkText=liveLinksCol&&(liveLinksCol.text||"");
     const videoIds=extractVideoIds(linkText);
+    const creatorPrice=priceCol&&priceCol.text?parseFloat(priceCol.text)||0:0;
     if(videoIds.length){
-      toUpdate.push({itemId:item.id,name:item.name,videoIds,currentViews:viewCountCol&&viewCountCol.text||""});
+      toUpdate.push({itemId:item.id,name:item.name,videoIds,creatorPrice});
     }
   }
 
-  if(!toUpdate.length)return res.json({message:"No subitems with YouTube links found",total:allSubitems.length});
+  if(!toUpdate.length)return res.json({message:"View count sync complete",found:0,updated:0});
 
-  // Fetch view counts from YouTube in batches of 50
-  let updated=0;
-  let errors=0;
-  const BATCH=50;
-  for(let i=0;i<toUpdate.length;i+=BATCH){
-    const batch=toUpdate.slice(i,i+BATCH);
-    const allIds=[...new Set(batch.flatMap(function(b){return b.videoIds;}))].join(",");
-    try{
-      const ytRes=await fetch("https://www.googleapis.com/youtube/v3/videos?part=statistics&id="+allIds+"&key="+YOUTUBE_API_KEY);
-      const ytData=await ytRes.json();
-      const statsMap={};
-      for(const v of(ytData.items||[])){
-        statsMap[v.id]=parseInt(v.statistics&&v.statistics.viewCount||0);
-      }
-      // Write view counts back to Monday - sum all video views per subitem
-      for(const item of batch){
-        const totalViews=item.videoIds.reduce(function(sum,id){return sum+(statsMap[id]||0);},0);
-        if(totalViews===0)continue;
-        const views=totalViews;
-        const viewStr=totalViews.toLocaleString("en-US");
-        try{
-          await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":MONDAY_API_KEY},body:JSON.stringify({query:"mutation{change_column_value(board_id:"+SUBITEMS_BOARD_ID+",item_id:"+item.itemId+",column_id:\"text_mm3ta8gs\",value:"+JSON.stringify(JSON.stringify(viewStr))+"){id}}"})});
-          updated++;
-          await new Promise(function(r){setTimeout(r,100);});
-        }catch(e){errors++;}
-      }
-    }catch(e){errors+=batch.length;}
+  // Fetch all unique video IDs from YouTube in batches of 50
+  const allVideoIds=[...new Set(toUpdate.flatMap(t=>t.videoIds))];
+  const statsMap={};
+  for(let i=0;i<allVideoIds.length;i+=50){
+    const batch=allVideoIds.slice(i,i+50);
+    const ytRes=await fetch("https://www.googleapis.com/youtube/v3/videos?part=statistics&id="+batch.join(",")+"&key="+YOUTUBE_API_KEY);
+    const ytData=await ytRes.json();
+    for(const v of(ytData.items||[])){
+      statsMap[v.id]=parseInt(v.statistics&&v.statistics.viewCount||0);
+    }
   }
 
-  return res.json({
-    message:"View count sync complete",
-    subitemsScanned:allSubitems.length,
-    withYouTubeLinks:toUpdate.length,
-    updated,
-    errors,
-    videos:toUpdate.map(function(t){return{name:t.name,videoIds:t.videoIds};})
-  });
+  // Write view counts and CPM back to Monday
+  let updated=0;
+  for(const item of toUpdate){
+    const totalViews=item.videoIds.reduce((sum,id)=>sum+(statsMap[id]||0),0);
+    if(totalViews===0)continue;
+    const cpm=item.creatorPrice>0?parseFloat(((item.creatorPrice/totalViews)*1000).toFixed(2)):null;
+    const colValues={numeric_mm3vrpfr:totalViews};
+    if(cpm!==null)colValues.numeric_mm1m53kk=cpm;
+    try{
+      const mut=await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":MONDAY_API_KEY},body:JSON.stringify({query:"mutation{change_multiple_column_values(board_id:"+SUBITEMS_BOARD_ID+",item_id:"+item.itemId+",column_values:"+JSON.stringify(JSON.stringify(colValues))+"){id}}"})});
+      const md=await mut.json();
+      if(md&&md.data&&md.data.change_multiple_column_values)updated++;
+    }catch(e){}
+    await new Promise(r=>setTimeout(r,100));
+  }
+
+  return res.json({message:"View count sync complete",found:toUpdate.length,updated,videos:toUpdate.map(t=>({name:t.name,videoIds:t.videoIds,creatorPrice:t.creatorPrice}))});
 }

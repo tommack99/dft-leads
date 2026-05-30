@@ -60,7 +60,7 @@ export default async function handler(req,res){
         draft=rd&&rd.content&&rd.content[0]&&rd.content[0].text||"";
       }catch(e){}
       var subject="Re: "+p.advertiser+" x "+p.creator+" - Renewal Opportunity";
-      var fullDraft="SUBJECT: "+subject+"\n\n"+(draft||"[Please write manually]");
+      var fullDraft="SUBJECT: "+subject+" "+(draft||"[Please write manually]");
       var cols=JSON.stringify({text_mm3t6g60:p.advertiser,text_mm3tacsw:p.creator,numeric_mm3tqsff:Math.round(p.clientPrice),numeric_mm3t15r1:p.renewal,numeric_mm3tbpvz:p.vn,numeric_mm3ty8e:p.ecpm,date_mm3t55tj:{date:p.liveStr},long_text_mm3tm4wc:{text:fullDraft}});
       var rs=await fetch("https://api.monday.com/v2",{method:"POST",headers:mHeaders,body:JSON.stringify({query:"mutation{create_item(board_id:"+REN+",group_id:"+JSON.stringify(GRP)+",item_name:"+JSON.stringify(p.iname)+",column_values:"+JSON.stringify(cols)+"){id}}"})});
       var rsd=await rs.json();

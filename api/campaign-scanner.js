@@ -15,6 +15,7 @@ async function getEmail(key,advertiser,creator,clientPrice,renewal,views,ecpm,li
 }
 
 export default async function handler(req,res){
+  try{
   var MON=process.env.MONDAY_API_KEY;
   var ANT=process.env.ANTHROPIC_API_KEY;
   if(!MON||!ANT)return res.status(500).json({error:"Missing env vars"});
@@ -74,4 +75,5 @@ export default async function handler(req,res){
     await new Promise(function(r){setTimeout(r,200);});
   }
   return res.json({message:"Scan complete",scanned:items.length,found:toProcess.length,added:added});
+  }catch(e){return res.status(200).json({error:e.message,line:e.stack});}
 }

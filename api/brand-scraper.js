@@ -116,10 +116,10 @@ export default async function handler(req,res){
 
   // Step 2: Search YouTube for more channels (uses quota but runs weekly)
   // Limit to 20 search terms to conserve quota (100 units each = 2000 units)
-  const searchTermsToRun=SEARCH_TERMS.slice(0,20);
+  const searchTermsToRun=SEARCH_TERMS.slice(0,51);
   for(const term of searchTermsToRun){
     try{
-      const r=await fetch("https://www.googleapis.com/youtube/v3/search?part=snippet&q="+encodeURIComponent(term)+"&type=channel&maxResults=15&relevanceLanguage=en&key="+YOUTUBE_API_KEY);
+      const r=await fetch("https://www.googleapis.com/youtube/v3/search?part=snippet&q="+encodeURIComponent(term)+"&type=channel&maxResults=50&relevanceLanguage=en&key="+YOUTUBE_API_KEY);
       const d=await r.json();
       for(const item of(d.items||[])){
         const id=item.id&&item.id.channelId;
@@ -189,10 +189,10 @@ export default async function handler(req,res){
   let processed=0;
 
   // Process channels in batches to avoid timeout
-  const MAX_CHANNELS=300;
+  const MAX_CHANNELS=1000;
   const channelsToProcess=filtered.slice(0,MAX_CHANNELS);
 
-  for(const channel of channelsToProcess){
+  const CONCURRENCY=10;for(let bi=0;bi<channelsToProcess.length;bi+=CONCURRENCY){const batch=channelsToProcess.slice(bi,bi+CONCURRENCY);await Promise.all(batch.map(async function(channel){
     try{
       const vids=await getChannelVideos(channel.id);
       const videos=await getVideoDetails(vids);
@@ -206,8 +206,8 @@ export default async function handler(req,res){
         }
       }
       processed++;
-      await new Promise(function(r){setTimeout(r,80);});
-    }catch(e){processed++;}
+      
+    }catch(e){processed++;}}));await new Promise(function(r){setTimeout(r,50);});
   }
 
   const exRes=await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":MONDAY_API_KEY},body:JSON.stringify({query:"{boards(ids:["+BOARD_ID+"]){items_page(limit:500){items{id name column_values(ids:[\"numeric_mm3swzsf\",\"numeric_mm3szew3\"]){id text}}}}}"})});

@@ -218,10 +218,10 @@ export default async function handler(req,res){
   // Only save brands on 2+ channels - filters out all noise
   const brands=Object.values(brandData).filter(function(d){return d.channels.size>=2;}).sort(function(a,b){return b.channels.size-a.channels.size;});
   let saved=0;
-  for(const data of brands){
-    const cols={text_mm3shz66:data.name,numeric_mm3swzsf:data.channels.size,numeric_mm3szew3:data.weekCount,date_mm3sx6hp:{date:data.lastSeen},text_mm3ss133:[...data.channels].slice(0,5).join(", "),text_mm3shf6v:"Gaming/Film"};
-    const itemName=data.name.substring(0,50);
-    const eid=exMap[data.name.toLowerCase()];
+  for(const data of brands){const dn=({"checkout":"Checkout.com","buyraycon":"Raycon","expressvpn":"ExpressVPN"})[data.name.toLowerCase()]||data.name;const tier=data.channels.size>=5?"High":data.channels.size>=3?"Mid":"Low";
+    const cols={text_mm3shz66:dn,numeric_mm3swzsf:data.channels.size,numeric_mm3szew3:data.weekCount,date_mm3sx6hp:{date:data.lastSeen},text_mm3ss133:[...data.channels].slice(0,5).join(", "),text_mm3shf6v:"Gaming/Film",color_mm3samv9:{label:tier}};
+    const itemName=dn.substring(0,50);
+    const eid=exMap[dn.toLowerCase()];
     try{
       if(eid){await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":MONDAY_API_KEY},body:JSON.stringify({query:"mutation{change_multiple_column_values(board_id:"+BOARD_ID+",item_id:"+eid+",column_values:"+JSON.stringify(JSON.stringify(cols))+"){id}}"})}); }
       else{await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":MONDAY_API_KEY},body:JSON.stringify({query:"mutation{create_item(board_id:"+BOARD_ID+",item_name:"+JSON.stringify(itemName)+",column_values:"+JSON.stringify(JSON.stringify(cols))+"){id}}"})}); }

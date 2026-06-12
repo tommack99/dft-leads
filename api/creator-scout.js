@@ -3,7 +3,7 @@ export default async function handler(req,res){
   const YOUTUBE_API_KEY=process.env.YOUTUBE_API_KEY;
   const MONDAY_API_KEY=process.env.MONDAY_API_KEY;
   const BOARD_ID="18415381478";
-  const GROUP_ID="topics";
+  const GROUP_ID="topics";const ROSTER_BOARD_ID="6160485039";
   if(!YOUTUBE_API_KEY||!MONDAY_API_KEY)return res.status(500).json({error:"Missing env vars"});
 
   const SEARCH_TERMS=[
@@ -50,7 +50,8 @@ export default async function handler(req,res){
     return AGENCY_SIGNALS.some(function(s){return t.includes(s);});
   }
 
-  // Step 1: Discover channels via YouTube search
+  function norm(s){return (s||"").toLowerCase().replace(/[^a-z0-9]/g,"");}
+// Step 1: Discover channels via YouTube search
   const discovered=new Map();
   for(const term of SEARCH_TERMS){
     try{
@@ -94,18 +95,26 @@ export default async function handler(req,res){
   const exData=await exRes.json();
   const existing=new Set((exData&&exData.data&&exData.data.boards&&exData.data.boards[0]&&exData.data.boards[0].items_page&&exData.data.boards[0].items_page.items||[]).map(function(i){return i.name.toLowerCase();}));
 
-  // Step 4: Check avg views and save qualifying channels
+  let rosterNorm=[];
+try{
+const rosRes=await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":MONDAY_API_KEY},body:JSON.stringify({query:"{boards(ids:["+ROSTER_BOARD_ID+"]){items_page(limit:500){items{name}}}}"})});
+const rosData=await rosRes.json();
+rosterNorm=((rosData&&rosData.data&&rosData.data.boards&&rosData.data.boards[0]&&rosData.data.boards[0].items_page&&rosData.data.boards[0].items_page.items)||[]).map(function(i){return norm(i.name);}).filter(function(n){return n.length>=5;});
+}catch(e){}
+// Step 4: Check avg views and save qualifying channels
   let saved=0;
   const today=new Date().toISOString().split("T")[0];
 
   for(const ch of qualified){
     if(existing.has(ch.name.toLowerCase()))continue;
+var __cn=norm(ch.name);if(__cn.length>=5&&rosterNorm.some(function(rn){return rn.indexOf(__cn)>=0||__cn.indexOf(rn)>=0;}))continue;
     try{
       // Get last 10 video IDs
       const playRes=await fetch("https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&playlistId="+ch.uploadsId+"&maxResults=10&key="+YOUTUBE_API_KEY);
       const playData=await playRes.json();
       const videoIds=(playData.items||[]).map(function(i){return i.contentDetails&&i.contentDetails.videoId;}).filter(Boolean);
       if(!videoIds.length)continue;
+var __pd=(playData.items||[]).map(function(i){return i.contentDetails&&i.contentDetails.videoPublishedAt;}).filter(Boolean);var __newest=0;for(var __k=0;__k<__pd.length;__k++){var __t=new Date(__pd[__k]).getTime();if(__t>__newest)__newest=__t;}if(!__newest||(Date.now()-__newest)>7776000000)continue;
 
       // Get view counts
       const vidRes=await fetch("https://www.googleapis.com/youtube/v3/videos?part=statistics,contentDetails&id="+videoIds.join(",")+"&key="+YOUTUBE_API_KEY);
@@ -127,13 +136,13 @@ export default async function handler(req,res){
       const notesText="Niche: "+ch.niche+" | Uploads: "+freq+" | Subs: "+ch.subs.toLocaleString()+(ch.email?"":"\n\nEMAIL NEEDED - check YouTube About page");
       const colVals=JSON.stringify({
         "link_mm3t777s":{"url":"https://youtube.com/channel/"+ch.id,"text":ch.name},
-        "numeric_mm3tmrdz":ch.subs,
+        "numeric_mm3tmrdz":ch.subs,"email_mm3t61sv":(ch.email?{"email":ch.email,"text":ch.email}:undefined),
         "numeric_mm3tr6gy":avgViews,
-        "date_mm3tvd56":{"date":today},
+        "date_mm3tvd56":{"date":today},"color_mm3tx56z":{"label":ch.niche},"color_mm3t8xqm":{"label":freq},
         "long_text_mm3tqaqs":{"text":(ch.email||"Check YouTube - click View Email Address")+"\n\n"+notesText}
       });
 
-      const mutation="mutation{create_item(board_id:"+BOARD_ID+",group_id:\""+GROUP_ID+"\",item_name:"+JSON.stringify(ch.name.substring(0,50))+",column_values:"+JSON.stringify(colVals)+"){id}}";
+      const mutation="mutation{create_item(board_id:"+BOARD_ID+",group_id:\""+GROUP_ID+"\",item_name:"+JSON.stringify(ch.name.substring(0,50))+",column_values:"+JSON.stringify(colVals)+",create_labels_if_missing:true){id}}";
       const saveRes=await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":MONDAY_API_KEY},body:JSON.stringify({query:mutation})});
       const saveData=await saveRes.json();
       if(saveData&&saveData.data&&saveData.data.create_item&&saveData.data.create_item.id)saved++;

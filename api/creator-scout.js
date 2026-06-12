@@ -5,6 +5,32 @@ export default async function handler(req,res){
   const BOARD_ID="18415381478";
   const GROUP_ID="topics";const ROSTER_BOARD_ID="6160485039";
   if(!YOUTUBE_API_KEY||!MONDAY_API_KEY)return res.status(500).json({error:"Missing env vars"});
+if((req.query&&req.query.backfill==="1")||(req.url&&req.url.indexOf("backfill=1")>=0)){
+var __rd=await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":MONDAY_API_KEY},body:JSON.stringify({query:'{boards(ids:['+BOARD_ID+']){items_page(limit:500){items{id name column_values(ids:["link_mm3t777s"]){... on LinkValue{url}}}}}}'})});
+var __rdj=await __rd.json();
+var __ip=((((__rdj.data||{}).boards||[])[0]||{}).items_page)||{};
+var __list=__ip.items||[];
+var __rows=__list.map(function(it){var u=(it.column_values&&it.column_values[0]&&it.column_values[0].url)||"";var seg=u.split("/channel/")[1]||"";var cid=seg.split("?")[0].split("/")[0]||null;return {id:it.id,name:it.name,cid:cid};});
+var __handles={};
+var __ids=__rows.map(function(r){return r.cid;}).filter(Boolean);
+for(var __i=0;__i<__ids.length;__i+=50){
+var __r=await fetch("https://www.googleapis.com/youtube/v3/channels?part=snippet&id="+__ids.slice(__i,__i+50).join(",")+"&key="+YOUTUBE_API_KEY);
+var __d=await __r.json();
+for(var __c of (__d.items||[])){__handles[__c.id]=(__c.snippet&&__c.snippet.customUrl)||"";}
+}
+var __done=0;
+for(var __k=0;__k<__rows.length;__k++){
+var __row=__rows[__k];
+var __h=(__row.cid&&__handles[__row.cid])||__row.name;
+var __b=["Hi "+__h+",","","I'm a talent director at Digital Fox Talent. You can check out our website here: https://www.digitalfoxtalent.com/","","We work with creators in the entertainment industries, helping them to generate more revenue.","","We've seen your content and would love to work with you, and get you on board with the agency.","","Perhaps we can schedule a call next week if that's of interest?","","Best,","Digital Fox Talent"].join(String.fromCharCode(10));
+var __g="https://mail.google.com/mail/?view=cm&fs=1&to="+encodeURIComponent("")+"&su="+encodeURIComponent("Working with Digital Fox Talent")+"&body="+encodeURIComponent(__b);
+var __cv=JSON.stringify({"link_mm4860f0":{"url":__g,"text":"Send via Gmail"}});
+await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":MONDAY_API_KEY},body:JSON.stringify({query:"mutation($v:JSON!){change_multiple_column_values(board_id:"+BOARD_ID+",item_id:"+__row.id+",column_values:$v){id}}",variables:{v:__cv}})});
+__done++;
+await new Promise(function(r){setTimeout(r,120);});
+}
+return res.json({backfilled:__done,total:__list.length});
+}
 
   const SEARCH_TERMS=[
     "gaming review youtube","film review youtube","movie analysis youtube",

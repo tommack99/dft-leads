@@ -84,7 +84,7 @@ export default async function handler(req,res){
         if(!niche||agency||subs<100000||subs>5000000)continue;
         const uploadsId=ch.contentDetails&&ch.contentDetails.relatedPlaylists&&ch.contentDetails.relatedPlaylists.uploads;
         if(!uploadsId)continue;
-        qualified.push({id:ch.id,name:ch.snippet.title,desc,subs,niche,uploadsId,email:extractEmail(desc)});
+        qualified.push({id:ch.id,name:ch.snippet.title,desc,subs,niche,uploadsId,email:extractEmail(desc),customUrl:(ch.snippet&&ch.snippet.customUrl)||""});
       }
     }catch(e){}
     await new Promise(function(r){setTimeout(r,200);});
@@ -134,8 +134,11 @@ var __pd=(playData.items||[]).map(function(i){return i.contentDetails&&i.content
 
       // Save to Monday - only safe column types
       const notesText="Niche: "+ch.niche+" | Uploads: "+freq+" | Subs: "+ch.subs.toLocaleString()+(ch.email?"":"\n\nEMAIL NEEDED - check YouTube About page");
-      const colVals=JSON.stringify({
-        "link_mm3t777s":{"url":"https://youtube.com/channel/"+ch.id,"text":ch.name},
+      var __handle=ch.customUrl||ch.name;
+var __body=["Hi "+__handle+",","","I'm a talent director at Digital Fox Talent. You can check out our website here: https://www.digitalfoxtalent.com/","","We work with creators in the entertainment industries, helping them to generate more revenue.","","We've seen your content and would love to work with you, and get you on board with the agency.","","Perhaps we can schedule a call next week if that's of interest?","","Best,","Digital Fox Talent"].join(String.fromCharCode(10));
+var __gmail="https://mail.google.com/mail/?view=cm&fs=1&to="+encodeURIComponent(ch.email||"")+"&su="+encodeURIComponent("Working with Digital Fox Talent")+"&body="+encodeURIComponent(__body);
+const colVals=JSON.stringify({
+        "link_mm3t777s":{"url":"https://youtube.com/channel/"+ch.id,"text":ch.name},"link_mm4860f0":{"url":__gmail,"text":"Send via Gmail"},
         "numeric_mm3tmrdz":ch.subs,"email_mm3t61sv":(ch.email?{"email":ch.email,"text":ch.email}:undefined),
         "numeric_mm3tr6gy":avgViews,
         "date_mm3tvd56":{"date":today},"color_mm3tx56z":{"label":ch.niche},"color_mm3t8xqm":{"label":freq},

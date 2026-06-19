@@ -10,6 +10,7 @@ const QUALITIES = ["Strong", "Marginal", "Reject: Job ad", "Reject: Wrong side",
 
 const TIME_BUDGET_MS = 45000; // return cleanly under the 60s function limit
 const MAX_COLLECT = 150;
+const RECENT_DAYS = 14; // audit only leads from the last N days; keeps the cron current and skips the historical pre-auditor backlog
 const BATCH = 20;
 
 async function mon(MON, query, variables) {
@@ -50,7 +51,8 @@ export default async function handler(req, res) {
   const t0 = Date.now();
 
   // PHASE 1 - collect newest unclassified leads (Auditor Notes empty), newest first
-  const rules = '{rules:[{column_id:"' + NOTES_COL + '", compare_value:[""], operator:is_empty}], order_by:[{column_id:"date_mm39nc42", direction:desc}]}';
+  const cutoff = new Date(Date.now() - RECENT_DAYS * 86400000).toISOString().slice(0, 10);
+  const rules = '{rules:[{column_id:"' + NOTES_COL + '", compare_value:[""], operator:is_empty},{column_id:"date_mm39nc42", compare_value:["EXACT","' + cutoff + '"], operator:greater_than}], order_by:[{column_id:"date_mm39nc42", direction:desc}]}';
   let todo = [], cursor = null;
   while (todo.length < MAX_COLLECT) {
     let page;
@@ -69,6 +71,7 @@ export default async function handler(req, res) {
     if (!cursor) break;
   }
 
+  todo.sort((a, b) => Number(b.id) - Number(a.id)); // newest-first by id (monday ignores order_by here)
   if (!todo.length) return res.json({ message: "Auditor complete - nothing to classify", scored: 0 });
 
   // PHASE 2 - classify + write Lead Quality + Auditor Notes, time-bounded (checked between AND within batches)

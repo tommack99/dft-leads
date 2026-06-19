@@ -34,7 +34,8 @@ async function classify(ANT, batch) {
     body: JSON.stringify({ model: "claude-haiku-4-5-20251001", max_tokens: 4000, messages: [{ role: "user", content: buildPrompt(batch) }] })
   });
   const cd = await cr.json();
-  const text = (cd && cd.content && cd.content[0] && cd.content[0].text) || "[]";
+  if (!cd || !cd.content) throw new Error("Anthropic " + cr.status + ": " + (cd && cd.error ? (cd.error.type + " / " + cd.error.message) : "no content"));
+  const text = (cd.content[0] && cd.content[0].text) || "[]";
   const clean = text.replace(/```json|```/g, "").trim();
   try { return JSON.parse(clean); }
   catch (e) {
@@ -75,7 +76,7 @@ export default async function handler(req, res) {
   if (!todo.length) return res.json({ message: "Auditor complete - nothing to classify", scored: 0 });
 
   // PHASE 2 - classify + write Lead Quality + Auditor Notes, time-bounded (checked between AND within batches)
-  let scored = 0, failed = 0, processed = 0;
+  let scored = 0, failed = 0, processed = 0, lastErr = null;
   outer:
   for (let start = 0; start < todo.length; start += BATCH) {
     if (Date.now() - t0 > TIME_BUDGET_MS) break;
@@ -89,7 +90,7 @@ export default async function handler(req, res) {
       return { id: c.id, name: c.name, text: p ? p.text : "" };
     });
     let results;
-    try { results = await classify(ANT, batch); } catch (e) { failed++; continue; }
+    try { results = await classify(ANT, batch); } catch (e) { failed++; lastErr = String(e.message || e); continue; }
     for (let i = 0; i < batch.length; i++) {
       if (Date.now() - t0 > TIME_BUDGET_MS) break outer;
       processed++;
@@ -109,5 +110,5 @@ export default async function handler(req, res) {
       } catch (e) {}
     }
   }
-  return res.json({ message: "Auditor complete", collected: todo.length, processed, scored, failed, ms: Date.now() - t0 });
+  return res.json({ message: "Auditor complete", collected: todo.length, processed, scored, failed, error: lastErr, ms: Date.now() - t0 });
 }

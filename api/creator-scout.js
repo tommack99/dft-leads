@@ -1,188 +1,216 @@
 export const config={maxDuration:300};
 export default async function handler(req,res){
-  const YOUTUBE_API_KEY=process.env.YOUTUBE_API_KEY;
-  const MONDAY_API_KEY=process.env.MONDAY_API_KEY;
-  const BOARD_ID="18415381478";
-  const GROUP_ID="topics";const ROSTER_BOARD_ID="6160485039";
-  if(!YOUTUBE_API_KEY||!MONDAY_API_KEY)return res.status(500).json({error:"Missing env vars"});
+const YOUTUBE_API_KEY=process.env.YOUTUBE_API_KEY;
+const MONDAY_API_KEY=process.env.MONDAY_API_KEY;
+const BOARD_ID="18415381478";
+const GROUP_ID="topics";const ROSTER_BOARD_ID="6160485039";
+if(!YOUTUBE_API_KEY||!MONDAY_API_KEY)return res.status(500).json({error:"Missing env vars"});
 if((req.query&&req.query.backfill==="1")||(req.url&&req.url.indexOf("backfill=1")>=0)){
 var __rd=await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":MONDAY_API_KEY},body:JSON.stringify({query:'{boards(ids:['+BOARD_ID+']){items_page(limit:500){items{id name column_values(ids:["link_mm3t777s"]){... on LinkValue{url}}}}}}'})});
 var __rdj=await __rd.json();
 var __ip=((((__rdj.data||{}).boards||[])[0]||{}).items_page)||{};
 var __list=__ip.items||[];
 var __rows=__list.map(function(it){var u=(it.column_values&&it.column_values[0]&&it.column_values[0].url)||"";var seg=u.split("/channel/")[1]||"";var cid=seg.split("?")[0].split("/")[0]||null;return {id:it.id,name:it.name,cid:cid};});
-var __handles={};
+var __info={};
 var __ids=__rows.map(function(r){return r.cid;}).filter(Boolean);
 for(var __i=0;__i<__ids.length;__i+=50){
-var __r=await fetch("https://www.googleapis.com/youtube/v3/channels?part=snippet&id="+__ids.slice(__i,__i+50).join(",")+"&key="+YOUTUBE_API_KEY);
+var __r=await fetch("https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,contentDetails&id="+__ids.slice(__i,__i+50).join(",")+"&key="+YOUTUBE_API_KEY);
 var __d=await __r.json();
-for(var __c of (__d.items||[])){__handles[__c.id]=(__c.snippet&&__c.snippet.customUrl)||"";}
+for(var __c of (__d.items||[])){__info[__c.id]={handle:(__c.snippet&&__c.snippet.customUrl)||"",desc:(__c.snippet&&__c.snippet.description)||"",subs:parseInt((__c.statistics&&__c.statistics.subscriberCount)||0),uploads:(__c.contentDetails&&__c.contentDetails.relatedPlaylists&&__c.contentDetails.relatedPlaylists.uploads)||""};}
 }
+var __today=new Date().toISOString().split("T")[0];
 var __done=0;
 for(var __k=0;__k<__rows.length;__k++){
 var __row=__rows[__k];
-var __h=(__row.cid&&__handles[__row.cid])||__row.name;
-var __b=["Hi "+__h+",","","I'm a talent director at Digital Fox Talent. You can check out our website here: https://www.digitalfoxtalent.com/","","We work with creators in the entertainment industries, helping them to generate more revenue.","","We've seen your content and would love to work with you, and get you on board with the agency.","","Perhaps we can schedule a call next week if that's of interest?","","Best,","Digital Fox Talent"].join(String.fromCharCode(10));
-var __g="https://mail.google.com/mail/?view=cm&fs=1&to="+encodeURIComponent("")+"&su="+encodeURIComponent("Working with Digital Fox Talent")+"&body="+encodeURIComponent(__b);
-var __cv=JSON.stringify({"link_mm4860f0":{"url":__g,"text":"Send via Gmail"}});
-await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":MONDAY_API_KEY},body:JSON.stringify({query:"mutation($v:JSON!){change_multiple_column_values(board_id:"+BOARD_ID+",item_id:"+__row.id+",column_values:$v){id}}",variables:{v:__cv}})});
+var __ci=(__row.cid&&__info[__row.cid])||{};
+var __handle=__ci.handle||__row.name;
+var __desc=__ci.desc||"";
+var __niche=detectNiche(__desc);
+var __email=extractEmail(__desc);
+var __subs=__ci.subs||0;
+var __avg=0;var __freq="Unknown";
+if(__ci.uploads){
+try{
+var __pr=await fetch("https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&playlistId="+__ci.uploads+"&maxResults=10&key="+YOUTUBE_API_KEY);
+var __pj=await __pr.json();
+var __vids=(__pj.items||[]).map(function(i){return i.contentDetails&&i.contentDetails.videoId;}).filter(Boolean);
+var __dates=(__pj.items||[]).map(function(i){return i.contentDetails&&i.contentDetails.videoPublishedAt;}).filter(Boolean);
+if(__vids.length){
+var __vr=await fetch("https://www.googleapis.com/youtube/v3/videos?part=statistics&id="+__vids.join(",")+"&key="+YOUTUBE_API_KEY);
+var __vj=await __vr.json();
+var __views=(__vj.items||[]).map(function(v){return parseInt((v.statistics&&v.statistics.viewCount)||0);});
+__avg=__views.length?Math.round(__views.reduce(function(a,b){return a+b;},0)/__views.length):0;
+}
+if(__dates.length>=2){var __db=(new Date(__dates[0])-new Date(__dates[__dates.length-1]))/86400000;var __pm=__db>0?(__dates.length/(__db/30)):0;__freq=__pm>=8?"Weekly+":__pm>=3?"Weekly":__pm>=1?"Monthly":"Infrequent";}
+}catch(e){}
+}
+var __b=["Hi "+__handle+",","","I'm a talent director at Digital Fox Talent. You can check out our website here: https://www.digitalfoxtalent.com/","","We work with creators in the entertainment industries, helping them to generate more revenue.","","We've seen your content and would love to work with you, and get you on board with the agency.","","Perhaps we can schedule a call next week if that's of interest?","","Best,","Digital Fox Talent"].join(String.fromCharCode(10));
+var __g="https://mail.google.com/mail/?view=cm&fs=1&to="+encodeURIComponent(__email||"")+"&su="+encodeURIComponent("Working with Digital Fox Talent")+"&body="+encodeURIComponent(__b);
+var __notes=(__email||"Check YouTube - click View Email Address")+"\n\nNiche: "+(__niche||"Unknown")+" | Uploads: "+__freq+" | Subs: "+(__subs?__subs.toLocaleString():"?")+(__email?"":"\n\nEMAIL NEEDED - check YouTube About page");
+var __cvObj={"link_mm4860f0":{"url":__g,"text":"Send via Gmail"},"date_mm3tvd56":{"date":__today},"color_mm3t8xqm":{"label":__freq},"long_text_mm3tqaqs":{"text":__notes}};
+if(__subs)__cvObj["numeric_mm3tmrdz"]=__subs;
+if(__avg)__cvObj["numeric_mm3tr6gy"]=__avg;
+if(__niche)__cvObj["color_mm3tx56z"]={"label":__niche};
+if(__email)__cvObj["email_mm3t61sv"]={"email":__email,"text":__email};
+var __cv=JSON.stringify(__cvObj);
+await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":MONDAY_API_KEY},body:JSON.stringify({query:"mutation($v:JSON!){change_multiple_column_values(board_id:"+BOARD_ID+",item_id:"+__row.id+",column_values:$v,create_labels_if_missing:true){id}}",variables:{v:__cv}})});
 __done++;
-await new Promise(function(r){setTimeout(r,120);});
+await new Promise(function(r){setTimeout(r,150);});
 }
-return res.json({backfilled:__done,total:__list.length});
+return res.json({enriched:__done,total:__list.length});
 }
 
-  const SEARCH_TERMS=[
-    "gaming review youtube","film review youtube","movie analysis youtube",
-    "tech review channel","game commentary youtube","indie game youtube",
-    "horror movie review youtube","sci fi review youtube","game critique",
-    "retro gaming youtube","comic book review youtube","game analysis channel",
-    "film essay youtube","gaming podcast","UK gaming youtube",
-    "UK film review","British gaming youtuber","Australian gaming youtube",
-    "Canadian game review","game lore youtube","movie breakdown youtube",
-    "gaming news channel",
-  ];
+const SEARCH_TERMS=[
+"gaming review youtube","film review youtube","movie analysis youtube",
+"tech review channel","game commentary youtube","indie game youtube",
+"horror movie review youtube","sci fi review youtube","game critique",
+"retro gaming youtube","comic book review youtube","game analysis channel",
+"film essay youtube","gaming podcast","UK gaming youtube",
+"UK film review","British gaming youtuber","Australian gaming youtube",
+"Canadian game review","game lore youtube","movie breakdown youtube",
+"gaming news channel",
+];
 
-  const AGENCY_SIGNALS=[
-    "talent agency","represented by","management@","manager@","agent@",
-    "inquiries@","booking@","press@","publicity@","united talent","wme",
-    "caa ","uta ","paradigm","3arts","night media","loaded","creator corp",
-    "amp studios","select management","no unsolicited","all inquiries",
-    "business only","for business",
-  ];
+const AGENCY_SIGNALS=[
+"talent agency","represented by","management@","manager@","agent@",
+"inquiries@","booking@","press@","publicity@","united talent","wme",
+"caa ","uta ","paradigm","3arts","night media","loaded","creator corp",
+"amp studios","select management","no unsolicited","all inquiries",
+"business only","for business",
+];
 
-  function detectNiche(desc){
-    const d=(desc||"").toLowerCase();
-    if(d.includes("gaming")||d.includes("game")||d.includes("playstation")||d.includes("xbox")||d.includes("nintendo")||d.includes("steam")||d.includes("esports"))return"Gaming";
-    if(d.includes("film")||d.includes("movie")||d.includes("cinema")||d.includes("marvel")||d.includes("tv show")||d.includes("director"))return"Film";
-    if(d.includes("tech")||d.includes("technology")||d.includes("gadget")||d.includes("software")||d.includes("hardware")||d.includes("iphone"))return"Tech";
-    if(d.includes("entertainment")||d.includes("comedy")||d.includes("podcast")||d.includes("streaming"))return"Entertainment";
-    return null;
-  }
+function detectNiche(desc){
+const d=(desc||"").toLowerCase();
+if(d.includes("gaming")||d.includes("game")||d.includes("playstation")||d.includes("xbox")||d.includes("nintendo")||d.includes("steam")||d.includes("esports"))return"Gaming";
+if(d.includes("film")||d.includes("movie")||d.includes("cinema")||d.includes("marvel")||d.includes("tv show")||d.includes("director"))return"Film";
+if(d.includes("tech")||d.includes("technology")||d.includes("gadget")||d.includes("software")||d.includes("hardware")||d.includes("iphone"))return"Tech";
+if(d.includes("entertainment")||d.includes("comedy")||d.includes("podcast")||d.includes("streaming"))return"Entertainment";
+return null;
+}
 
-  function extractEmail(text){
-    if(!text)return null;
-    const m=text.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
-    if(!m)return null;
-    const e=m[0].toLowerCase();
-    const skip=["noreply","no-reply","example","youtu","google","twitter","instagram","tiktok"];
-    if(skip.some(function(s){return e.includes(s);}))return null;
-    return m[0];
-  }
+function extractEmail(text){
+if(!text)return null;
+const m=text.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
+if(!m)return null;
+const e=m[0].toLowerCase();
+const skip=["noreply","no-reply","example","youtu","google","twitter","instagram","tiktok"];
+if(skip.some(function(s){return e.includes(s);}))return null;
+return m[0];
+}
 
-  function hasAgency(text){
-    if(!text)return false;
-    const t=text.toLowerCase();
-    return AGENCY_SIGNALS.some(function(s){return t.includes(s);});
-  }
+function hasAgency(text){
+if(!text)return false;
+const t=text.toLowerCase();
+return AGENCY_SIGNALS.some(function(s){return t.includes(s);});
+}
 
-  function norm(s){return (s||"").toLowerCase().replace(/[^a-z0-9]/g,"");}
+function norm(s){return (s||"").toLowerCase().replace(/[^a-z0-9]/g,"");}
 // Step 1: Discover channels via YouTube search
-  const discovered=new Map();
-  for(const term of SEARCH_TERMS){
-    try{
-      const r=await fetch("https://www.googleapis.com/youtube/v3/search?part=snippet&q="+encodeURIComponent(term)+"&type=channel&maxResults=15&relevanceLanguage=en&key="+YOUTUBE_API_KEY);
-      const d=await r.json();
-      if(d.error)continue;
-      for(const item of(d.items||[])){
-        const id=item.id&&item.id.channelId;
-        const name=item.snippet&&item.snippet.channelTitle;
-        if(id&&name&&!discovered.has(id))discovered.set(id,name);
-      }
-      await new Promise(function(r){setTimeout(r,200);});
-    }catch(e){}
-  }
+const discovered=new Map();
+for(const term of SEARCH_TERMS){
+try{
+const r=await fetch("https://www.googleapis.com/youtube/v3/search?part=snippet&q="+encodeURIComponent(term)+"&type=channel&maxResults=15&relevanceLanguage=en&key="+YOUTUBE_API_KEY);
+const d=await r.json();
+if(d.error)continue;
+for(const item of(d.items||[])){
+const id=item.id&&item.id.channelId;
+const name=item.snippet&&item.snippet.channelTitle;
+if(id&&name&&!discovered.has(id))discovered.set(id,name);
+}
+await new Promise(function(r){setTimeout(r,200);});
+}catch(e){}
+}
 
-  // Step 2: Get channel details in batches of 50
-  const candidates=[...discovered.entries()].map(function(e){return{id:e[0],name:e[1]};});
-  const qualified=[];
-  for(let i=0;i<Math.min(candidates.length,300);i+=50){
-    const batch=candidates.slice(i,i+50);
-    const ids=batch.map(function(c){return c.id;}).join(",");
-    try{
-      const r=await fetch("https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,contentDetails&id="+ids+"&key="+YOUTUBE_API_KEY);
-      const d=await r.json();
-      for(const ch of(d.items||[])){
-        const subs=parseInt(ch.statistics&&ch.statistics.subscriberCount||0);
-        const desc=(ch.snippet&&ch.snippet.description)||"";
-        const niche=detectNiche(desc);
-        const agency=hasAgency(desc);
-        if(!niche||agency||subs<100000||subs>5000000)continue;
-        const uploadsId=ch.contentDetails&&ch.contentDetails.relatedPlaylists&&ch.contentDetails.relatedPlaylists.uploads;
-        if(!uploadsId)continue;
-        qualified.push({id:ch.id,name:ch.snippet.title,desc,subs,niche,uploadsId,email:extractEmail(desc),customUrl:(ch.snippet&&ch.snippet.customUrl)||""});
-      }
-    }catch(e){}
-    await new Promise(function(r){setTimeout(r,200);});
-  }
+// Step 2: Get channel details in batches of 50
+const candidates=[...discovered.entries()].map(function(e){return{id:e[0],name:e[1]};});
+const qualified=[];
+for(let i=0;i<Math.min(candidates.length,300);i+=50){
+const batch=candidates.slice(i,i+50);
+const ids=batch.map(function(c){return c.id;}).join(",");
+try{
+const r=await fetch("https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,contentDetails&id="+ids+"&key="+YOUTUBE_API_KEY);
+const d=await r.json();
+for(const ch of(d.items||[])){
+const subs=parseInt(ch.statistics&&ch.statistics.subscriberCount||0);
+const desc=(ch.snippet&&ch.snippet.description)||"";
+const niche=detectNiche(desc);
+const agency=hasAgency(desc);
+if(!niche||agency||subs<100000||subs>5000000)continue;
+const uploadsId=ch.contentDetails&&ch.contentDetails.relatedPlaylists&&ch.contentDetails.relatedPlaylists.uploads;
+if(!uploadsId)continue;
+qualified.push({id:ch.id,name:ch.snippet.title,desc,subs,niche,uploadsId,email:extractEmail(desc),customUrl:(ch.snippet&&ch.snippet.customUrl)||""});
+}
+}catch(e){}
+await new Promise(function(r){setTimeout(r,200);});
+}
 
-  // Step 3: Get existing items to avoid duplicates
-  const exRes=await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":MONDAY_API_KEY},body:JSON.stringify({query:"{boards(ids:["+BOARD_ID+"]){items_page(limit:500){items{name}}}}"})});
-  const exData=await exRes.json();
-  const existing=new Set((exData&&exData.data&&exData.data.boards&&exData.data.boards[0]&&exData.data.boards[0].items_page&&exData.data.boards[0].items_page.items||[]).map(function(i){return i.name.toLowerCase();}));
+// Step 3: Get existing items to avoid duplicates
+const exRes=await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":MONDAY_API_KEY},body:JSON.stringify({query:"{boards(ids:["+BOARD_ID+"]){items_page(limit:500){items{name}}}}"})});
+const exData=await exRes.json();
+const existing=new Set((exData&&exData.data&&exData.data.boards&&exData.data.boards[0]&&exData.data.boards[0].items_page&&exData.data.boards[0].items_page.items||[]).map(function(i){return i.name.toLowerCase();}));
 
-  let rosterNorm=[];
+let rosterNorm=[];
 try{
 const rosRes=await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":MONDAY_API_KEY},body:JSON.stringify({query:"{boards(ids:["+ROSTER_BOARD_ID+"]){items_page(limit:500){items{name}}}}"})});
 const rosData=await rosRes.json();
 rosterNorm=((rosData&&rosData.data&&rosData.data.boards&&rosData.data.boards[0]&&rosData.data.boards[0].items_page&&rosData.data.boards[0].items_page.items)||[]).map(function(i){return norm(i.name);}).filter(function(n){return n.length>=5;});
 }catch(e){}
 // Step 4: Check avg views and save qualifying channels
-  let saved=0;
-  const today=new Date().toISOString().split("T")[0];
+let saved=0;
+const today=new Date().toISOString().split("T")[0];
 
-  for(const ch of qualified){
-    if(existing.has(ch.name.toLowerCase()))continue;
+for(const ch of qualified){
+if(existing.has(ch.name.toLowerCase()))continue;
 var __cn=norm(ch.name);if(__cn.length>=5&&rosterNorm.some(function(rn){return rn.indexOf(__cn)>=0||__cn.indexOf(rn)>=0;}))continue;
-    try{
-      // Get last 10 video IDs
-      const playRes=await fetch("https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&playlistId="+ch.uploadsId+"&maxResults=10&key="+YOUTUBE_API_KEY);
-      const playData=await playRes.json();
-      const videoIds=(playData.items||[]).map(function(i){return i.contentDetails&&i.contentDetails.videoId;}).filter(Boolean);
-      if(!videoIds.length)continue;
+try{
+// Get last 10 video IDs
+const playRes=await fetch("https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&playlistId="+ch.uploadsId+"&maxResults=10&key="+YOUTUBE_API_KEY);
+const playData=await playRes.json();
+const videoIds=(playData.items||[]).map(function(i){return i.contentDetails&&i.contentDetails.videoId;}).filter(Boolean);
+if(!videoIds.length)continue;
 var __pd=(playData.items||[]).map(function(i){return i.contentDetails&&i.contentDetails.videoPublishedAt;}).filter(Boolean);var __newest=0;for(var __k=0;__k<__pd.length;__k++){var __t=new Date(__pd[__k]).getTime();if(__t>__newest)__newest=__t;}if(!__newest||(Date.now()-__newest)>7776000000)continue;
 
-      // Get view counts
-      const vidRes=await fetch("https://www.googleapis.com/youtube/v3/videos?part=statistics,contentDetails&id="+videoIds.join(",")+"&key="+YOUTUBE_API_KEY);
-      const vidData=await vidRes.json();
-      const views=(vidData.items||[]).map(function(v){return parseInt(v.statistics&&v.statistics.viewCount||0);});
-      const avgViews=views.length?Math.round(views.reduce(function(a,b){return a+b;},0)/views.length):0;
-      if(avgViews<50000)continue;
+// Get view counts
+const vidRes=await fetch("https://www.googleapis.com/youtube/v3/videos?part=statistics,contentDetails&id="+videoIds.join(",")+"&key="+YOUTUBE_API_KEY);
+const vidData=await vidRes.json();
+const views=(vidData.items||[]).map(function(v){return parseInt(v.statistics&&v.statistics.viewCount||0);});
+const avgViews=views.length?Math.round(views.reduce(function(a,b){return a+b;},0)/views.length):0;
+if(avgViews<50000)continue;
 
-      // Upload frequency
-      const pubDates=(playData.items||[]).map(function(i){return i.contentDetails&&i.contentDetails.videoPublishedAt;}).filter(Boolean);
-      let freq="Unknown";
-      if(pubDates.length>=2){
-        const daysBetween=(new Date(pubDates[0])-new Date(pubDates[pubDates.length-1]))/86400000;
-        const perMonth=daysBetween>0?(pubDates.length/(daysBetween/30)):0;
-        freq=perMonth>=8?"Weekly+":perMonth>=3?"Weekly":perMonth>=1?"Monthly":"Infrequent";
-      }
+// Upload frequency
+const pubDates=(playData.items||[]).map(function(i){return i.contentDetails&&i.contentDetails.videoPublishedAt;}).filter(Boolean);
+let freq="Unknown";
+if(pubDates.length>=2){
+const daysBetween=(new Date(pubDates[0])-new Date(pubDates[pubDates.length-1]))/86400000;
+const perMonth=daysBetween>0?(pubDates.length/(daysBetween/30)):0;
+freq=perMonth>=8?"Weekly+":perMonth>=3?"Weekly":perMonth>=1?"Monthly":"Infrequent";
+}
 
-      // Save to Monday - only safe column types
-      const notesText="Niche: "+ch.niche+" | Uploads: "+freq+" | Subs: "+ch.subs.toLocaleString()+(ch.email?"":"\n\nEMAIL NEEDED - check YouTube About page");
-      var __handle=ch.customUrl||ch.name;
+// Save to Monday - only safe column types
+const notesText="Niche: "+ch.niche+" | Uploads: "+freq+" | Subs: "+ch.subs.toLocaleString()+(ch.email?"":"\n\nEMAIL NEEDED - check YouTube About page");
+var __handle=ch.customUrl||ch.name;
 var __body=["Hi "+__handle+",","","I'm a talent director at Digital Fox Talent. You can check out our website here: https://www.digitalfoxtalent.com/","","We work with creators in the entertainment industries, helping them to generate more revenue.","","We've seen your content and would love to work with you, and get you on board with the agency.","","Perhaps we can schedule a call next week if that's of interest?","","Best,","Digital Fox Talent"].join(String.fromCharCode(10));
 var __gmail="https://mail.google.com/mail/?view=cm&fs=1&to="+encodeURIComponent(ch.email||"")+"&su="+encodeURIComponent("Working with Digital Fox Talent")+"&body="+encodeURIComponent(__body);
 const colVals=JSON.stringify({
-        "link_mm3t777s":{"url":"https://youtube.com/channel/"+ch.id,"text":ch.name},"link_mm4860f0":{"url":__gmail,"text":"Send via Gmail"},
-        "numeric_mm3tmrdz":ch.subs,"email_mm3t61sv":(ch.email?{"email":ch.email,"text":ch.email}:undefined),
-        "numeric_mm3tr6gy":avgViews,
-        "date_mm3tvd56":{"date":today},"color_mm3tx56z":{"label":ch.niche},"color_mm3t8xqm":{"label":freq},
-        "long_text_mm3tqaqs":{"text":(ch.email||"Check YouTube - click View Email Address")+"\n\n"+notesText}
-      });
+"link_mm3t777s":{"url":"https://youtube.com/channel/"+ch.id,"text":ch.name},"link_mm4860f0":{"url":__gmail,"text":"Send via Gmail"},
+"numeric_mm3tmrdz":ch.subs,"email_mm3t61sv":(ch.email?{"email":ch.email,"text":ch.email}:undefined),
+"numeric_mm3tr6gy":avgViews,
+"date_mm3tvd56":{"date":today},"color_mm3tx56z":{"label":ch.niche},"color_mm3t8xqm":{"label":freq},
+"long_text_mm3tqaqs":{"text":(ch.email||"Check YouTube - click View Email Address")+"\n\n"+notesText}
+});
 
-      const mutation="mutation{create_item(board_id:"+BOARD_ID+",group_id:\""+GROUP_ID+"\",item_name:"+JSON.stringify(ch.name.substring(0,50))+",column_values:"+JSON.stringify(colVals)+",create_labels_if_missing:true){id}}";
-      const saveRes=await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":MONDAY_API_KEY},body:JSON.stringify({query:mutation})});
-      const saveData=await saveRes.json();
-      if(saveData&&saveData.data&&saveData.data.create_item&&saveData.data.create_item.id)saved++;
-      await new Promise(function(r){setTimeout(r,150);});
-    }catch(e){}
-  }
+const mutation="mutation{create_item(board_id:"+BOARD_ID+",group_id:\""+GROUP_ID+"\",item_name:"+JSON.stringify(ch.name.substring(0,50))+",column_values:"+JSON.stringify(colVals)+",create_labels_if_missing:true){id}}";
+const saveRes=await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":MONDAY_API_KEY},body:JSON.stringify({query:mutation})});
+const saveData=await saveRes.json();
+if(saveData&&saveData.data&&saveData.data.create_item&&saveData.data.create_item.id)saved++;
+await new Promise(function(r){setTimeout(r,150);});
+}catch(e){}
+}
 
-  return res.json({
-    message:"Creator scout complete",
-    channelsDiscovered:discovered.size,
-    qualified:qualified.length,
-    saved
-  });
+return res.json({
+message:"Creator scout complete",
+channelsDiscovered:discovered.size,
+qualified:qualified.length,
+saved
+});
 }

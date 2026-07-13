@@ -5,25 +5,34 @@ const MONDAY_API_KEY=process.env.MONDAY_API_KEY;
 const BOARD_ID="18415192682";
 if(!YOUTUBE_API_KEY||!MONDAY_API_KEY)return res.status(500).json({error:"Missing env vars"});
 
-// Step 1: Discover channels dynamically via YouTube search
-// Distinct sub-niche / format / region terms (not synonyms) to widen the unique-channel catch.
+// Step 1: Discover channels dynamically via YouTube search.
+// Each term carries a niche so brands can be labelled Gaming / Film / Tech.
 const SEARCH_TERMS=[
-"RPG game review youtube","soulslike game youtube","strategy game youtube",
-"simulation game youtube","sim racing youtube","fighting game youtube",
-"MMO game youtube","survival horror game youtube","indie game youtube",
-"speedrun youtube","retro gaming youtube","handheld emulation youtube",
-"esports youtube channel","game design youtube","video game documentary youtube",
-"pc building youtube","gaming hardware review youtube",
-"tabletop rpg youtube","board game review youtube","warhammer hobby youtube",
-"movie review youtube","film video essay youtube","movie reaction youtube",
-"tv series review youtube","horror movie youtube","sci fi movie youtube","filmmaking youtube",
-"anime review youtube","comic book youtube",
-"UK gaming youtube","British film youtube","Australian gaming youtube",
+{q:"RPG game review youtube",niche:"Gaming"},{q:"soulslike game youtube",niche:"Gaming"},{q:"strategy game youtube",niche:"Gaming"},
+{q:"simulation game youtube",niche:"Gaming"},{q:"sim racing youtube",niche:"Gaming"},{q:"fighting game youtube",niche:"Gaming"},
+{q:"MMO game youtube",niche:"Gaming"},{q:"survival horror game youtube",niche:"Gaming"},{q:"indie game youtube",niche:"Gaming"},
+{q:"speedrun youtube",niche:"Gaming"},{q:"retro gaming youtube",niche:"Gaming"},{q:"handheld emulation youtube",niche:"Gaming"},
+{q:"esports youtube channel",niche:"Gaming"},{q:"game design youtube",niche:"Gaming"},{q:"video game documentary youtube",niche:"Gaming"},
+{q:"tabletop rpg youtube",niche:"Gaming"},{q:"board game review youtube",niche:"Gaming"},{q:"warhammer hobby youtube",niche:"Gaming"},
+{q:"movie review youtube",niche:"Film"},{q:"film video essay youtube",niche:"Film"},{q:"movie reaction youtube",niche:"Film"},
+{q:"tv series review youtube",niche:"Film"},{q:"horror movie youtube",niche:"Film"},{q:"sci fi movie youtube",niche:"Film"},{q:"filmmaking youtube",niche:"Film"},
+{q:"anime review youtube",niche:"Film"},{q:"comic book youtube",niche:"Film"},
+// Tech (added 2026-07: broaden beyond Gaming/Film into consumer-tech sponsorship spend).
+{q:"pc building youtube",niche:"Tech"},{q:"gaming hardware review youtube",niche:"Tech"},{q:"tech review youtube",niche:"Tech"},
+{q:"smartphone review youtube",niche:"Tech"},{q:"laptop review youtube",niche:"Tech"},{q:"consumer tech youtube",niche:"Tech"},
+{q:"gadget review youtube",niche:"Tech"},{q:"tech news youtube",niche:"Tech"},
+// Region terms.
+{q:"UK gaming youtube",niche:"Gaming"},{q:"British film youtube",niche:"Film"},{q:"Australian gaming youtube",niche:"Gaming"},
 ];
 
-const discoveredChannels=new Map();
+const discoveredChannels=new Map(); // id -> {name, niche:[atoms]}
 
-// Add our verified seed channels first
+// Seeds default to broad Gaming/Film; named tech/film seeds get atomic niches so
+// brand labels stay accurate without asserting a wrong single niche.
+const TECH_SEEDS=new Set(["Linus Tech Tips","Marques Brownlee","Austin Evans","Dave2D","Mrwhosetheboss"]);
+const FILM_SEEDS=new Set(["Heavy Spoilers","Screen Rant","WatchMojo","New Rockstars","Dead Meat","Emergency Awesome","Jeremy Jahns","Chris Stuckmann","Gigguk","Looper","CinemaSins","Cinema Therapy","Alex Meyers","The Critical Drinker","Mother Basement","The Anime Man","Anime America","Steve Reviews","Sean Chandler","Wisecrack","Like Stories Of Old","Folding Ideas","Now You See It","Just Write","CinemaBlend","Blockbuster Reviews","Chibi Reviews","Star Wars Theory"]);
+function seedNiche(name){if(TECH_SEEDS.has(name))return["Tech"];if(FILM_SEEDS.has(name))return["Film"];return["Gaming","Film"];}
+
 const SEED_CHANNELS=[
 {id:"UCq3hT5JPPKy87JGbDls_5BQ",name:"Heavy Spoilers"},
 {id:"UCXuqSBlHAE6Xw-yeJA0Tunw",name:"Linus Tech Tips"},
@@ -105,23 +114,21 @@ const SEED_CHANNELS=[
 {id:"UCRW9giz4WKZSVssQWdd5pLg",name:"Video Game Analysis"},
 {id:"UCBRdH7MGiy3EmNG1GndsdIg",name:"Avalanche Reviews"},
 {id:"UC5c-DuzPdH9iaWYdI0v0uzw",name:"Star Wars Theory"},
-{id:"UCDiFRMQWpcp8_KD4vwIVicw",name:"Emergency Awesome 2"},
 ];
-for(const c of SEED_CHANNELS)discoveredChannels.set(c.id,c.name);
+for(const c of SEED_CHANNELS)discoveredChannels.set(c.id,{name:c.name,niche:seedNiche(c.name)});
 
 // Step 2: Search YouTube for more channels. Paginate up to 2 pages per term to widen
-// the unique-channel catch. ~32 terms x 2 pages = up to ~64 search calls (~6,400 units).
-const searchTermsToRun=SEARCH_TERMS;
-for(const term of searchTermsToRun){
+// the unique-channel catch. ~37 terms x 2 pages = up to ~74 search calls (~7,400 units).
+for(const term of SEARCH_TERMS){
 let pageToken="";
 for(let page=0;page<2;page++){
 try{
-const r=await fetch("https://www.googleapis.com/youtube/v3/search?part=snippet&q="+encodeURIComponent(term)+"&type=channel&maxResults=50&relevanceLanguage=en"+(pageToken?"&pageToken="+pageToken:"")+"&key="+YOUTUBE_API_KEY);
+const r=await fetch("https://www.googleapis.com/youtube/v3/search?part=snippet&q="+encodeURIComponent(term.q)+"&type=channel&maxResults=50&relevanceLanguage=en"+(pageToken?"&pageToken="+pageToken:"")+"&key="+YOUTUBE_API_KEY);
 const d=await r.json();
 for(const item of(d.items||[])){
 const id=item.id&&item.id.channelId;
 const name=item.snippet&&item.snippet.channelTitle;
-if(id&&name&&!discoveredChannels.has(id))discoveredChannels.set(id,name);
+if(id&&name&&!discoveredChannels.has(id))discoveredChannels.set(id,{name:name,niche:[term.niche]});
 }
 pageToken=d.nextPageToken||"";
 await new Promise(function(r){setTimeout(r,200);});
@@ -130,7 +137,7 @@ if(!pageToken)break;
 }
 }
 
-const CHANNELS=[...discoveredChannels.entries()].map(function(e){return{id:e[0],name:e[1]};});
+const CHANNELS=[...discoveredChannels.entries()].map(function(e){return{id:e[0],name:e[1].name,niche:e[1].niche};});
 
 // Filter out obvious noise
 const SKIP=["ugc","india","hindi","tamil","telugu","roblox","minecraft kids","fortnite kids","gaming review ","film breakdown ","fps gaming","fps channel","fps game","movie review channel","review channel"];
@@ -140,9 +147,6 @@ return !SKIP.some(function(s){return n.includes(s);}) && c.name.length>2 && c.na
 });
 
 // Subscriber floor (50k) + uploads-playlist pre-pass.
-// Batched channels.list (1 quota unit per 50 channels) so we skip sub-50k channels BEFORE the
-// costly per-channel crawl - this both keeps the sample to channels that plausibly carry paid
-// sponsorships and saves quota (no per-channel channels.list during the crawl).
 const SUB_FLOOR=50000;
 const chanInfo={};
 for(let i=0;i<filtered.length;i+=50){
@@ -160,71 +164,99 @@ await new Promise(function(r){setTimeout(r,100);});
 }
 const eligible=filtered.filter(function(c){const info=chanInfo[c.id];return info&&info.uploads&&info.subs>=SUB_FLOOR;});
 
-const NOISE=["YouTube","Google","Twitter","Instagram","Discord","Twitch","Reddit","Amazon","Apple","Microsoft","Steam","PlayStation","Xbox","Nintendo","Patreon","Spotify","Netflix","Subscribe","Channel","Video","Watch","Click","Link","Below","Description","Comment","Like","Share","Merch","Support","Music","Join","Members","Podcast","Facebook","TikTok","Linkedin"];
+// http/https/www + bare TLDs added so URL schemes/hosts are never captured as a "brand"
+// (this was the source of the junk "http"/"https" rows on the board).
+const NOISE=["YouTube","Google","Twitter","Instagram","Discord","Twitch","Reddit","Amazon","Apple","Microsoft","Steam","PlayStation","Xbox","Nintendo","Patreon","Spotify","Netflix","Subscribe","Channel","Video","Watch","Click","Link","Below","Description","Comment","Like","Share","Merch","Support","Music","Join","Members","Podcast","Facebook","TikTok","Linkedin","http","https","www","com","net","org"];
 
 function extractSponsors(desc,channelName){
 if(!desc)return[];
 const sponsors=new Set();
 const channelDomain=channelName.toLowerCase().replace(/\s+/g,"");
 const noiseLower=NOISE.map(function(n){return n.toLowerCase();});
+function ok(brand){return brand.length>3&&brand.length<30&&!noiseLower.includes(brand.toLowerCase())&&!/^(https?|www)$/i.test(brand)&&brand.toLowerCase()!==channelDomain;}
+// Require the scheme (and optional www.) to be fully consumed BEFORE the captured host label,
+// so the capture group can never be "http"/"https"/"www".
 const urlPattern=/(?:visit|go to|check out|head to|download|try|sign up(?:\s+at)?|use)\s+(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9][a-zA-Z0-9-]+)\.[a-z]{2,}/gi;
 for(const m of [...desc.matchAll(urlPattern)]){
 const brand=m[1].charAt(0).toUpperCase()+m[1].slice(1);
-if(brand.length>3&&brand.length<30&&!noiseLower.includes(brand.toLowerCase())&&brand.toLowerCase()!==channelDomain)sponsors.add(brand);
+if(ok(brand))sponsors.add(brand);
 }
 const byPattern=/(?:sponsored by|brought to you by|partner(?:ed)? with|in partnership with|thanks? to)\s+([A-Z][a-zA-Z0-9]+(?:\s[A-Z][a-zA-Z0-9]+)?)/g;
 for(const m of [...desc.matchAll(byPattern)]){
 const brand=m[1].trim();
-if(brand.length>3&&brand.length<30&&!noiseLower.includes(brand.toLowerCase())&&brand.toLowerCase()!==channelDomain)sponsors.add(brand);
+if(ok(brand))sponsors.add(brand);
 }
 const codePattern=/(?:use code|promo code|discount code)\s+\w+\s+(?:at|for|on)\s+([A-Z][a-zA-Z0-9]+)/gi;
 for(const m of [...desc.matchAll(codePattern)]){
 const brand=m[1].trim();
-if(brand.length>3&&brand.length<30&&!noiseLower.includes(brand.toLowerCase())&&brand.toLowerCase()!==channelDomain)sponsors.add(brand);
+if(ok(brand))sponsors.add(brand);
 }
 return[...sponsors];
 }
 
-async function getUploadsVideos(uploadsId){
-try{
+// 7-DAY WINDOW (was: latest 5 uploads). Since the scraper runs weekly, scan every upload
+// from the last 7 days so a brand's true weekly footprint is captured and a still-active
+// brand doesn't drop to Falling just because it wasn't in the last 5 videos.
+const WINDOW_DAYS=7;
+const MAX_VIDS_PER_CHANNEL=40; // safety cap for hyper-prolific channels (bounds quota/time)
+async function getRecentVideoIds(uploadsId,cutoffMs){
 if(!uploadsId)return[];
-const playRes=await fetch("https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&playlistId="+uploadsId+"&maxResults=5&key="+YOUTUBE_API_KEY);
-const playData=await playRes.json();
-return(playData.items||[]).map(function(i){return i.contentDetails&&i.contentDetails.videoId;}).filter(Boolean);
-}catch(e){return[];}
+const ids=[];let pageToken="";
+try{
+for(let page=0;page<3;page++){
+const r=await fetch("https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&playlistId="+uploadsId+"&maxResults=50&key="+YOUTUBE_API_KEY+(pageToken?"&pageToken="+pageToken:""));
+const d=await r.json();
+let stop=false;
+for(const i of(d.items||[])){
+const cd=i.contentDetails||{};
+const pub=cd.videoPublishedAt?Date.parse(cd.videoPublishedAt):0;
+if(pub&&pub<cutoffMs){stop=true;break;} // uploads playlist is newest-first
+if(cd.videoId)ids.push(cd.videoId);
+if(ids.length>=MAX_VIDS_PER_CHANNEL){stop=true;break;}
+}
+pageToken=d.nextPageToken||"";
+if(stop||!pageToken)break;
+}
+}catch(e){}
+return ids;
 }
 
 async function getVideoDetails(ids){
 if(!ids.length)return[];
+const out=[];
+for(let i=0;i<ids.length;i+=50){
 try{
-const r=await fetch("https://www.googleapis.com/youtube/v3/videos?part=snippet&id="+ids.join(",")+"&key="+YOUTUBE_API_KEY);
-return((await r.json()).items||[]);
-}catch(e){return[];}
+const r=await fetch("https://www.googleapis.com/youtube/v3/videos?part=snippet&id="+ids.slice(i,i+50).join(",")+"&key="+YOUTUBE_API_KEY);
+for(const v of(((await r.json()).items)||[]))out.push(v);
+}catch(e){}
+}
+return out;
 }
 
 const brandData={};
 const today=new Date().toISOString().split("T")[0];
+const cutoffMs=Date.now()-WINDOW_DAYS*24*60*60*1000;
 let processed=0;
 
-// Process channels in batches to avoid timeout
 const MAX_CHANNELS=1000;
 const channelsToProcess=eligible.slice(0,MAX_CHANNELS);
 
-const CONCURRENCY=10;for(let bi=0;bi<channelsToProcess.length;bi+=CONCURRENCY){const batch=channelsToProcess.slice(bi,bi+CONCURRENCY);await Promise.all(batch.map(async function(channel){
+// Concurrency raised 10 -> 20 so a full 1000-channel, 7-day run completes within the 300s limit.
+const CONCURRENCY=20;for(let bi=0;bi<channelsToProcess.length;bi+=CONCURRENCY){const batch=channelsToProcess.slice(bi,bi+CONCURRENCY);await Promise.all(batch.map(async function(channel){
 try{
-const vids=await getUploadsVideos(chanInfo[channel.id]&&chanInfo[channel.id].uploads);
+const vids=await getRecentVideoIds(chanInfo[channel.id]&&chanInfo[channel.id].uploads,cutoffMs);
 const videos=await getVideoDetails(vids);
 for(const v of videos){
 for(const s of extractSponsors(v.snippet&&v.snippet.description||"",channel.name)){
 const k=s.toLowerCase().replace(/\s+/g,"");
-if(!brandData[k])brandData[k]={name:s,channels:new Set(),lastSeen:today,weekCount:0};
+if(!brandData[k])brandData[k]={name:s,channels:new Set(),niches:new Set(),lastSeen:today,weekCount:0};
 brandData[k].channels.add(channel.name);
+for(const nn of(channel.niche||[]))brandData[k].niches.add(nn);
 brandData[k].weekCount++;
 brandData[k].lastSeen=today;
 }
 }
 processed++;
-
 }catch(e){processed++;}}));await new Promise(function(r){setTimeout(r,50);});
 }
 
@@ -233,11 +265,15 @@ const exData=await exRes.json();
 const exMap={};
 for(const i of(exData&&exData.data&&exData.data.boards&&exData.data.boards[0]&&exData.data.boards[0].items_page&&exData.data.boards[0].items_page.items)||[]){const cv=i.column_values||[];const gv=function(cid){const c=cv.find(function(x){return x.id===cid;});return Number((c&&c.text)||0);};exMap[i.name.toLowerCase()]={id:i.id,rec:gv("numeric_mm3swzsf"),peak:gv("numeric_mm3szew3")};}
 
+// Expanded display-name normalization (keyed on lowercased, space-stripped name).
+const DISPLAY={checkout:"Checkout.com","checkout.com":"Checkout.com",buyraycon:"Raycon",raycon:"Raycon",expressvpn:"ExpressVPN",nordvpn:"NordVPN",surfshark:"Surfshark",betterhelp:"BetterHelp",squarespace:"Squarespace",displate:"Displate",saily:"Saily",helixsleep:"Helix Sleep",zocdoc:"Zocdoc",cookunity:"CookUnity",manscaped:"Manscaped",hellofresh:"HelloFresh",factormeals:"Factor",factor:"Factor",incogni:"Incogni",aura:"Aura",skillshare:"Skillshare",audible:"Audible",ridge:"Ridge",keeps:"Keeps",rocketmoney:"Rocket Money",ground:"Ground News",groundnews:"Ground News",established:"Established Titles",shopify:"Shopify",scentbird:"Scentbird",greenchef:"Green Chef",asus:"ASUS",intel:"Intel",chime:"Chime"};
+function displayName(name){const k=name.toLowerCase().replace(/\s+/g,"");if(DISPLAY[k])return DISPLAY[k];if(DISPLAY[name.toLowerCase()])return DISPLAY[name.toLowerCase()];return name.charAt(0).toUpperCase()+name.slice(1);}
+
 // Only save brands on 2+ channels - filters out all noise
 const brands=Object.values(brandData).filter(function(d){return d.channels.size>=2;}).sort(function(a,b){return b.channels.size-a.channels.size;});
 let saved=0;
-for(const data of brands){const dn=({"checkout":"Checkout.com","buyraycon":"Raycon","expressvpn":"ExpressVPN"})[data.name.toLowerCase()]||data.name;const tier=data.channels.size>=5?"High":data.channels.size>=3?"Mid":"Low";const ex=exMap[dn.toLowerCase()];const trend=!ex?"New":data.channels.size>ex.rec?"Rising":data.channels.size<ex.rec?"Falling":"Steady";const peak=Math.max(ex?ex.peak:0,data.channels.size);
-const cols={text_mm3shz66:dn,numeric_mm3swzsf:data.channels.size,numeric_mm3szew3:peak,date_mm3sx6hp:{date:data.lastSeen},text_mm3ss133:[...data.channels].slice(0,5).join(", "),text_mm3shf6v:"Gaming/Film",color_mm3samv9:{label:tier},color_mm3sgerw:{label:trend}};
+for(const data of brands){const dn=displayName(data.name);const tier=data.channels.size>=5?"High":data.channels.size>=3?"Mid":"Low";const ex=exMap[dn.toLowerCase()];const trend=!ex?"New":data.channels.size>ex.rec?"Rising":data.channels.size<ex.rec?"Falling":"Steady";const peak=Math.max(ex?ex.peak:0,data.channels.size);const niche=[...data.niches].sort().join("/")||"Gaming/Film";
+const cols={text_mm3shz66:dn,numeric_mm3swzsf:data.channels.size,numeric_mm3szew3:peak,date_mm3sx6hp:{date:data.lastSeen},text_mm3ss133:[...data.channels].slice(0,5).join(", "),text_mm3shf6v:niche,color_mm3samv9:{label:tier},color_mm3sgerw:{label:trend}};
 const itemName=dn.substring(0,50);
 const eid=ex&&ex.id;
 try{
@@ -247,5 +283,5 @@ saved++;
 }catch(e){}
 }
 
-const seenSet=new Set(brands.map(function(b){return (({"checkout":"Checkout.com","buyraycon":"Raycon","expressvpn":"ExpressVPN"})[b.name.toLowerCase()]||b.name).toLowerCase();}));for(const zk in exMap){if(seenSet.has(zk))continue;try{await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":MONDAY_API_KEY},body:JSON.stringify({query:"mutation{change_multiple_column_values(board_id:"+BOARD_ID+",item_id:"+exMap[zk].id+",column_values:"+JSON.stringify(JSON.stringify({numeric_mm3swzsf:0,color_mm3sgerw:{label:"Falling"}}))+",create_labels_if_missing:true){id}}"})});}catch(e){}}return res.json({message:"Done",channelsDiscovered:discoveredChannels.size,channelsFiltered:filtered.length,channelsEligible:eligible.length,channelsProcessed:processed,brandsFound:Object.keys(brandData).length,brandsOn2Plus:brands.length,saved,topBrands:brands.slice(0,20).map(function(b){return{name:b.name,channels:b.channels.size,seenOn:[...b.channels].join(", ")};})});
+const seenSet=new Set(brands.map(function(b){return displayName(b.name).toLowerCase();}));for(const zk in exMap){if(seenSet.has(zk))continue;try{await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":MONDAY_API_KEY},body:JSON.stringify({query:"mutation{change_multiple_column_values(board_id:"+BOARD_ID+",item_id:"+exMap[zk].id+",column_values:"+JSON.stringify(JSON.stringify({numeric_mm3swzsf:0,color_mm3sgerw:{label:"Falling"}}))+",create_labels_if_missing:true){id}}"})});}catch(e){}}return res.json({message:"Done",windowDays:WINDOW_DAYS,channelsDiscovered:discoveredChannels.size,channelsFiltered:filtered.length,channelsEligible:eligible.length,channelsProcessed:processed,brandsFound:Object.keys(brandData).length,brandsOn2Plus:brands.length,saved,topBrands:brands.slice(0,20).map(function(b){return{name:displayName(b.name),channels:b.channels.size,niche:[...b.niches].sort().join("/"),seenOn:[...b.channels].join(", ")};})});
 }

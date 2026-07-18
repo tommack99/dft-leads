@@ -8,6 +8,7 @@ export default async function handler(req,res){
 const YOUTUBE_API_KEY=process.env.YOUTUBE_API_KEY;
 const MONDAY_API_KEY=process.env.MONDAY_API_KEY;
 const BOARD_ID="18415192682";
+const EMERGING_GROUP="group_mm5c4nzd"; // "Emerging (1 channel)" group — early single-channel signals
 const CATALOG_BOARD="18421642067";
 const CAT_YTID="text_mm57h9s4",CAT_NICHE="text_mm57h3g2";
 if(!YOUTUBE_API_KEY||!MONDAY_API_KEY)return res.status(500).json({error:"Missing env vars"});
@@ -69,7 +70,7 @@ for(const m of [...desc.matchAll(codePattern)]){const b=m[1].trim();if(ok(b))fou
 return[...found];
 }
 
-const WINDOW_DAYS=7,MAX_VIDS_PER_CHANNEL=40;
+const WINDOW_DAYS=30,MAX_VIDS_PER_CHANNEL=40;
 const cutoffMs=Date.now()-WINDOW_DAYS*24*60*60*1000;
 function uploadsPlaylist(channelId){return channelId&&channelId.slice(0,2)==="UC"?"UU"+channelId.slice(2):"";}
 async function getRecentVideoIds(uploadsId){
@@ -111,14 +112,15 @@ for(const i of(exRes&&exRes.data&&exRes.data.boards&&exRes.data.boards[0]&&exRes
 const DISPLAY={buyraycon:"Raycon"};
 function displayName(name){if(BRAND_TOKENS[name])return name;const k=name.toLowerCase().replace(/\s+/g,"");if(DISPLAY[k])return DISPLAY[k];return name.charAt(0).toUpperCase()+name.slice(1);}
 
-const brands=Object.values(brandData).filter(function(d){return d.channels.size>=2;}).sort(function(a,b){return b.channels.size-a.channels.size;});
+// Include single-channel brands too (surfaced into the Emerging group as early signals).
+const brands=Object.values(brandData).filter(function(d){return d.channels.size>=1;}).sort(function(a,b){return b.channels.size-a.channels.size;});
 let saved=0;
 for(const data of brands){const dn=displayName(data.name);const tier=data.channels.size>=5?"High":data.channels.size>=3?"Mid":"Low";const ex=exMap[dn.toLowerCase()];const trend=!ex?"New":data.channels.size>ex.rec?"Rising":data.channels.size<ex.rec?"Falling":"Steady";const peak=Math.max(ex?ex.peak:0,data.channels.size);const niche=[...data.niches].sort().join("/")||"Gaming/Film";
 const cols={text_mm3shz66:dn,numeric_mm3swzsf:data.channels.size,numeric_mm3szew3:peak,date_mm3sx6hp:{date:data.lastSeen},text_mm3ss133:[...data.channels].slice(0,5).join(", "),text_mm3shf6v:niche,color_mm3samv9:{label:tier},color_mm3sgerw:{label:trend}};
 const eid=ex&&ex.id;
 try{
 if(eid){await monday("mutation{change_multiple_column_values(board_id:"+BOARD_ID+",item_id:"+eid+",column_values:"+JSON.stringify(JSON.stringify(cols))+",create_labels_if_missing:true){id}}");}
-else{await monday("mutation{create_item(board_id:"+BOARD_ID+",item_name:"+JSON.stringify(dn.substring(0,50))+",column_values:"+JSON.stringify(JSON.stringify(cols))+",create_labels_if_missing:true){id}}");}
+else{const grp=data.channels.size<2?",group_id:\""+EMERGING_GROUP+"\"":"";await monday("mutation{create_item(board_id:"+BOARD_ID+grp+",item_name:"+JSON.stringify(dn.substring(0,50))+",column_values:"+JSON.stringify(JSON.stringify(cols))+",create_labels_if_missing:true){id}}");}
 saved++;
 }catch(e){}
 }
@@ -126,5 +128,5 @@ saved++;
 const seenSet=new Set(brands.map(function(b){return displayName(b.name).toLowerCase();}));
 for(const zk in exMap){if(seenSet.has(zk))continue;try{await monday("mutation{change_multiple_column_values(board_id:"+BOARD_ID+",item_id:"+exMap[zk].id+",column_values:"+JSON.stringify(JSON.stringify({numeric_mm3swzsf:0,color_mm3sgerw:{label:"Falling"}}))+",create_labels_if_missing:true){id}}");}catch(e){}}
 
-return res.json({message:"Done (scan-only v2)",windowDays:WINDOW_DAYS,catalogLoaded:catalog.length,channelsProcessed:processed,brandsFound:Object.keys(brandData).length,brandsOn2Plus:brands.length,saved,topBrands:brands.slice(0,25).map(function(b){return{name:displayName(b.name),channels:b.channels.size,niche:[...b.niches].sort().join("/")};})});
+return res.json({message:"Done (scan-only v3)",windowDays:WINDOW_DAYS,catalogLoaded:catalog.length,channelsProcessed:processed,brandsFound:Object.keys(brandData).length,brandsOn2Plus:brands.filter(function(b){return b.channels.size>=2;}).length,brandsEmerging:brands.filter(function(b){return b.channels.size===1;}).length,saved,topBrands:brands.slice(0,25).map(function(b){return{name:displayName(b.name),channels:b.channels.size,niche:[...b.niches].sort().join("/")};})});
 }

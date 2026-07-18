@@ -119,7 +119,14 @@ const cols={text_mm3shz66:dn,numeric_mm3swzsf:data.channels.size,numeric_mm3szew
 const eid=ex&&ex.id;
 try{
 if(eid){await monday("mutation{change_multiple_column_values(board_id:"+BOARD_ID+",item_id:"+eid+",column_values:"+JSON.stringify(JSON.stringify(cols))+",create_labels_if_missing:true){id}}");}
-else{await monday("mutation{create_item(board_id:"+BOARD_ID+",item_name:"+JSON.stringify(dn.substring(0,50))+",column_values:"+JSON.stringify(JSON.stringify(cols))+",create_labels_if_missing:true){id}}");}
+else{
+// New brand: create WITHOUT the Trend value, then set Trend in a second call so it registers as a
+// status CHANGE — this is what fires the Monday "when Trend changes to New" email automation.
+const colsNoTrend=Object.assign({},cols);delete colsNoTrend.color_mm3sgerw;
+const cr=await monday("mutation{create_item(board_id:"+BOARD_ID+",item_name:"+JSON.stringify(dn.substring(0,50))+",column_values:"+JSON.stringify(JSON.stringify(colsNoTrend))+",create_labels_if_missing:true){id}}");
+const newId=cr&&cr.data&&cr.data.create_item&&cr.data.create_item.id;
+if(newId)await monday("mutation{change_multiple_column_values(board_id:"+BOARD_ID+",item_id:"+newId+",column_values:"+JSON.stringify(JSON.stringify({color_mm3sgerw:{label:trend}}))+",create_labels_if_missing:true){id}}");
+}
 saved++;
 }catch(e){}
 }

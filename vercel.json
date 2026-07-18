@@ -13,6 +13,10 @@
       "schedule": "0 8 * * 1"
     },
     {
+      "path": "/api/channel-discovery",
+      "schedule": "0 6 * * 0,4"
+    },
+    {
       "path": "/api/creator-scout",
       "schedule": "0 9 * * 3"
     },

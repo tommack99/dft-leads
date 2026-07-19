@@ -5,13 +5,15 @@ export default async function handler(req,res){
   const SUBITEMS_BOARD_ID="6162879732";
   if(!YOUTUBE_API_KEY||!MONDAY_API_KEY)return res.status(500).json({error:"Missing env vars"});
 
-  // Fetch all subitems that have a Live Links value (file_mm1zd4v9)
+  // Fetch all subitems that have a Live Links value.
+  // Links now live in "LIVE LINKS NEW" (link_mm5dgdx9); we still read the legacy
+  // "LIVE LINKS OLD" (file_mm1zd4v9) as a fallback for campaigns not yet migrated.
   let allSubitems=[];
   let cursor=null;
   do{
     const q=cursor
-      ?'{ boards(ids: ['+SUBITEMS_BOARD_ID+']){ items_page(limit:100,cursor:"'+cursor+'"){ cursor items{ id name column_values(ids:["file_mm1zd4v9","numeric_mm3vg42g"]){ id text value } } } } }'
-      :'{ boards(ids: ['+SUBITEMS_BOARD_ID+']){ items_page(limit:100){ cursor items{ id name column_values(ids:["file_mm1zd4v9","numeric_mm3vg42g"]){ id text value } } } } }';
+      ?'{ boards(ids: ['+SUBITEMS_BOARD_ID+']){ items_page(limit:100,cursor:"'+cursor+'"){ cursor items{ id name column_values(ids:["link_mm5dgdx9","file_mm1zd4v9","numeric_mm3vg42g"]){ id text value } } } } }'
+      :'{ boards(ids: ['+SUBITEMS_BOARD_ID+']){ items_page(limit:100){ cursor items{ id name column_values(ids:["link_mm5dgdx9","file_mm1zd4v9","numeric_mm3vg42g"]){ id text value } } } } }';
     const r=await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":MONDAY_API_KEY},body:JSON.stringify({query:q})});
     const d=await r.json();
     const page=d&&d.data&&d.data.boards&&d.data.boards[0]&&d.data.boards[0].items_page;
@@ -30,9 +32,13 @@ export default async function handler(req,res){
 
   const toUpdate=[];
   for(const item of allSubitems){
-    const liveLinksCol=item.column_values.find(c=>c.id==="file_mm1zd4v9");
+    const newLinksCol=item.column_values.find(c=>c.id==="link_mm5dgdx9");
+    const oldLinksCol=item.column_values.find(c=>c.id==="file_mm1zd4v9");
     const priceCol=item.column_values.find(c=>c.id==="numeric_mm3vg42g");
-    const linkText=liveLinksCol&&(liveLinksCol.text||"");
+    const newText=(newLinksCol&&newLinksCol.text)||"";
+    const oldText=(oldLinksCol&&oldLinksCol.text)||"";
+    // Prefer LIVE LINKS NEW; fall back to LIVE LINKS OLD for legacy rows.
+    const linkText=extractVideoIds(newText).length?newText:oldText;
     const videoIds=extractVideoIds(linkText);
     const creatorPrice=priceCol&&priceCol.text?parseFloat(priceCol.text)||0:0;
     if(videoIds.length){

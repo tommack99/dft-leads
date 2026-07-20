@@ -24,19 +24,41 @@ const sleep=function(ms){return new Promise(function(r){setTimeout(r,ms);});};
 async function monday(q){const r=await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":MK},body:JSON.stringify({query:q})});return r.json();}
 async function yt(endpoint,params){const u="https://www.googleapis.com/youtube/v3/"+endpoint+"?"+Object.keys(params).filter(function(k){return params[k]!=null;}).map(function(k){return k+"="+encodeURIComponent(params[k]);}).join("&")+"&key="+YT;try{return await (await fetch(u)).json();}catch(e){return{};}}
 
-// ---- IP keyword logic ----
+// ---- IP / FRANCHISE keyword logic ----
+// Match a creator's videos to a release by FRANCHISE, ignoring sequel numbers and subtitles, so
+// e.g. a "Witcher 3" video counts toward "The Witcher 4" and "GTA V" counts toward "Grand Theft Auto VI".
+// Known abbreviations / alternate names (franchise phrase -> extra strings that also count as a match).
+const FRANCHISE_ALIASES={
+"grand theft auto":["gta"],
+"call of duty":["cod","warzone"],
+"resident evil":["biohazard"],
+"the legend of zelda":["zelda"],
+"final fantasy":["ffvii","ffxvi"],
+"the elder scrolls":["skyrim"]
+};
+// Generic words that must NOT be used as a standalone match token (too noisy on their own).
+const GENERIC_TOKENS=new Set(["control","star","stars","world","worlds","story","stories","order","dawn","rise","legacy","zero","company","beast","island","magic","night","last","final","first","dark","light","fire","blood","ring","souls","hill","gate","gates","land","lands","force","hero","team","game","games","movie","film","series","season","edition","complete","definitive","remake","remaster","remastered","chapter","part","reloaded","origins","tarnished","brand","open","sword","field","the","and","for"]);
+function normText(s){return (s||"").toLowerCase().replace(/[^a-z0-9]+/g," ").replace(/\s+/g," ").trim();}
 function keywordsFor(title){
-let t=title.toLowerCase().replace(/\(.*?\)/g," ").replace(/[^a-z0-9\s]/g," ").replace(/\s+/g," ").trim();
-t=t.replace(/\s+(\d+|[ivx]+)$/,"").trim(); // drop trailing sequel number / roman numeral
-const stop=new Set(["the","of","a","an","and","part","chapter","edition","remake","remastered","remaster","new"]);
-const words=t.split(" ").filter(function(w){return w&&!stop.has(w)&&!/^\d+$/.test(w);});
-const first=words.find(function(w){return w.length>=4;})||"";
-return{first:first,phrase:words.join(" ")};
+const raw=(title||"").toLowerCase();
+// main title = the part before a subtitle separator (": ", " - ", "(")
+const main=raw.split(/\s+[-–—:]\s+|:|\(/)[0];
+// franchise phrase: normalized main title minus a trailing sequel number / roman numeral (keeps small words like "of")
+const phrase=normText(main).replace(/\s+(\d+|[ivxlcdm]+)$/,"").trim();
+// distinctive tokens: words >=4 chars from the franchise that aren't generic
+const tokens=phrase.split(" ").filter(function(w){return w.length>=4&&!GENERIC_TOKENS.has(w);});
+let aliases=[];
+Object.keys(FRANCHISE_ALIASES).forEach(function(fp){if(phrase.indexOf(fp)>=0)aliases=aliases.concat(FRANCHISE_ALIASES[fp]);});
+return{phrase:phrase,tokens:tokens,aliases:aliases};
 }
 function titleMatches(videoTitle,kw){
-const v=(videoTitle||"").toLowerCase();
-if(kw.phrase&&kw.phrase.length>=5&&v.indexOf(kw.phrase)>=0)return true;
-if(kw.first&&kw.first.length>=4&&new RegExp("\\b"+kw.first+"\\b").test(v))return true;
+const v=" "+normText(videoTitle)+" ";
+// 1) multi-word franchise phrase appears in the video (precise; e.g. "call of duty", "silent hill")
+if(kw.phrase&&kw.phrase.indexOf(" ")>=0&&v.indexOf(kw.phrase)>=0)return true;
+// 2) a distinctive franchise token at a word start (e.g. "witcher" -> Witcher 3; "dune" -> Dune Part Two)
+for(let i=0;i<kw.tokens.length;i++){if(v.indexOf(" "+kw.tokens[i])>=0)return true;}
+// 3) known abbreviations / alternate names (e.g. "gta", "cod", "zelda")
+for(let j=0;j<kw.aliases.length;j++){if(new RegExp("\\b"+kw.aliases[j]+"\\b").test(v))return true;}
 return false;
 }
 

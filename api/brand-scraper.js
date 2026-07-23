@@ -4,6 +4,9 @@ export const config={maxDuration:300};
 // Discovery lives in api/channel-discovery.js. (Split 2026-07-18.)
 // Detection v2 (2026-07-18): sponsor-signal gate + curated known-sponsor dictionary + generic
 // fallback. Big recall uplift over the old narrow regex while controlling precision.
+// Momentum (2026-07-20): numeric_mm3szew3 now holds week-over-week Momentum (this scan's channel
+// count minus last scan's), NOT the old all-time peak. New brand = 0; a brand that dropped off
+// this scan = negative (0 - last count). "recent" (numeric_mm3swzsf) stays the live count.
 export default async function handler(req,res){
 const YOUTUBE_API_KEY=process.env.YOUTUBE_API_KEY;
 const MONDAY_API_KEY=process.env.MONDAY_API_KEY;
@@ -103,9 +106,9 @@ processed++;
 }catch(e){processed++;}}));await sleep(50);
 }
 
-const exRes=await monday("{boards(ids:["+BOARD_ID+"]){items_page(limit:500){items{id name column_values(ids:[\"numeric_mm3swzsf\",\"numeric_mm3szew3\"]){id text}}}}}");
+const exRes=await monday("{boards(ids:["+BOARD_ID+"]){items_page(limit:500){items{id name column_values(ids:[\"numeric_mm3swzsf\"]){id text}}}}}");
 const exMap={};
-for(const i of(exRes&&exRes.data&&exRes.data.boards&&exRes.data.boards[0]&&exRes.data.boards[0].items_page&&exRes.data.boards[0].items_page.items)||[]){const cv=i.column_values||[];const gv=function(cid){const c=cv.find(function(x){return x.id===cid;});return Number((c&&c.text)||0);};exMap[i.name.toLowerCase()]={id:i.id,rec:gv("numeric_mm3swzsf"),peak:gv("numeric_mm3szew3")};}
+for(const i of(exRes&&exRes.data&&exRes.data.boards&&exRes.data.boards[0]&&exRes.data.boards[0].items_page&&exRes.data.boards[0].items_page.items)||[]){const cv=i.column_values||[];const gv=function(cid){const c=cv.find(function(x){return x.id===cid;});return Number((c&&c.text)||0);};exMap[i.name.toLowerCase()]={id:i.id,rec:gv("numeric_mm3swzsf")};}
 
 // dict brands are already canonical; DISPLAY only tidies generic-fallback captures
 const DISPLAY={buyraycon:"Raycon"};
@@ -114,8 +117,8 @@ function displayName(name){if(BRAND_TOKENS[name])return name;const k=name.toLowe
 // Keep brands seen on 2+ channels (single-channel added too much noise), all in the one group.
 const brands=Object.values(brandData).filter(function(d){return d.channels.size>=2;}).sort(function(a,b){return b.channels.size-a.channels.size;});
 let saved=0;
-for(const data of brands){const dn=displayName(data.name);const tier=data.channels.size>=5?"High":data.channels.size>=3?"Mid":"Low";const ex=exMap[dn.toLowerCase()];const trend=!ex?"New":data.channels.size>ex.rec?"Rising":data.channels.size<ex.rec?"Falling":"Steady";const peak=Math.max(ex?ex.peak:0,data.channels.size);const niche=[...data.niches].sort().join("/")||"Gaming/Film";
-const cols={text_mm3shz66:dn,numeric_mm3swzsf:data.channels.size,numeric_mm3szew3:peak,date_mm3sx6hp:{date:data.lastSeen},text_mm3ss133:[...data.channels].slice(0,5).join(", "),text_mm3shf6v:niche,color_mm3samv9:{label:tier},color_mm3sgerw:{label:trend}};
+for(const data of brands){const dn=displayName(data.name);const tier=data.channels.size>=5?"High":data.channels.size>=3?"Mid":"Low";const ex=exMap[dn.toLowerCase()];const trend=!ex?"New":data.channels.size>ex.rec?"Rising":data.channels.size<ex.rec?"Falling":"Steady";const momentum=ex?(data.channels.size-ex.rec):0;const niche=[...data.niches].sort().join("/")||"Gaming/Film";
+const cols={text_mm3shz66:dn,numeric_mm3swzsf:data.channels.size,numeric_mm3szew3:momentum,date_mm3sx6hp:{date:data.lastSeen},text_mm3ss133:[...data.channels].slice(0,5).join(", "),text_mm3shf6v:niche,color_mm3samv9:{label:tier},color_mm3sgerw:{label:trend}};
 const eid=ex&&ex.id;
 try{
 if(eid){await monday("mutation{change_multiple_column_values(board_id:"+BOARD_ID+",item_id:"+eid+",column_values:"+JSON.stringify(JSON.stringify(cols))+",create_labels_if_missing:true){id}}");}
@@ -132,7 +135,7 @@ saved++;
 }
 
 const seenSet=new Set(brands.map(function(b){return displayName(b.name).toLowerCase();}));
-for(const zk in exMap){if(seenSet.has(zk))continue;try{await monday("mutation{change_multiple_column_values(board_id:"+BOARD_ID+",item_id:"+exMap[zk].id+",column_values:"+JSON.stringify(JSON.stringify({numeric_mm3swzsf:0,color_mm3sgerw:{label:"Falling"}}))+",create_labels_if_missing:true){id}}");}catch(e){}}
+for(const zk in exMap){if(seenSet.has(zk))continue;try{await monday("mutation{change_multiple_column_values(board_id:"+BOARD_ID+",item_id:"+exMap[zk].id+",column_values:"+JSON.stringify(JSON.stringify({numeric_mm3swzsf:0,numeric_mm3szew3:-(exMap[zk].rec||0),color_mm3sgerw:{label:"Falling"}}))+",create_labels_if_missing:true){id}}");}catch(e){}}
 
 return res.json({message:"Done (scan-only v3)",windowDays:WINDOW_DAYS,catalogLoaded:catalog.length,channelsProcessed:processed,brandsFound:Object.keys(brandData).length,brandsOn2Plus:brands.filter(function(b){return b.channels.size>=2;}).length,brandsEmerging:brands.filter(function(b){return b.channels.size===1;}).length,saved,topBrands:brands.slice(0,25).map(function(b){return{name:displayName(b.name),channels:b.channels.size,niche:[...b.niches].sort().join("/")};})});
 }

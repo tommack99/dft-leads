@@ -32,7 +32,7 @@
 
   /* Grid */
   .scroll{ flex:1; overflow:auto; background:#fff; }
-  table{ border-collapse:separate; border-spacing:0; font-size:12.5px; table-layout:fixed; width:max-content; min-width:100%; }
+  table{ border-collapse:separate; border-spacing:0; font-size:12.5px; table-layout:fixed; }
   th,td{ border-right:1px solid var(--grid); border-bottom:1px solid var(--grid); padding:0 10px; height:var(--rowh); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:center; vertical-align:middle; }
   thead th{ position:sticky; top:0; z-index:3; background:var(--orange); color:var(--charcoal); font-weight:600; letter-spacing:.01em; box-shadow:0 1px 0 rgba(0,0,0,.06); cursor:pointer; user-select:none; }
   thead th:hover{ background:#ff9a2e; }
@@ -141,13 +141,13 @@ const COLS=[
   {key:"category",head:"Category",         w:116},
   {key:"location",head:"Location",         w:124},
   {key:"handle", head:"Handle",            w:126},
-  {key:"about",  head:"About",             w:220, cls:"wide"},
+  {key:"about",  head:"About",             w:200, cls:"wide"},
   {key:"hostGender",head:"Host Gender",    w:90},
   {key:"hostRead",head:"Host Read",        w:78},
   {key:"exclusive",head:"Exclusive",       w:80},
-  {key:"adTypes",head:"Ad Types",          w:180, cls:"wide"},
+  {key:"adTypes",head:"Ad Types",          w:150, cls:"wide"},
   {key:"videos", head:"Videos / mo",       w:82,  fmt:"int"},
-  {key:"audience",head:"Audience",         w:210, cls:"wide"},
+  {key:"audience",head:"Audience",         w:190, cls:"wide"},
   {key:"male",   head:"Male %",            w:64},
   {key:"female", head:"Female %",          w:70},
   {key:"a1317",  head:"13-17",             w:56},
@@ -284,7 +284,8 @@ function render(){
     return `<th class="${c.cls||""}" data-key="${c.key}" title="Click to sort">${esc(c.head)}${car}</th>`;
   }).join("")}</tr></thead>`;
   const tbody=`<tbody>${rowsFor(list)}</tbody>`;
-  $("#scroll").innerHTML= list.length ? `<table>${colgroup}${thead}${tbody}</table>` :
+  const totalW=COLS.reduce((a,c)=>a+c.w,0);
+  $("#scroll").innerHTML= list.length ? `<table style="width:${totalW}px">${colgroup}${thead}${tbody}</table>` :
     `<div class="state"><div>No creators match your search.</div></div>`;
 
   $("#scroll").querySelectorAll("tr.chan").forEach(tr=>{

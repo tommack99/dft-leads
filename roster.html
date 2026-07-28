@@ -71,6 +71,13 @@
   td.wide.clickable{ cursor:pointer; }
   td.wide.exp{ white-space:normal; word-break:break-word; vertical-align:top; padding-top:8px; padding-bottom:8px; background:#fff7ee; }
   tr.chan > td.wide.exp{ background:#fbe6cf; }
+  .grip{ display:inline-block; cursor:grab; user-select:none; margin-right:1px; color:#c9a37a; font-size:12px; line-height:1; }
+  tr.chan:hover .grip{ color:#a85f00; }
+  tr.chan.dragging > td{ opacity:.45; }
+  tr.chan.drop-before > td{ box-shadow: inset 0 2px 0 0 var(--orange); }
+  tr.chan.drop-after > td{ box-shadow: inset 0 -2px 0 0 var(--orange); }
+  .reset{ border:1px solid #e4d8c7; background:#fff; color:#a85f00; font-family:var(--font); font-size:11.5px; font-weight:600; border-radius:8px; padding:7px 10px; cursor:pointer; white-space:nowrap; }
+  .reset:hover{ background:#fff5ea; }
   .tag{ display:inline-block; font-size:10px; font-weight:700; color:#a85f00; background:#fff; border:1px solid #f0d3ac; border-radius:5px; padding:0 5px; margin-left:6px; vertical-align:middle; }
 
   /* Bottom sheet-style tabs */
@@ -94,6 +101,7 @@
     </div>
     <div class="spacer"></div>
     <div class="count" id="count">Loading…</div>
+    <button id="resetOrder" class="reset" style="display:none" title="Clear your custom order">↺ Reset order</button>
     <label class="search">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
       <input id="search" type="text" placeholder="Search creator, host, category…" autocomplete="off">
@@ -170,6 +178,9 @@ const QUERY=`query{boards(ids:[${BOARD}]){groups(ids:[${gIds}]){id items_page(li
 
 let DATA={}, activeTab="topics", query="";
 let sortKey="vg", sortDir="desc";
+let manualOrder = {};
+try { manualOrder = JSON.parse(localStorage.getItem("dftRosterOrder")||"{}") || {}; } catch(e){ manualOrder = {}; }
+const persistOrder = () => { try { localStorage.setItem("dftRosterOrder", JSON.stringify(manualOrder)); } catch(e){} };
 const openSet=new Set();
 
 const $=s=>document.querySelector(s);
@@ -220,7 +231,7 @@ function nameCell(c){
   const dn=dispName(c.name);
   const nm=c.url?`<a href="${esc(c.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(dn)}</a>`:esc(dn);
   const tag=has?`<span class="tag">+${c.shows.length}</span>`:"";
-  return `<div class="nmwrap">${chev}<span class="nmtext">${nm}${tag}</span></div>`;
+  return `<div class="nmwrap"><span class="grip" title="Drag to reorder">⠿</span>${chev}<span class="nmtext">${nm}${tag}</span></div>`;
 }
 function showNameCell(s){
   const nm=s.url?`<a href="${esc(s.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(s.name)}</a>`:esc(s.name);
@@ -231,7 +242,7 @@ function rowsFor(list){
   let html="";
   list.forEach(c=>{
     const open=openSet.has(c.id);
-    html+=`<tr class="chan ${open?"open":""}" data-id="${c.id}">`;
+    html+=`<tr class="chan ${open?"open":""}" data-id="${c.id}" draggable="false">`;
     COLS.forEach(col=>{
       const cls=(col.cls||"");
       const title=(col.cls==="wide"&&c[col.key])?` title="${esc(c[col.key])}"`:"";
@@ -272,13 +283,25 @@ function cmpChannels(a,b){
   return sortDir==="desc"?-r:r;
 }
 
+function effectiveList(all){
+  const mo=manualOrder[activeTab];
+  if(mo&&mo.length){
+    const pos={}; mo.forEach((id,i)=>pos[id]=i);
+    return all.slice().sort((a,b)=>{
+      const pa=pos[a.id]!=null?pos[a.id]:1e9, pb=pos[b.id]!=null?pos[b.id]:1e9;
+      return pa!==pb ? pa-pb : cmpChannels(a,b);
+    });
+  }
+  return all.slice().sort(cmpChannels);
+}
+
 function render(){
-  const all=DATA[activeTab]||[];
+  const all=effectiveList(DATA[activeTab]||[]);
   const q=query.trim().toLowerCase();
-  let list=q?all.filter(c=>(c.name+" "+c.host+" "+c.category+" "+c.handle+" "+c.location).toLowerCase().includes(q)):all.slice();
-  list=list.slice().sort(cmpChannels);
+  let list=q?all.filter(c=>(c.name+" "+c.host+" "+c.category+" "+c.handle+" "+c.location).toLowerCase().includes(q)):all;
   const total=GROUPS.reduce((n,g)=>n+(DATA[g.id]||[]).length,0);
   $("#count").textContent=total+" creators · "+list.length+" shown";
+  const rb=$("#resetOrder"); if(rb) rb.style.display=(manualOrder[activeTab]&&manualOrder[activeTab].length)?"":"none";
 
   const colgroup=`<colgroup>${COLS.map(c=>`<col class="${c.key==="name"?"cName":""}" style="width:${c.w}px">`).join("")}</colgroup>`;
   const thead=`<thead><tr>${COLS.map(c=>{
@@ -302,6 +325,7 @@ function render(){
     th.addEventListener("click",()=>{
       const k=th.dataset.key;
       if(k===sortKey) sortDir=(sortDir==="desc"?"asc":"desc"); else { sortKey=k; sortDir="desc"; }
+      if(manualOrder[activeTab]){ delete manualOrder[activeTab]; persistOrder(); }   // sorting overrides a manual drag order
       render();
     });
   });
@@ -311,6 +335,33 @@ function render(){
     td.classList.add("clickable");
     td.title = "Click to expand";
     td.addEventListener("click", e=>{ e.stopPropagation(); td.classList.toggle("exp"); });
+  });
+
+  // Drag-to-reorder (per viewer; grip handle keeps it separate from row/cell clicks).
+  let dragId=null;
+  const clearDropMarks=()=>$("#scroll").querySelectorAll(".drop-before,.drop-after").forEach(x=>x.classList.remove("drop-before","drop-after"));
+  $("#scroll").querySelectorAll("tr.chan").forEach(tr=>{
+    const grip=tr.querySelector(".grip");
+    if(grip){
+      grip.addEventListener("mousedown", ()=>tr.setAttribute("draggable","true"));
+      grip.addEventListener("click", e=>e.stopPropagation());
+    }
+    tr.addEventListener("dragstart", e=>{ dragId=tr.dataset.id; tr.classList.add("dragging"); e.dataTransfer.effectAllowed="move"; try{e.dataTransfer.setData("text/plain",dragId);}catch(_){} });
+    tr.addEventListener("dragend", ()=>{ tr.setAttribute("draggable","false"); tr.classList.remove("dragging"); clearDropMarks(); dragId=null; });
+    tr.addEventListener("dragover", e=>{ if(!dragId||tr.dataset.id===dragId) return; e.preventDefault(); const r=tr.getBoundingClientRect(); const after=(e.clientY-r.top)>r.height/2; tr.classList.toggle("drop-after",after); tr.classList.toggle("drop-before",!after); });
+    tr.addEventListener("dragleave", ()=>tr.classList.remove("drop-before","drop-after"));
+    tr.addEventListener("drop", e=>{
+      e.preventDefault();
+      const targetId=tr.dataset.id;
+      if(!dragId||targetId===dragId) return;
+      const r=tr.getBoundingClientRect(); const after=(e.clientY-r.top)>r.height/2;
+      const order=effectiveList(DATA[activeTab]||[]).map(c=>c.id);
+      const from=order.indexOf(dragId); if(from<0) return;
+      order.splice(from,1);
+      let idx=order.indexOf(targetId); if(idx<0) idx=order.length-1;
+      order.splice(after?idx+1:idx, 0, dragId);
+      manualOrder[activeTab]=order; persistOrder(); dragId=null; render();
+    });
   });
 }
 
@@ -336,6 +387,7 @@ async function load(){
   }
 }
 document.querySelector("#search").addEventListener("input",function(e){query=e.target.value;render();});
+document.querySelector("#resetOrder").addEventListener("click",function(){ delete manualOrder[activeTab]; persistOrder(); render(); });
 load();
 
 </script>

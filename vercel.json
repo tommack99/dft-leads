@@ -1,32 +1,14 @@
 {
   "crons": [
-    {
-      "path": "/api/auditor",
-      "schedule": "0 10 * * *"
-    },
-    {
-      "path": "/api/view-count-sync",
-      "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/brand-scraper",
-      "schedule": "0 8 * * 1"
-    },
-    {
-      "path": "/api/channel-discovery",
-      "schedule": "0 6 * * 0,4"
-    },
-    {
-      "path": "/api/creator-scout",
-      "schedule": "0 9 * * 3"
-    },
-    {
-      "path": "/api/campaign-scanner",
-      "schedule": "0 8 * * 2"
-    },
-    {
-      "path": "/api/creator-matcher",
-      "schedule": "0 16 * * 1"
-    }
+    { "path": "/api/auditor", "schedule": "0 10 * * *" },
+    { "path": "/api/view-count-sync", "schedule": "0 9 * * *" },
+    { "path": "/api/brand-scraper", "schedule": "0 8 * * 1" },
+    { "path": "/api/channel-discovery", "schedule": "0 6 * * 0,4" },
+    { "path": "/api/creator-scout", "schedule": "0 9 * * 3" },
+    { "path": "/api/campaign-scanner", "schedule": "0 8 * * 2" },
+    { "path": "/api/creator-matcher", "schedule": "0 16 * * 1" }
+  ],
+  "rewrites": [
+    { "source": "/", "destination": "/roster.html" }
   ]
 }

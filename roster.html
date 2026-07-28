@@ -1,0 +1,330 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DFT Creator Roster</title>
+<style>
+  :root{
+    color-scheme: light;
+    --orange:#ff8800; --charcoal:#15110e; --peach:#fceedf; --namebg:#f9cb9c;
+    --child:#4a4640; --grid:#e6d9c8; --muted:#8a7d70; --bg:#f4f1ec;
+    --font:"Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --rowh:34px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; }
+  body{ font-family:var(--font); color:var(--charcoal); background:var(--bg); -webkit-font-smoothing:antialiased; }
+  a{ color:inherit; text-decoration:none; }
+
+  .app{ display:flex; flex-direction:column; height:100vh; }
+
+  /* Toolbar */
+  .toolbar{ display:flex; align-items:center; gap:12px; padding:12px 16px; background:#fff; border-bottom:1px solid #e9e0d3; flex-wrap:wrap; }
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .mark{ width:30px; height:30px; border-radius:8px; background:linear-gradient(135deg,var(--orange),#ff6a00); display:grid; place-items:center; color:#fff; font-weight:800; font-size:15px; box-shadow:0 4px 10px rgba(255,136,0,.35); }
+  .brand .t{ font-size:15px; font-weight:700; letter-spacing:-.2px; }
+  .brand .s{ font-size:11px; color:var(--muted); font-weight:500; margin-top:1px; }
+  .spacer{ flex:1; }
+  .count{ font-size:11.5px; font-weight:600; color:var(--muted); }
+  .search{ position:relative; }
+  .search input{ font-family:var(--font); font-size:12.5px; color:var(--charcoal); border:1px solid #e4d8c7; background:#fff; border-radius:8px; padding:8px 12px 8px 31px; outline:none; width:230px; }
+  .search input:focus{ border-color:var(--orange); box-shadow:0 0 0 3px rgba(255,136,0,.12); }
+  .search svg{ position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--muted); }
+
+  /* Grid */
+  .scroll{ flex:1; overflow:auto; background:#fff; }
+  table{ border-collapse:separate; border-spacing:0; font-size:12.5px; width:max-content; min-width:100%; }
+  th,td{ border-right:1px solid var(--grid); border-bottom:1px solid var(--grid); padding:0 10px; height:var(--rowh); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:center; vertical-align:middle; }
+  thead th{ position:sticky; top:0; z-index:3; background:var(--orange); color:var(--charcoal); font-weight:600; letter-spacing:.01em; box-shadow:0 1px 0 rgba(0,0,0,.06); cursor:pointer; user-select:none; }
+  thead th:hover{ background:#ff9a2e; }
+  .sortcar{ font-size:8px; margin-left:5px; vertical-align:middle; color:var(--charcoal); }
+  .sortcar.dim{ opacity:0; transition:opacity .12s; }
+  thead th:hover .sortcar.dim{ opacity:.4; }
+
+  /* Sticky first (name) column */
+  col.cName{ width:200px; }
+  th.name, td.name{ position:sticky; left:0; z-index:2; text-align:left; box-shadow:1px 0 0 var(--grid); }
+  thead th.name{ z-index:4; }
+
+  /* Channel rows */
+  tr.chan > td{ background:var(--peach); color:var(--charcoal); }
+  tr.chan > td.name{ background:var(--namebg); font-weight:600; }
+  tr.chan{ cursor:pointer; }
+  tr.chan:hover > td{ background:#fbe6cf; }
+  tr.chan:hover > td.name{ background:#f6c191; }
+
+  /* Show (sub) rows */
+  tr.show > td{ background:#fff; color:var(--child); }
+  tr.show > td.name{ background:#fff; }
+  tr.show .nmwrap{ padding-left:22px; }
+
+  /* Name cell internals */
+  .nmwrap{ display:flex; align-items:center; gap:7px; }
+  .chev{ flex:0 0 auto; width:16px; height:16px; display:grid; place-items:center; color:#b45c00; transition:transform .18s; }
+  .chev.spacer-ic{ visibility:hidden; }
+  tr.chan.open .chev{ transform:rotate(90deg); }
+  .nmtext{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .nmtext a:hover{ text-decoration:underline; }
+  .arrow{ color:var(--orange); margin-right:5px; }
+  .exlink{ color:#c26a00; font-weight:600; }
+  .exlink:hover{ text-decoration:underline; }
+  td.wide{ text-align:left; }
+  .tag{ display:inline-block; font-size:10px; font-weight:700; color:#a85f00; background:#fff; border:1px solid #f0d3ac; border-radius:5px; padding:0 5px; margin-left:6px; vertical-align:middle; }
+
+  /* Bottom sheet-style tabs */
+  .tabbar{ display:flex; align-items:stretch; gap:2px; background:#fff; border-top:1px solid #e9e0d3; padding:0 10px; height:40px; }
+  .tab{ border:0; background:transparent; font-family:var(--font); font-size:12.5px; font-weight:600; color:var(--muted); padding:0 16px; cursor:pointer; display:flex; align-items:center; gap:7px; border-top:3px solid transparent; }
+  .tab .n{ font-size:10.5px; font-weight:700; opacity:.65; }
+  .tab:hover{ color:var(--charcoal); background:#faf6f0; }
+  .tab.active{ color:var(--charcoal); border-top-color:var(--orange); background:#fff5ea; }
+
+  /* States */
+  .state{ display:grid; place-items:center; height:100%; color:var(--muted); text-align:center; }
+  .spinner{ width:24px; height:24px; border:3px solid #f0dcc2; border-top-color:var(--orange); border-radius:50%; animation:spin .8s linear infinite; margin-bottom:12px; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+</style>
+
+<div class="app">
+  <div class="toolbar">
+    <div class="brand">
+      <div class="mark">F</div>
+      <div><div class="t">Digital Fox Talent — Creator Roster</div><div class="s">Live from the View Guarantee model · updates automatically</div></div>
+    </div>
+    <div class="spacer"></div>
+    <div class="count" id="count">Loading…</div>
+    <label class="search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="search" type="text" placeholder="Search creator, host, category…" autocomplete="off">
+    </label>
+  </div>
+
+  <div class="scroll" id="scroll">
+    <div class="state"><div><div class="spinner"></div>Loading roster…</div></div>
+  </div>
+
+  <div class="tabbar" id="tabs"></div>
+</div>
+
+<script>
+const BOARD=18417663127;
+const MONDAY="mcp__5bfda783-8c88-4d71-897c-72b9d6197d3c__all_monday_api";
+
+const GROUPS=[
+  {id:"topics",         label:"YouTube Channels"},
+  {id:"group_mm4av3kr", label:"YouTube Shorts"},
+  {id:"group_mm4a1fe0", label:"Instagram"},
+  {id:"group_mm4bd5tk", label:"TikTok"},
+];
+
+const P={ subs:"numeric_mm49cx8f", rate:"numeric_mm497vsg", vg:"numeric_mm49rr3n", cpm:"numeric_mm49bb66",
+  host:"text_mm4944gw", category:"text_mm49j2nf", location:"text_mm49s85f", handle:"text_mm49w81b",
+  about:"long_text_mm492hxg", url:"text_mm499xez",
+  hostGender:"text_mm5nmtz1", hostRead:"text_mm5n7q86", exclusive:"text_mm5n8zh3",
+  adTypes:"long_text_mm5n8f4t", adEx:"link_mm5n1zej", videos:"numeric_mm5nn2wj", audience:"long_text_mm5nw1s9",
+  male:"text_mm5nkdfn", female:"text_mm5nb2t7",
+  a1317:"text_mm5n6m90", a1824:"text_mm5n69hv", a2534:"text_mm5nbatb", a3544:"text_mm5n7syq",
+  a4554:"text_mm5n5cc8", a5564:"text_mm5nzj3n", us:"text_mm5nsagz", uk:"text_mm5n7ybc" };
+const S={ rate:"numeric_mm495xbb", vg:"numeric_mm49tej8", cpm:"numeric_mm49fe4b", url:"text_mm49bb5z" };
+
+// Display-name overrides (shorten unwieldy board names for the brand-facing view).
+const RENAME={ "Down To Earth With Kristian Harloff (UAP NEWS)":"Down to Earth" };
+const dispName=n=>RENAME[n]||n;
+
+// Column layout mirrors the sheet (name is sticky-left).
+const COLS=[
+  {key:"name",   head:"Creator / Shows",   w:200, cls:"name"},
+  {key:"subs",   head:"Subscribers",       w:112, fmt:"int"},
+  {key:"rate",   head:"Rate",              w:96,  fmt:"money"},
+  {key:"vg",     head:"View Guarantee",    w:122, fmt:"int"},
+  {key:"cpm",    head:"CPM",               w:72,  fmt:"money"},
+  {key:"host",   head:"Host",              w:158},
+  {key:"adEx",   head:"Ad Examples",       w:112},
+  {key:"category",head:"Category",         w:132},
+  {key:"location",head:"Location",         w:146},
+  {key:"handle", head:"Handle",            w:150},
+  {key:"about",  head:"About",             w:340, cls:"wide"},
+  {key:"hostGender",head:"Host Gender",    w:108},
+  {key:"hostRead",head:"Host Read",        w:98},
+  {key:"exclusive",head:"Exclusive",       w:98},
+  {key:"adTypes",head:"Ad Types Available",w:250, cls:"wide"},
+  {key:"videos", head:"Videos / mo",       w:104, fmt:"int"},
+  {key:"audience",head:"Audience",         w:300, cls:"wide"},
+  {key:"male",   head:"Male %",            w:82},
+  {key:"female", head:"Female %",          w:86},
+  {key:"a1317",  head:"13-17",             w:70},
+  {key:"a1824",  head:"18-24",             w:70},
+  {key:"a2534",  head:"25-34",             w:70},
+  {key:"a3544",  head:"35-44",             w:70},
+  {key:"a4554",  head:"45-54",             w:70},
+  {key:"a5564",  head:"55-64",             w:70},
+  {key:"us",     head:"US %",              w:76},
+  {key:"uk",     head:"UK %",              w:76},
+];
+
+const pIds=Object.values(P).map(x=>'"'+x+'"').join(",");
+const sIds=Object.values(S).map(x=>'"'+x+'"').join(",");
+const gIds=GROUPS.map(g=>'"'+g.id+'"').join(",");
+const QUERY=`query{boards(ids:[${BOARD}]){groups(ids:[${gIds}]){id items_page(limit:120){items{id name column_values(ids:[${pIds}]){id text value} subitems{id name column_values(ids:[${sIds}]){id text}}}}}}}`;
+
+let DATA={}, activeTab="topics", query="";
+let sortKey="vg", sortDir="desc";
+const openSet=new Set();
+
+const $=s=>document.querySelector(s);
+const numv=v=>{const n=parseFloat(String(v==null?"":v).replace(/[^0-9.\-]/g,""));return isNaN(n)?null:n;};
+const money=v=>v==null?"":"$"+Math.round(v).toLocaleString();
+const int=v=>v==null?"":Math.round(v).toLocaleString();
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pct=v=>{const s=String(v==null?"":v).trim();return s?(s.endsWith("%")?s:s+"%"):"";};
+function cmap(cvs){const o={};(cvs||[]).forEach(c=>{o[c.id]={text:c.text||"",value:c.value||""};});return o;}
+function linkUrl(v){try{const j=JSON.parse(v||"null");return j&&j.url?j.url:"";}catch(e){return"";}}
+
+function parse(groups){
+  const out={}; GROUPS.forEach(g=>out[g.id]=[]);
+  (groups||[]).forEach(g=>{
+    const items=(g.items_page&&g.items_page.items)||[];
+    out[g.id]=items.map(it=>{
+      const m=cmap(it.column_values); const gv=id=>(m[id]?m[id].text:"")||"";
+      const shows=(it.subitems||[]).map(s=>{const sm=cmap(s.column_values);const sg=id=>(sm[id]?sm[id].text:"")||"";
+        return{name:s.name,rate:numv(sg(S.rate)),vg:numv(sg(S.vg)),cpm:numv(sg(S.cpm)),url:sg(S.url)};
+      }).sort((a,b)=>(b.vg||0)-(a.vg||0));
+      return{ id:it.id, name:it.name,
+        subs:numv(gv(P.subs)), rate:numv(gv(P.rate)), vg:numv(gv(P.vg)), cpm:numv(gv(P.cpm)),
+        host:gv(P.host), category:gv(P.category), location:gv(P.location), handle:gv(P.handle),
+        about:gv(P.about), url:gv(P.url),
+        hostGender:gv(P.hostGender), hostRead:gv(P.hostRead), exclusive:gv(P.exclusive),
+        adTypes:gv(P.adTypes), adEx:linkUrl(m[P.adEx]?m[P.adEx].value:""), videos:numv(gv(P.videos)), audience:gv(P.audience),
+        male:pct(gv(P.male)), female:pct(gv(P.female)),
+        a1317:pct(gv(P.a1317)), a1824:pct(gv(P.a1824)), a2534:pct(gv(P.a2534)),
+        a3544:pct(gv(P.a3544)), a4554:pct(gv(P.a4554)), a5564:pct(gv(P.a5564)),
+        us:pct(gv(P.us)), uk:pct(gv(P.uk)),
+        shows:shows };
+    }).sort((a,b)=>(b.vg||0)-(a.vg||0));
+  });
+  return out;
+}
+
+function fmtCell(c,col){
+  let v=c[col.key];
+  if(col.fmt==="money") return money(v);
+  if(col.fmt==="int") return int(v);
+  if(col.key==="adEx") return v?`<a class="exlink" href="${esc(v)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Examples ↗</a>`:"";
+  return esc(v);
+}
+
+function nameCell(c){
+  const has=c.shows.length;
+  const chev=`<span class="chev ${has?"":"spacer-ic"}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></span>`;
+  const dn=dispName(c.name);
+  const nm=c.url?`<a href="${esc(c.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(dn)}</a>`:esc(dn);
+  const tag=has?`<span class="tag">+${c.shows.length}</span>`:"";
+  return `<div class="nmwrap">${chev}<span class="nmtext">${nm}${tag}</span></div>`;
+}
+function showNameCell(s){
+  const nm=s.url?`<a href="${esc(s.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(s.name)}</a>`:esc(s.name);
+  return `<div class="nmwrap"><span class="nmtext"><span class="arrow">&#8627;</span>${nm}</span></div>`;
+}
+
+function rowsFor(list){
+  let html="";
+  list.forEach(c=>{
+    const open=openSet.has(c.id);
+    html+=`<tr class="chan ${open?"open":""}" data-id="${c.id}">`;
+    COLS.forEach(col=>{
+      const cls=(col.cls||"");
+      const title=(col.cls==="wide"&&c[col.key])?` title="${esc(c[col.key])}"`:"";
+      const inner=col.key==="name"?nameCell(c):fmtCell(c,col);
+      html+=`<td class="${cls}"${title}>${inner}</td>`;
+    });
+    html+=`</tr>`;
+    if(open){
+      c.shows.forEach(s=>{
+        html+=`<tr class="show">`;
+        COLS.forEach(col=>{
+          let inner="";
+          if(col.key==="name") inner=showNameCell(s);
+          else if(col.key==="rate") inner=money(s.rate);
+          else if(col.key==="vg") inner=int(s.vg);
+          else if(col.key==="cpm") inner=money(s.cpm);
+          html+=`<td class="${col.cls||""}">${inner}</td>`;
+        });
+        html+=`</tr>`;
+      });
+    }
+  });
+  return html;
+}
+
+function cmpChannels(a,b){
+  const col=COLS.find(c=>c.key===sortKey)||{};
+  let r;
+  if(sortKey==="name"){ r=dispName(a.name).localeCompare(dispName(b.name)); }
+  else if(col.fmt==="int"||col.fmt==="money"){
+    const av=a[sortKey], bv=b[sortKey];
+    r=(av==null?-Infinity:av)-(bv==null?-Infinity:bv);
+  } else {
+    const an=numv(a[sortKey]), bn=numv(b[sortKey]);
+    if(an!=null||bn!=null) r=(an==null?-Infinity:an)-(bn==null?-Infinity:bn);
+    else r=String(a[sortKey]||"").localeCompare(String(b[sortKey]||""));
+  }
+  return sortDir==="desc"?-r:r;
+}
+
+function render(){
+  const all=DATA[activeTab]||[];
+  const q=query.trim().toLowerCase();
+  let list=q?all.filter(c=>(c.name+" "+c.host+" "+c.category+" "+c.handle+" "+c.location).toLowerCase().includes(q)):all.slice();
+  list=list.slice().sort(cmpChannels);
+  const total=GROUPS.reduce((n,g)=>n+(DATA[g.id]||[]).length,0);
+  $("#count").textContent=total+" creators · "+list.length+" shown";
+
+  const colgroup=`<colgroup>${COLS.map(c=>`<col class="${c.key==="name"?"cName":""}" style="width:${c.w}px">`).join("")}</colgroup>`;
+  const thead=`<thead><tr>${COLS.map(c=>{
+    const active=c.key===sortKey;
+    const car=active?`<span class="sortcar">${sortDir==="desc"?"▼":"▲"}</span>`:`<span class="sortcar dim">▼</span>`;
+    return `<th class="${c.cls||""}" data-key="${c.key}" title="Click to sort">${esc(c.head)}${car}</th>`;
+  }).join("")}</tr></thead>`;
+  const tbody=`<tbody>${rowsFor(list)}</tbody>`;
+  $("#scroll").innerHTML= list.length ? `<table>${colgroup}${thead}${tbody}</table>` :
+    `<div class="state"><div>No creators match your search.</div></div>`;
+
+  $("#scroll").querySelectorAll("tr.chan").forEach(tr=>{
+    tr.addEventListener("click",()=>{
+      const id=tr.dataset.id;
+      if(openSet.has(id)) openSet.delete(id); else openSet.add(id);
+      render();
+    });
+  });
+  $("#scroll").querySelectorAll("th[data-key]").forEach(th=>{
+    th.addEventListener("click",()=>{
+      const k=th.dataset.key;
+      if(k===sortKey) sortDir=(sortDir==="desc"?"asc":"desc"); else { sortKey=k; sortDir="desc"; }
+      render();
+    });
+  });
+}
+
+function renderTabs(){
+  $("#tabs").innerHTML=GROUPS.map(g=>{
+    const n=(DATA[g.id]||[]).length;
+    return `<button class="tab ${g.id===activeTab?"active":""}" data-g="${g.id}">${esc(g.label)}<span class="n">${n}</span></button>`;
+  }).join("");
+  $("#tabs").querySelectorAll(".tab").forEach(b=>b.onclick=()=>{activeTab=b.dataset.g;renderTabs();render();$("#scroll").scrollTop=0;});
+}
+
+async function load(){
+  try{
+    const r = await fetch("/api/roster", { headers:{ "accept":"application/json" } });
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    const groups = await r.json();
+    if(!Array.isArray(groups)) throw new Error("bad payload");
+    DATA = parse(groups);
+    renderTabs(); render();
+  }catch(e){
+    document.querySelector("#scroll").innerHTML = "<div class=\"state\"><div>Could not load the roster right now.</div></div>";
+    document.querySelector("#count").textContent = "Error";
+  }
+}
+document.querySelector("#search").addEventListener("input",function(e){query=e.target.value;render();});
+load();
+
+</script>

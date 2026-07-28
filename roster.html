@@ -68,6 +68,9 @@
   .exlink{ color:#c26a00; font-weight:600; }
   .exlink:hover{ text-decoration:underline; }
   td.wide{ text-align:left; }
+  td.wide.clickable{ cursor:pointer; }
+  td.wide.exp{ white-space:normal; word-break:break-word; vertical-align:top; padding-top:8px; padding-bottom:8px; background:#fff7ee; }
+  tr.chan > td.wide.exp{ background:#fbe6cf; }
   .tag{ display:inline-block; font-size:10px; font-weight:700; color:#a85f00; background:#fff; border:1px solid #f0d3ac; border-radius:5px; padding:0 5px; margin-left:6px; vertical-align:middle; }
 
   /* Bottom sheet-style tabs */
@@ -301,6 +304,13 @@ function render(){
       if(k===sortKey) sortDir=(sortDir==="desc"?"asc":"desc"); else { sortKey=k; sortDir="desc"; }
       render();
     });
+  });
+  // Click a long-text cell (About / Audience / Ad Types) to expand its full text in place.
+  $("#scroll").querySelectorAll("td.wide").forEach(td=>{
+    if(!td.textContent.trim()) return;              // skip empty cells (e.g. show rows)
+    td.classList.add("clickable");
+    td.title = "Click to expand";
+    td.addEventListener("click", e=>{ e.stopPropagation(); td.classList.toggle("exp"); });
   });
 }
 

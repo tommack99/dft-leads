@@ -102,6 +102,7 @@
     <div class="spacer"></div>
     <div class="count" id="count">Loading…</div>
     <button id="resetOrder" class="reset" style="display:none" title="Clear your custom order">↺ Reset order</button>
+    <button id="exportCsv" class="reset" title="Export the current tab's channel rows (not shows) as a CSV">⭳ Export CSV</button>
     <label class="search">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
       <input id="search" type="text" placeholder="Search creator, host, category…" autocomplete="off">
@@ -299,8 +300,10 @@ function render(){
   const all=effectiveList(DATA[activeTab]||[]);
   const q=query.trim().toLowerCase();
   let list=q?all.filter(c=>(c.name+" "+c.host+" "+c.category+" "+c.handle+" "+c.location).toLowerCase().includes(q)):all;
-  const total=GROUPS.reduce((n,g)=>n+(DATA[g.id]||[]).length,0);
-  $("#count").textContent=total+" creators · "+list.length+" shown";
+  const allC=GROUPS.reduce((a,g)=>a.concat(DATA[g.id]||[]),[]);
+  const total=allC.length;
+  const uniq=new Set(allC.map(c=>c.name)).size;
+  $("#count").textContent=uniq+" creators · "+total+" profiles across "+GROUPS.length+" platforms · "+list.length+" shown";
   const rb=$("#resetOrder"); if(rb) rb.style.display=(manualOrder[activeTab]&&manualOrder[activeTab].length)?"":"none";
 
   const colgroup=`<colgroup>${COLS.map(c=>`<col class="${c.key==="name"?"cName":""}" style="width:${c.w}px">`).join("")}</colgroup>`;
@@ -388,6 +391,31 @@ async function load(){
 }
 document.querySelector("#search").addEventListener("input",function(e){query=e.target.value;render();});
 document.querySelector("#resetOrder").addEventListener("click",function(){ delete manualOrder[activeTab]; persistOrder(); render(); });
+
+// CSV export — current tab's channel rows only (shows/sub-items are intentionally excluded to keep it flat).
+function csvEscape(v){ v=(v==null?"":String(v)); return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }
+function currentChannels(){
+  const all=effectiveList(DATA[activeTab]||[]);
+  const q=query.trim().toLowerCase();
+  return q?all.filter(c=>(c.name+" "+c.host+" "+c.category+" "+c.handle+" "+c.location).toLowerCase().includes(q)):all;
+}
+function exportCSV(){
+  const header=COLS.map(c=>c.head==="Creator / Shows"?"Creator":c.head);
+  const rows=currentChannels().map(c=>COLS.map(col=>{
+    if(col.key==="name") return dispName(c.name);
+    const v=c[col.key];
+    if(col.fmt==="money"||col.fmt==="int") return v==null?"":Math.round(v);
+    return v==null?"":v;
+  }));
+  const csv=[header,...rows].map(r=>r.map(csvEscape).join(",")).join("\r\n");
+  const blob=new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8;"});
+  const url=URL.createObjectURL(blob);
+  const label=((GROUPS.find(g=>g.id===activeTab)||{}).label||"roster").toLowerCase().replace(/[^a-z0-9]+/g,"-");
+  const a=document.createElement("a"); a.href=url; a.download="dft-roster-"+label+".csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+document.querySelector("#exportCsv").addEventListener("click",exportCSV);
 load();
 
 </script>

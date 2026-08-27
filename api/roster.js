@@ -56,7 +56,14 @@ export default async function handler(req, res) {
       });
     });
 
-    res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=600");
+    // The board is rewritten once a day by Shows View Guarantee Sync (08:30 UTC cron,
+    // ~16 min run), so the data is static for ~23 hours out of 24. The query itself is
+    // slow - 4 groups x 120 items x 27 columns, plus subitems, plus a per-row board
+    // relation into the Global Talent Roster for State - and took 60-90s cold, which a
+    // brand opening the link had to sit through. A long stale-while-revalidate means a
+    // visitor is served instantly from cache and the refresh happens behind them; only
+    // a link left untouched for a full day can still go cold.
+    res.setHeader("Cache-Control", "s-maxage=1800, stale-while-revalidate=86400");
     return res.status(200).json(groups);
   } catch (e) {
     return res.status(500).json({ error: String(e && e.message || e) });

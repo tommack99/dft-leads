@@ -1,7 +1,6 @@
 {
   "crons": [
     { "path": "/api/auditor", "schedule": "0 10 * * *" },
-    { "path": "/api/roster", "schedule": "30 9 * * *" },
     { "path": "/api/brand-scraper", "schedule": "0 8 * * 1" },
     { "path": "/api/channel-discovery", "schedule": "0 6 * * 0,4" },
     { "path": "/api/creator-scout", "schedule": "0 9 * * 3" },

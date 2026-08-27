@@ -138,6 +138,12 @@ const P={ subs:"numeric_mm49cx8f", rate:"numeric_mm497vsg", vg:"numeric_mm49rr3n
   a4554:"text_mm5n5cc8", a5564:"text_mm5nzj3n", us:"text_mm5nsagz", uk:"text_mm5n7ybc" };
 const S={ rate:"numeric_mm495xbb", vg:"numeric_mm49tej8", cpm:"numeric_mm49fe4b", url:"text_mm49bb5z" };
 
+// Synthesised server-side by /api/roster from the linked creator's State on Global
+// Talent Roster (6160485039 · dup__of_email), reached via the "Creator" board relation.
+// It is deliberately NOT in P: P's values are real column ids on the rates board and
+// are used to build the GraphQL id list. "" means no state recorded — render it blank.
+const STATE_KEY="__creator_state";
+
 // Display-name overrides (shorten unwieldy board names for the brand-facing view).
 const RENAME={ "Down To Earth With Kristian Harloff (UAP NEWS)":"Down to Earth" };
 const dispName=n=>RENAME[n]||n;
@@ -153,6 +159,7 @@ const COLS=[
   {key:"adEx",   head:"Ad Examples",       w:90},
   {key:"category",head:"Category",         w:116},
   {key:"location",head:"Location",         w:124},
+  {key:"state",  head:"State / Region",    w:112},
   {key:"handle", head:"Handle",            w:126},
   {key:"about",  head:"About",             w:200, cls:"wide"},
   {key:"hostGender",head:"Host Gender",    w:90},
@@ -205,7 +212,7 @@ function parse(groups){
       }).sort((a,b)=>(b.vg||0)-(a.vg||0));
       return{ id:it.id, name:it.name,
         subs:numv(gv(P.subs)), rate:numv(gv(P.rate)), vg:numv(gv(P.vg)), cpm:numv(gv(P.cpm)),
-        host:gv(P.host), category:gv(P.category), location:gv(P.location), handle:gv(P.handle),
+        host:gv(P.host), category:gv(P.category), location:gv(P.location), state:gv(STATE_KEY), handle:gv(P.handle),
         about:gv(P.about), url:gv(P.url),
         hostGender:gv(P.hostGender), hostRead:gv(P.hostRead), exclusive:gv(P.exclusive),
         adTypes:gv(P.adTypes), adEx:linkUrl(m[P.adEx]?m[P.adEx].value:""), videos:numv(gv(P.videos)), audience:gv(P.audience),
@@ -300,7 +307,7 @@ function effectiveList(all){
 function render(){
   const all=effectiveList(DATA[activeTab]||[]);
   const q=query.trim().toLowerCase();
-  let list=q?all.filter(c=>(c.name+" "+c.host+" "+c.category+" "+c.handle+" "+c.location).toLowerCase().includes(q)):all;
+  let list=q?all.filter(c=>(c.name+" "+c.host+" "+c.category+" "+c.handle+" "+c.location+" "+c.state).toLowerCase().includes(q)):all;
   const allC=GROUPS.reduce((a,g)=>a.concat(DATA[g.id]||[]),[]);
   const total=allC.length;
   const uniq=new Set(allC.map(c=>c.name)).size;
@@ -398,7 +405,7 @@ function csvEscape(v){ v=(v==null?"":String(v)); return /[",\n\r]/.test(v)?'"'+v
 function currentChannels(){
   const all=effectiveList(DATA[activeTab]||[]);
   const q=query.trim().toLowerCase();
-  return q?all.filter(c=>(c.name+" "+c.host+" "+c.category+" "+c.handle+" "+c.location).toLowerCase().includes(q)):all;
+  return q?all.filter(c=>(c.name+" "+c.host+" "+c.category+" "+c.handle+" "+c.location+" "+c.state).toLowerCase().includes(q)):all;
 }
 function exportCSV(){
   const header=COLS.map(c=>c.head==="Creator / Shows"?"Creator":c.head);

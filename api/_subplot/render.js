@@ -120,6 +120,11 @@ body[data-ads="off"] .ad{display:none}
 .castgrid{margin-bottom:1.5rem}
 .notfound{padding:4rem 0 5rem}
 .emptystate{padding:3.5rem 0 4.5rem}
+.aboutcols{display:grid;grid-template-columns:minmax(0,1fr) 19rem;gap:clamp(2.5rem,6vw,5rem);align-items:start}
+.aboutrail{display:flex;flex-direction:column;gap:1.6rem;position:sticky;top:4.5rem}
+.aboutrail .cta{display:inline-block;background:var(--blue);color:#fff;font-family:var(--disp);font-weight:700;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;padding:.75rem 1.2rem;border-radius:999px;text-decoration:none}
+.aboutrail .cta:hover{background:var(--blue-ink)}
+@media (max-width:60rem){.aboutcols{grid-template-columns:1fr}.aboutrail{position:static}}
 .about h2{font-family:var(--disp);font-weight:800;font-size:1.3rem;letter-spacing:-.02em;margin:2.4rem 0 .6rem}
 .about p{max-width:42rem;color:var(--ink-2)}
 .about p b{color:var(--ink)}
@@ -463,6 +468,8 @@ export function aboutPage(data, base) {
 <main class="homeview">
   <div class="wrap about">
     <a class="back" href="${base}/">&larr; Back to the front page</a>
+    <div class="aboutcols">
+    <div class="abouttext">
     <h1 class="headline" style="font-size:clamp(1.9rem,4vw,2.8rem);margin-top:1rem">Who we are</h1>
     <p>${BRAND} is a publication written by the people who actually watch the things it covers. Every article here started life as a video by one of the ${data.panel.length} creators on <a href="${base}/#panel" style="color:var(--blue)">The Panel</a>, and runs under that creator&rsquo;s name with a link to the video it came from. We don&rsquo;t have staff writers. We don&rsquo;t have anonymous bylines.</p>
     <p>The name is the idea: the story under the story. Breakdowns, theories, reactions, opinions, reviews and lore &mdash; the second layer that people who love this stuff actually talk about.</p>
@@ -478,6 +485,27 @@ export function aboutPage(data, base) {
     <p>What&rsquo;s never AI: the ideas, the takes, the jokes, the reporting, the personality. Those belong to the creator, which is the whole point.</p>
     <p>Creators join by applying with their handle and agreeing to the same standard terms as everyone else; nothing publishes under a creator&rsquo;s name without that agreement, and any creator can pull any article at any time.</p>
 
+    </div>
+    <aside class="aboutrail">
+      <div class="box">
+        <h2>Want in?</h2>
+        <p class="note">Make videos about film, TV, games, comics or anime? Your videos, in writing, under your name &mdash; and half of what they earn.</p>
+        <div style="padding:0 1.3rem 1.2rem"><a class="cta" href="${base}/join">Become a SubPlotter</a></div>
+      </div>
+      <div class="box">
+        <h2>By the numbers</h2>
+        <ul class="stdlist">
+          <li>${data.panel.length} creators writing here</li>
+          <li>${data.arts.length} articles, every one from a real video</li>
+          <li>0 anonymous bylines</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h2>Corrections</h2>
+        <p class="note" style="border-bottom:0">Got something wrong? <span style="color:var(--ink)">corrections@subplot.tv</span> &mdash; we fix it and say so.</p>
+      </div>
+    </aside>
+    </div>
     <h2 id="cast">The cast</h2>
     <p>Seven of our own. None of them belongs to anyone else&rsquo;s franchise, which is the point.</p>
     <div class="castgrid">${Object.entries(CAST_META).map(([k, m]) => `<figure>${ch(k, 150)}<b>${esc(m.name)}</b><span>${esc(m.line)}</span></figure>`).join("")}</div>

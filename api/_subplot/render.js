@@ -103,11 +103,13 @@ body[data-ads="off"] .ad{display:none}
 .emptystate .cast{height:150px;width:auto}
 .abouthead{display:grid;grid-template-columns:1fr auto;gap:2rem;align-items:end}
 .abouthead .cast{height:220px;width:auto}
-.castgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(11rem,1fr));gap:1.6rem 1.2rem;margin-top:1.2rem}
+.castgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1.4rem .9rem;margin-top:1.2rem}
+@media (max-width:60rem){.castgrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (max-width:36rem){.castgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .castgrid figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:.5rem;text-align:center}
-.castgrid .cast{height:150px;width:auto}
+.castgrid .cast{height:130px;width:auto}
 .castgrid b{font-family:var(--disp);font-weight:800;font-size:.95rem}
-.castgrid span{font-size:.82rem;color:var(--ink-2);line-height:1.45}
+.castgrid span{font-size:.78rem;color:var(--ink-2);line-height:1.4}
 .done{display:grid;grid-template-columns:auto 1fr;gap:1rem;align-items:center}
 .done .cast{height:110px;width:auto}
 .foot .fm{display:flex;align-items:center;gap:.6rem}

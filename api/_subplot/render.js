@@ -115,6 +115,11 @@ body[data-ads="off"] .ad{display:none}
 .foot .fm{display:flex;align-items:center;gap:.6rem}
 .foot .fm .cast{height:44px;width:auto}
 @media (max-width:52rem){.joinhero{grid-template-columns:1fr}.joinhero .mascot{display:none}.band{grid-template-columns:1fr}.band .mascot{display:none}.notfound,.emptystate,.abouthead{grid-template-columns:1fr}}
+.homeview > .wrap{padding-bottom:4rem}
+.about{padding-top:1rem}
+.castgrid{margin-bottom:1.5rem}
+.notfound{padding:4rem 0 5rem}
+.emptystate{padding:3.5rem 0 4.5rem}
 .about h2{font-family:var(--disp);font-weight:800;font-size:1.3rem;letter-spacing:-.02em;margin:2.4rem 0 .6rem}
 .about p{max-width:42rem;color:var(--ink-2)}
 .about p b{color:var(--ink)}

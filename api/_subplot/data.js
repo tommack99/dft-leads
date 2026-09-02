@@ -95,8 +95,7 @@ async function load() {
     a.c = known || ("@" + a.c.toLowerCase().replace(/[^a-z0-9_.-]/g, ""));
   }
   arts.sort((x, y) => new Date(y.p) - new Date(x.p));
-  const kept = APPROVED ? arts.filter(a => APPROVED.includes(a.c)) : arts;
-  arts.length = 0; arts.push(...kept);
+  if (APPROVED) { const kept = arts.filter(a => APPROVED.includes(a.c)); arts.length = 0; arts.push(...kept); }
 
   // creators
   const byC = new Map();

@@ -456,7 +456,7 @@ export function aboutPage(data, base) {
 <main class="homeview">
   <div class="wrap about">
     <a class="back" href="${base}/">&larr; Back to the front page</a>
-    <div class="abouthead"><h1 class="headline" style="font-size:clamp(1.9rem,4vw,2.8rem);margin-top:1rem">Who we are</h1>${ch("subplot", 220)}</div>
+    <h1 class="headline" style="font-size:clamp(1.9rem,4vw,2.8rem);margin-top:1rem">Who we are</h1>
     <p>${BRAND} is a publication written by the people who actually watch the things it covers. Every article here started life as a video by one of the ${data.panel.length} creators on <a href="${base}/#panel" style="color:var(--blue)">The Panel</a>, and runs under that creator&rsquo;s name with a link to the video it came from. We don&rsquo;t have staff writers. We don&rsquo;t have anonymous bylines.</p>
     <p>The name is the idea: the story under the story. Breakdowns, theories, reactions, opinions, reviews and lore &mdash; the second layer that people who love this stuff actually talk about.</p>
 

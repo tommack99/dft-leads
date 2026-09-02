@@ -284,7 +284,7 @@ export function joinPage(data, base) {
     </div>
     <div class="twocol">
       <div><h3>What you get</h3><ul>
-        <li><b>Readers video can&rsquo;t reach.</b> Search and Discover send people to articles, not to YouTube.</li>
+        <li><b>An audience on top of your views, not instead of them.</b> Google and Discover surface articles, so these are readers your video wasn&rsquo;t going to reach &mdash; and every article points them at the video.</li>
         <li><b>A link back on every piece.</b> Each article points at the video it came from.</li>
         <li><b>Half of what your articles earn.</b> A straight 50/50 split. No fees, no minimum term, no exclusivity. Paid monthly once your balance clears $50.</li>
         <li><b>Company.</b> Your take sits alongside other creators covering the same thing &mdash; see Threads on the front page.</li></ul></div>

@@ -219,7 +219,7 @@ export function articlePage(a, data, base) {
       <h1 class="headline">${esc(a.h)}</h1>
       <p class="dek">${esc(a.s)}</p>
       <div class="authorbar"><span class="mono">${esc(initials(a.b))}</span>
-        <span class="nm"><b><a href="${base}/c/${esc(slugH(a.c))}" style="color:inherit;text-decoration:none">${esc(a.b)}</a></b><span>${esc(a.c)} · ${esc(fmt(a.p))}</span></span>
+        <span class="nm"><b><a href="${base}/c/${esc(slugH(a.c))}" style="color:inherit;text-decoration:none">${esc(a.c)}</a></b><span>${esc(fmt(a.p))}</span></span>
         <span class="meta">${a.w.toLocaleString("en-GB")} words · ${a.rt} min read</span></div>
       <div class="prose">${a.body}</div>
       <div class="rule-h" style="margin-top:2.6rem"><h2>Watch the original</h2><span class="note">${esc(a.c)} · YouTube</span></div>
@@ -245,8 +245,8 @@ export function creatorPage(handle, data, base) {
   <div class="wrap">
     <div class="chead">
       <span class="mono">${esc(initials(name))}</span>
-      <div><h1>${esc(name)}</h1>
-        <p>${esc(h)} &middot; ${list.length} article${list.length === 1 ? "" : "s"} on ${BRAND} &middot; <a class="yt" href="https://www.youtube.com/${esc(h)}" target="_blank" rel="noopener">Channel on YouTube</a></p>
+      <div><h1>${esc(h)}</h1>
+        <p>${list.length} article${list.length === 1 ? "" : "s"} on ${BRAND} &middot; <a class="yt" href="https://www.youtube.com/${esc(h)}" target="_blank" rel="noopener">Channel on YouTube</a></p>
         <span class="meta">Every piece below is adapted from one of ${esc(name)}&rsquo;s own videos, with the video at the end.</span></div>
     </div>
     <section class="grid3">${list.slice(0, 3).map(a => card(a, base)).join("")}</section>

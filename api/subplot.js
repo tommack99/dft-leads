@@ -4,6 +4,8 @@
 // Optional gate: set SUBPLOT_PASS in Vercel env to require a password (user "subplot").
 import { getData } from "./_subplot/data.js";
 import { homePage, articlePage, creatorPage, joinPage, aboutPage, notFound } from "./_subplot/render.js";
+import { CAST } from "./_subplot/cast.js";
+import { OG_PNG, APPLE_PNG } from "./_subplot/images.js";
 
 const CATS = new Set(["marvel", "dc", "scifi", "gaming", "anime", "screen"]);
 
@@ -26,6 +28,9 @@ export default async function handler(req, res) {
   const path = "/" + String(req.query.path || "").replace(/^\/+|\/+$/g, "");
   const base = req.query.base === "subplot" ? "/subplot" : "";
 
+  if (path === "/favicon.svg") { res.setHeader("Content-Type", "image/svg+xml"); res.setHeader("Cache-Control", "public, max-age=86400"); return res.status(200).send(CAST.favicon); }
+  if (path === "/apple-touch-icon.png") { res.setHeader("Content-Type", "image/png"); res.setHeader("Cache-Control", "public, max-age=86400"); return res.status(200).send(Buffer.from(APPLE_PNG, "base64")); }
+  if (path === "/og.png") { res.setHeader("Content-Type", "image/png"); res.setHeader("Cache-Control", "public, max-age=86400"); return res.status(200).send(Buffer.from(OG_PNG, "base64")); }
   if (path === "/robots.txt") {
     res.setHeader("Content-Type", "text/plain");
     res.setHeader("Cache-Control", "public, max-age=3600");

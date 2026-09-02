@@ -1,6 +1,7 @@
 // SUBPLOT page templates. Pure functions: (data, base) -> HTML string.
 import { CSS } from "./css.js";
 import { CATS } from "./data.js";
+import { ch, CAST_META } from "./cast.js";
 
 const BRAND = "SUBPLOT";
 const TAG = "The story under the story. Breakdowns, theories, reactions, opinions, reviews and lore from the people who actually watch it.";
@@ -75,6 +76,43 @@ body.has-anchor{padding-bottom:56px}
 @media (min-width:48rem){.ad-anchor{display:none}body.has-anchor{padding-bottom:0}}
 @media (max-width:48rem){.ad-leader{height:50px;max-width:320px}}
 body[data-ads="off"] .ad{display:none}
+/* cast-influenced: soft corners, thin ink line, pill buttons */
+.thumb,.lead .plate,.player,.thread,.box,.ad,.honest,.terms,.done,.source,.field input,.field select,.field .handle span,.band,.step{border-radius:14px}
+.thumb,.player{overflow:hidden}
+.field .handle span{border-radius:14px 0 0 14px}.field .handle input{border-radius:0 14px 14px 0}
+.box,.thread{border:1.5px solid var(--ink)}
+.thread{border-top-width:1.5px}
+.box h2{border-bottom:1.5px solid var(--ink)}
+.band .cta,.joinhero .cta,.submit,.nav a.join{border-radius:999px}
+.nav a.join{border:1.5px solid var(--orange);padding:.45rem 1rem;margin:.55rem 0 .55rem auto;border-bottom-width:1.5px}
+.nav a.join:hover{background:var(--orange);color:#fff}
+.mono{border-radius:8px}
+.tags span{border-radius:999px;padding:.22rem .7rem}
+.cast{display:block;overflow:visible}
+.joinhero{position:relative;grid-template-columns:1.2fr 1fr auto}
+.joinhero .mascot{align-self:end;margin-bottom:-6px}
+.joinhero .mascot .cast{height:220px;width:auto}
+.band{position:relative;grid-template-columns:auto 1fr auto;align-items:center}
+.band .mascot .cast{height:120px;width:auto;margin:-1.2rem 0 -1.4rem}
+.notfound{display:grid;grid-template-columns:auto 1fr;gap:2rem;align-items:center;padding:3rem 0 4rem}
+.notfound .cast{height:200px;width:auto}
+.notfound h1{font-family:var(--disp);font-weight:800;font-size:clamp(1.8rem,4vw,2.6rem);letter-spacing:-.03em;margin:0;line-height:1.05}
+.notfound p{color:var(--ink-2);margin:.5rem 0 1rem}
+.notfound a{color:var(--blue);font-weight:700}
+.emptystate{display:grid;grid-template-columns:auto 1fr;gap:1.5rem;align-items:center;padding:3rem 0}
+.emptystate .cast{height:150px;width:auto}
+.abouthead{display:grid;grid-template-columns:1fr auto;gap:2rem;align-items:end}
+.abouthead .cast{height:220px;width:auto}
+.castgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(11rem,1fr));gap:1.6rem 1.2rem;margin-top:1.2rem}
+.castgrid figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:.5rem;text-align:center}
+.castgrid .cast{height:150px;width:auto}
+.castgrid b{font-family:var(--disp);font-weight:800;font-size:.95rem}
+.castgrid span{font-size:.82rem;color:var(--ink-2);line-height:1.45}
+.done{display:grid;grid-template-columns:auto 1fr;gap:1rem;align-items:center}
+.done .cast{height:110px;width:auto}
+.foot .fm{display:flex;align-items:center;gap:.6rem}
+.foot .fm .cast{height:44px;width:auto}
+@media (max-width:52rem){.joinhero{grid-template-columns:1fr}.joinhero .mascot{display:none}.band{grid-template-columns:1fr}.band .mascot{display:none}.notfound,.emptystate,.abouthead{grid-template-columns:1fr}}
 .about h2{font-family:var(--disp);font-weight:800;font-size:1.3rem;letter-spacing:-.02em;margin:2.4rem 0 .6rem}
 .about p{max-width:42rem;color:var(--ink-2)}
 .about p b{color:var(--ink)}
@@ -109,6 +147,13 @@ function shell({ base, title, desc, body, current = "all", bodyClass = "", rule 
 <meta name="robots" content="noindex,nofollow,noarchive">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}">
+<link rel="icon" type="image/svg+xml" href="${base}/favicon.svg">
+<link rel="apple-touch-icon" href="${base}/apple-touch-icon.png">
+<meta property="og:site_name" content="${BRAND}">
+<meta property="og:title" content="${esc(title)}">
+<meta property="og:description" content="${esc(desc)}">
+<meta property="og:image" content="https://subplot.digitalfoxtalent.com/og.png">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Mono:wght@400;500&family=Mulish:wght@400;600;700&display=swap">
@@ -135,7 +180,7 @@ ${rule ? `<div class="artrule" style="background:${rule}"></div>` : ""}
 ${body}
 <footer class="foot">
   <div class="wrap foot-in">
-    <div><p class="fm">${BRAND}</p><p>${esc(TAG)}</p></div>
+    <div><p class="fm">${ch("subplot", 44)}${BRAND}</p><p>${esc(TAG)}</p></div>
     <div><h3>About</h3><ul><li><a href="${base}/join">Become a SubPlotter</a></li><li><a href="${base}/about">Who we are</a></li><li><a href="${base}/about#standards">Editorial standards</a></li><li><a href="${base}/about#ai">How we use AI</a></li></ul></div>
     <div><h3>Sections</h3><ul>${Object.entries(CATS).map(([k, n]) => `<li><a href="${base}/s/${k}">${esc(n)}</a></li>`).join("")}</ul></div>
     <div><h3>Contact</h3><p>hello@subplot.tv</p><p>corrections@subplot.tv</p><p class="legal">Terms &middot; Privacy &middot; Creator agreement</p></div>
@@ -213,6 +258,7 @@ function rail(panel, base) {
 
 const band = base => `
     <section class="band">
+      <div class="mascot">${ch("reactor", 120)}</div>
       <div><h2>Make videos? Get read.</h2>
       <p>SUBPLOT turns the videos you already make into articles, under your name, with a link back to every one. We split what they earn down the middle. Apply with your YouTube handle.</p></div>
       <a class="cta" href="${base}/join">Become a SubPlotter</a>
@@ -221,7 +267,7 @@ const band = base => `
 export function homePage(data, base, section = "all") {
   const list = data.arts.filter(a => section === "all" || a.k === section);
   if (!list.length) return shell({ base, title: `${BRAND} — ${CATS[section] || "Front Page"}`, desc: TAG, current: section,
-    body: `<main class="homeview"><div class="wrap"><p class="empty">Nothing in this section yet.</p></div></main>` });
+    body: `<main class="homeview"><div class="wrap"><div class="emptystate">${ch("reactor", 150)}<p class="empty">Nothing in this section yet &mdash; the Reactor is as surprised as you are.</p></div></div></main>` });
   const lead = list.find(a => a.w >= 600) || list[0]; const rest = list.filter(a => a !== lead);
   const seconds = rest.filter(a => a.w >= 400).slice(0, 3); const wireList = rest.filter(a => !seconds.includes(a));
   const threads = data.threads.filter(t => section === "all" || t.k === section);
@@ -330,6 +376,7 @@ export function joinPage(data, base) {
         <h1>Your videos, <em>in writing.</em> Under your name.</h1></div>
       <div><p>You make the video. We turn it into an article that people find on Google and Discover, bylined to you, linking back to your channel. You don&rsquo;t write a word.</p>
         <a class="cta" href="#apply">Apply with your handle</a></div>
+      <div class="mascot">${ch("subplot", 220)}</div>
     </div>
     <div class="rule-h"><h2>How it works</h2><span class="note">three steps, one of them yours</span></div>
     <div class="steps">
@@ -378,7 +425,7 @@ export function joinPage(data, base) {
         <button class="submit" type="submit" id="f-submit">Send application</button>
         <p class="formnote" id="formnote">Applying is the agreement &mdash; there&rsquo;s no second contract. We check the channel and captions first; if it&rsquo;s a fit, your first articles appear within a week and we email you the links.</p>
       </form>
-      <div class="done" id="applydone" hidden><b>Got it &mdash; you&rsquo;re in the queue.</b><p>We&rsquo;ll check the channel and captions. If it&rsquo;s a fit, your first articles appear within a week and we&rsquo;ll email you the links. Change your mind at any point and they come down.</p></div>
+      <div class="done" id="applydone" hidden>${ch("reactor", 110)}<div><b>Got it &mdash; you&rsquo;re in the queue.</b><p>We&rsquo;ll check the channel and captions. If it&rsquo;s a fit, your first articles appear within a week and we&rsquo;ll email you the links. Change your mind at any point and they come down.</p></div></div>
     </div>
   </div>
 </section>
@@ -409,7 +456,7 @@ export function aboutPage(data, base) {
 <main class="homeview">
   <div class="wrap about">
     <a class="back" href="${base}/">&larr; Back to the front page</a>
-    <h1 class="headline" style="font-size:clamp(1.9rem,4vw,2.8rem);margin-top:1rem">Who we are</h1>
+    <div class="abouthead"><h1 class="headline" style="font-size:clamp(1.9rem,4vw,2.8rem);margin-top:1rem">Who we are</h1>${ch("subplot", 220)}</div>
     <p>${BRAND} is a publication written by the people who actually watch the things it covers. Every article here started life as a video by one of the ${data.panel.length} creators on <a href="${base}/#panel" style="color:var(--blue)">The Panel</a>, and runs under that creator&rsquo;s name with a link to the video it came from. We don&rsquo;t have staff writers. We don&rsquo;t have anonymous bylines.</p>
     <p>The name is the idea: the story under the story. Breakdowns, theories, reactions, opinions, reviews and lore &mdash; the second layer that people who love this stuff actually talk about.</p>
 
@@ -423,6 +470,10 @@ export function aboutPage(data, base) {
     <p>The first draft of every article is written by AI, from the creator&rsquo;s own transcript. A fidelity check then compares the draft with the video and holds back anything that drifts from what was actually said. Every article carries a short note saying so.</p>
     <p>What&rsquo;s never AI: the ideas, the takes, the jokes, the reporting, the personality. Those belong to the creator, which is the whole point.</p>
     <p>Creators join by applying with their handle and agreeing to the same standard terms as everyone else; nothing publishes under a creator&rsquo;s name without that agreement, and any creator can pull any article at any time.</p>
+
+    <h2 id="cast">The cast</h2>
+    <p>Seven of our own. None of them belongs to anyone else&rsquo;s franchise, which is the point.</p>
+    <div class="castgrid">${Object.entries(CAST_META).map(([k, m]) => `<figure>${ch(k, 150)}<b>${esc(m.name)}</b><span>${esc(m.line)}</span></figure>`).join("")}</div>
   </div>
 </main>`;
   return shell({ base, title: `About — ${BRAND}`, desc: "Who we are, our editorial standards, and how we use AI.", body })
@@ -430,6 +481,6 @@ export function aboutPage(data, base) {
 }
 
 export function notFound(base) {
-  return shell({ base, title: `Not found — ${BRAND}`, desc: "", body: `<main class="homeview"><div class="wrap"><p class="empty">That page isn&rsquo;t here. <a href="${base}/">Back to the front page.</a></p></div></main>` })
+  return shell({ base, title: `Not found — ${BRAND}`, desc: "", body: `<main class="homeview"><div class="wrap"><div class="notfound">${ch("goblin", 200)}<div><h1>That page isn&rsquo;t here.</h1><p>The goblin already knows how it ends, and isn&rsquo;t telling.</p><a href="${base}/">Back to the front page &rarr;</a></div></div></div></main>` })
     .replace('<span id="panelcount-slot"></span>', "");
 }

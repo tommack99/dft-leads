@@ -74,7 +74,6 @@ function shell({ base, title, desc, body, current = "all", bodyClass = "" }) {
     <div class="top-meta">
       <b>${esc(new Date().toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "long", year: "numeric", timeZone: "Europe/London" }))}</b>
       <span id="panelcount-slot"></span>
-      <a class="joinlink" href="${base}/join">Become a SubPlotter &rarr;</a>
     </div>
   </div>
   <nav class="nav"><div class="wrap nav-in">${nav}<a class="join" href="${base}/join">Become a SubPlotter</a></div></nav>

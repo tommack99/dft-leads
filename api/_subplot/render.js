@@ -304,8 +304,8 @@ export function joinPage(data, base) {
     </div>
     <div class="apply" id="apply">
       <div class="aside"><h2>Apply with your YouTube handle.</h2>
-        <p>That&rsquo;s all we really need &mdash; we look at the channel, the captions and the kind of videos you make, then come back to you within a week.</p>
-        <p>The terms are the same for everyone and they&rsquo;re on the form, so there&rsquo;s nothing to negotiate and nothing hidden.</p>
+        <p>That&rsquo;s all we really need &mdash; we look at the channel, the captions and the kind of videos you make, and if it&rsquo;s a fit we start.</p>
+        <p>The terms are the same for everyone and they&rsquo;re on the form. Applying is the agreement, so there&rsquo;s nothing to negotiate, nothing to sign later, and nothing hidden.</p>
         <p>We&rsquo;re taking film, TV, games, comics, anime and everything adjacent. Long-form, reactions, breakdowns, lore, interviews.</p></div>
       <form class="form" id="applyform" method="post" action="${base}/api/apply">
         <div class="field"><label for="f-handle">YouTube handle</label>
@@ -322,12 +322,12 @@ export function joinPage(data, base) {
         </div>
         <div class="terms"><span class="lbl">Standard terms</span>
           <p><b>50 / 50</b> on everything your articles earn &middot; non-exclusive, so run them anywhere else you like &middot; no fees, no minimum term &middot; leave any time and we take the articles down &middot; paid monthly from $50.</p></div>
-        <label class="consent"><input type="checkbox" name="consent" value="yes" required><span>I own these videos or hold the rights to have them adapted, and I understand articles are drafted from my transcripts with AI assistance and published under my name.</span></label>
+        <label class="consent"><input type="checkbox" name="consent" value="yes" required><span>I own these videos, or hold the rights to have them adapted. <b>By applying I give SUBPLOT permission to turn my public videos into articles, drafted with AI from my transcripts, and publish them under my handle on the standard terms above.</b> I can withdraw at any time and the articles come down.</span></label>
         <input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
         <button class="submit" type="submit" id="f-submit">Send application</button>
-        <p class="formnote" id="formnote">We reply to every application. Nothing publishes until you&rsquo;ve said yes to the terms.</p>
+        <p class="formnote" id="formnote">Applying is the agreement &mdash; there&rsquo;s no second contract. We check the channel and captions first; if it&rsquo;s a fit, your first articles appear within a week and we email you the links.</p>
       </form>
-      <div class="done" id="applydone" hidden><b>Got it &mdash; thanks.</b><p>We&rsquo;ll look at the channel and be in touch within a week. Nothing publishes until you&rsquo;ve agreed the terms.</p></div>
+      <div class="done" id="applydone" hidden><b>Got it &mdash; you&rsquo;re in the queue.</b><p>We&rsquo;ll check the channel and captions. If it&rsquo;s a fit, your first articles appear within a week and we&rsquo;ll email you the links. Change your mind at any point and they come down.</p></div>
     </div>
   </div>
 </section>
@@ -371,7 +371,7 @@ export function aboutPage(data, base) {
     <h2 id="ai">How we use AI</h2>
     <p>The first draft of every article is written by AI, from the creator&rsquo;s own transcript. A fidelity check then compares the draft with the video and holds back anything that drifts from what was actually said. Every article carries a short note saying so.</p>
     <p>What&rsquo;s never AI: the ideas, the takes, the jokes, the reporting, the personality. Those belong to the creator, which is the whole point.</p>
-    <p>Creators can pull any article at any time. Nothing publishes under a creator&rsquo;s name without their agreement.</p>
+    <p>Creators join by applying with their handle and agreeing to the same standard terms as everyone else; nothing publishes under a creator&rsquo;s name without that agreement, and any creator can pull any article at any time.</p>
   </div>
 </main>`;
   return shell({ base, title: `About — ${BRAND}`, desc: "Who we are, our editorial standards, and how we use AI.", body })

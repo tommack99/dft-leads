@@ -123,7 +123,14 @@ async function load() {
       items: firsts.concat(rest).slice(0, 6).map(i => i.id) });
   }
   threads.sort((a, b) => b.score - a.score);
-  return { arts, panel, threads: threads.slice(0, 3), loadedAt: new Date().toISOString() };
+  const chosen = []; const used = new Set();
+  for (const t of threads) {
+    const overlap = t.items.filter(id => used.has(id)).length;
+    if (overlap > t.items.length / 2) continue;
+    chosen.push(t); t.items.forEach(id => used.add(id));
+    if (chosen.length === 3) break;
+  }
+  return { arts, panel, threads: chosen, loadedAt: new Date().toISOString() };
 }
 
 export async function getData() {

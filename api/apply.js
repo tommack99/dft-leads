@@ -34,7 +34,7 @@ export default async function handler(req, res) {
     [COL.email]: { email, text: email },
     [COL.kind]: String(b.kind || "").slice(0, 80),
     [COL.size]: String(b.size || "").slice(0, 40),
-    [COL.terms]: "50/50 · non-exclusive · no fees · payout from $50",
+    [COL.terms]: "50/50 · non-exclusive · no fees · payout from $50 · licence granted on application (v1, Sep 2026)",
     [COL.submitted]: { date: new Date().toISOString().slice(0, 10) },
     [COL.status]: { label: "New" },
     [COL.youtube]: { url: "https://www.youtube.com/" + handle, text: handle },

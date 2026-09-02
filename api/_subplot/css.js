@@ -191,6 +191,7 @@ body[data-view="join"] .homeview{display:none}
 .terms .lbl{font-family:var(--disp);font-weight:800;font-size:.66rem;letter-spacing:.13em;text-transform:uppercase;color:var(--orange-ink);padding-top:.2rem;white-space:nowrap}
 .terms p{margin:0;font-size:.9rem;color:var(--ink-2);line-height:1.55}
 .terms b{color:var(--ink)}
+.consent b{color:var(--ink);font-weight:700}
 .consent{display:grid;grid-template-columns:auto 1fr;gap:.6rem;align-items:start;font-size:.88rem;color:var(--ink-2);line-height:1.5}
 .consent input{margin-top:.3rem;accent-color:var(--blue)}
 .submit{background:var(--blue);color:#fff;font-family:var(--disp);font-weight:700;font-size:.82rem;letter-spacing:.08em;text-transform:uppercase;padding:.9rem 1.3rem;cursor:pointer;align-self:flex-start}

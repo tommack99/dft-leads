@@ -65,10 +65,10 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;text-align:
 .lead .plate{display:block;aspect-ratio:24/9;position:relative;overflow:hidden;background:var(--paper-3);border:4px solid var(--orange)}
 .lead .plate img{width:100%;height:100%;object-fit:cover;object-position:50% 32%}
 
-.leadgrid{display:grid;grid-template-columns:1.5fr 1fr;gap:1.6rem clamp(2rem,5vw,4rem);padding:1.8rem 0 .6rem;align-items:start}
+.leadgrid{display:grid;grid-template-columns:1.5fr 1fr;gap:1.6rem clamp(2rem,5vw,4rem);padding:1.8rem 0 .6rem;align-items:end}
 .lead .headline{font-size:clamp(1.7rem,3.2vw,2.5rem);display:block}
 .lead:hover .headline{color:var(--blue)}
-.leadside{display:flex;flex-direction:column;gap:.7rem;padding-top:.35rem}
+.leadside{display:flex;flex-direction:column;gap:.7rem;padding-bottom:.35rem}
 .lead .dek{font-size:1.02rem}
 .leadmeta{display:flex;flex-wrap:wrap;gap:.3rem .9rem;align-items:baseline;padding-top:.6rem;border-top:1px solid var(--rule)}
 

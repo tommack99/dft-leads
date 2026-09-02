@@ -86,5 +86,18 @@
       "source": "/",
       "destination": "/roster.html"
     }
+  ],
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "subplot.digitalfoxtalent.com"
+        }
+      ],
+      "destination": "https://subplot.tv/:path*",
+      "permanent": true
+    }
   ]
 }

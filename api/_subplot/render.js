@@ -12,6 +12,31 @@ const dayKey = p => String(p).slice(0, 10);
 const initials = n => n.replace(/[^A-Za-z ]/g, "").split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase();
 const slugH = h => h.replace(/^@/, "");
 
+// ---- Ad slots. Placeholders for now; each becomes one network tag at launch.
+// Names are stable so reports (and the 50/50 attribution by page) can key on them.
+export function adSlot(name, desktop, mobile = desktop, extraClass = "") {
+  return `<div class="ad ${extraClass}" data-slot="${name}" data-desktop="${desktop}" data-mobile="${mobile}">
+    <span class="ad-lbl">Ad</span><span class="ad-meta">${name} · ${desktop}${mobile !== desktop ? " / " + mobile : ""}</span></div>`;
+}
+// Insert an in-article slot after every `every` paragraphs, never right after a heading, never in the last 2.
+function withInArticleAds(bodyHtml, every = 5) {
+  const parts = bodyHtml.split(/(?<=<\/p>)/);
+  const paras = parts.filter(p => /<p>/.test(p)).length;
+  if (paras < every + 2) return bodyHtml;
+  let out = "", count = 0, n = 0;
+  for (let i = 0; i < parts.length; i++) {
+    out += parts[i];
+    if (!/<p>/.test(parts[i])) continue;
+    count++;
+    const next = parts[i + 1] || "";
+    const remaining = paras - count;
+    if (count % every === 0 && remaining >= 2 && !/^\s*<h2/.test(next)) {
+      n++; out += adSlot("in-article-" + n, "300×250", "300×250", "ad-inline");
+    }
+  }
+  return out;
+}
+
 const EXTRA_CSS = String.raw`
 .card{text-decoration:none;color:inherit}
 a.lead,a.card,.takes a,.wire a,.roster a{text-decoration:none;color:inherit}
@@ -31,6 +56,22 @@ a.lead,a.card,.takes a,.wire a,.roster a{text-decoration:none;color:inherit}
 @media (max-width:48rem){.mobile-only{display:inline}.nav a.join{display:none}}
 .nav-in{-webkit-mask-image:linear-gradient(to right,#000 92%,transparent);mask-image:linear-gradient(to right,#000 92%,transparent)}
 @media (min-width:48rem){.nav-in{-webkit-mask-image:none;mask-image:none}}
+.ad{display:grid;place-items:center;gap:.15rem;border:2px dashed var(--rule-2);background:var(--paper-2);color:var(--ink-3);min-height:90px;position:relative}
+.ad-lbl{font-family:var(--disp);font-weight:800;font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
+.ad-meta{font-family:var(--mono);font-size:.68rem}
+.ad-leader{max-width:970px;height:90px;margin:1.4rem auto 0}
+.ad-inline{height:250px;max-width:336px;margin:1.6rem auto}
+.ad-rail{width:300px;height:600px;position:sticky;top:1.2rem}
+.ad-infeed{height:250px;max-width:336px;margin:.6rem auto 1.2rem}
+.ad-anchor{position:fixed;left:0;right:0;bottom:0;height:50px;min-height:0;z-index:20;border-width:2px 0 0;background:var(--paper);box-shadow:0 -4px 16px rgba(14,14,22,.08)}
+.ad-anchor .close{position:absolute;right:.5rem;top:-1.4rem;font-family:var(--mono);font-size:.68rem;background:var(--paper);border:1px solid var(--rule-2);padding:.1rem .45rem;cursor:pointer}
+body.has-anchor{padding-bottom:56px}
+.artwrap{display:grid;grid-template-columns:minmax(0,43rem) 300px;gap:clamp(2rem,5vw,4rem);justify-content:center;align-items:start}
+.artwrap .artmain{margin:0}
+@media (max-width:72rem){.artwrap{grid-template-columns:minmax(0,43rem)}.artwrap .ad-rail{display:none}}
+@media (min-width:48rem){.ad-anchor{display:none}body.has-anchor{padding-bottom:0}}
+@media (max-width:48rem){.ad-leader{height:50px;max-width:320px}}
+body[data-ads="off"] .ad{display:none}
 .about h2{font-family:var(--disp);font-weight:800;font-size:1.3rem;letter-spacing:-.02em;margin:2.4rem 0 .6rem}
 .about p{max-width:42rem;color:var(--ink-2)}
 .about p b{color:var(--ink)}
@@ -54,7 +95,7 @@ a.lead,a.card,.takes a,.wire a,.roster a{text-decoration:none;color:inherit}
 .wire .sub a:hover{text-decoration:underline}
 `;
 
-function shell({ base, title, desc, body, current = "all", bodyClass = "" }) {
+function shell({ base, title, desc, body, current = "all", bodyClass = "", rule = "" }) {
   const nav = [["all", "All"], ...Object.entries(CATS)].map(([k, n]) =>
     `<a href="${base}/${k === "all" ? "" : "s/" + k}" ${k === current ? 'aria-current="true"' : ""}>${esc(n)}</a>`).join("");
   return `<!doctype html>
@@ -86,6 +127,8 @@ function shell({ base, title, desc, body, current = "all", bodyClass = "" }) {
   </div>
   <nav class="nav"><div class="wrap nav-in">${nav}<a class="join" href="${base}/join">Become a SubPlotter</a></div></nav>
 </header>
+${rule ? `<div class="artrule" style="background:${rule}"></div>` : ""}
+<div class="wrap">${adSlot("leaderboard", "970×90", "320×50", "ad-leader")}</div>
 ${body}
 <footer class="foot">
   <div class="wrap foot-in">
@@ -96,7 +139,10 @@ ${body}
   </div>
   <div class="protolabel"><div class="wrap">Private preview &middot; not indexed &middot; articles read live from the production feed</div></div>
 </footer>
+${adSlot("mobile-anchor", "320×50", "320×50", "ad-anchor")}
 <script>
+document.body.classList.add('has-anchor');
+if (/[?&]ads=0/.test(location.search)) document.body.dataset.ads = 'off';
 document.addEventListener('click', e => {
   const play = e.target.closest('.player .play');
   if (!play) return;
@@ -126,7 +172,7 @@ function wire(list, base) {
     const g = groups[groups.length - 1];
     if (g && g.k === dayKey(a.p)) g.items.push(a); else groups.push({ k: dayKey(a.p), p: a.p, items: [a] });
   }
-  return groups.map(g => `
+  return groups.map((g, gi) => (gi === 1 ? adSlot("in-feed", "336×280", "300×250", "ad-infeed") : "") + `
     <section class="daygroup"><div class="daylabel">${esc(dayLabel(g.p))}</div><ul class="wire">
     ${g.items.map(a => `
       <li><a href="${base}/a/${esc(a.id)}">
@@ -219,9 +265,9 @@ export function homePage(data, base, section = "all") {
 export function articlePage(a, data, base) {
   const body = `
 <article class="artview" style="display:block">
-  <div class="artrule"></div>
   <div class="wrap">
     <a class="back" href="${base}/">&larr; Back to the front page</a>
+    <div class="artwrap">
     <div class="artmain">
       <span class="kicker">${esc(CATS[a.k])}</span>
       <h1 class="headline">${esc(a.h)}</h1>
@@ -229,7 +275,7 @@ export function articlePage(a, data, base) {
       <div class="authorbar"><span class="mono">${esc(initials(a.b))}</span>
         <span class="nm"><b><a href="${base}/c/${esc(slugH(a.c))}" style="color:inherit;text-decoration:none">${esc(a.c)}</a></b><span>${esc(fmt(a.p))}</span></span>
         <span class="meta">${a.w.toLocaleString("en-GB")} words · ${a.rt} min read</span></div>
-      <div class="prose">${a.body}</div>
+      <div class="prose">${withInArticleAds(a.body)}</div>
       <div class="rule-h" style="margin-top:2.6rem"><h2>Watch the original</h2><span class="note">${esc(a.c)} · YouTube</span></div>
       <div class="player" data-v="${esc(a.v)}" style="margin-top:1rem">
         <img alt="" src="${esc(a.thumb)}" onerror="this.onerror=null;this.src='${esc(a.thumbSmall.replace("mqdefault","hqdefault"))}'">
@@ -238,9 +284,11 @@ export function articlePage(a, data, base) {
       <p class="disclose">Adapted from ${esc(a.b)}&rsquo;s original video. Written with the help of AI from that video&rsquo;s transcript; the views and analysis are ${esc(a.b)}&rsquo;s own.</p>
       <div class="tags">${a.t.map(t => `<span>${esc(t)}</span>`).join("")}</div>
     </div>
+    ${adSlot("article-rail", "300×600", "—", "ad-rail")}
+    </div>
   </div>
 </article>`;
-  return shell({ base, title: `${a.h} — ${BRAND}`, desc: a.s, current: a.k, body })
+  return shell({ base, title: `${a.h} — ${BRAND}`, desc: a.s, current: a.k, body, rule: "var(--blue)" })
     .replace('<span id="panelcount-slot"></span>', `<span>${data.panel.length} creators writing here</span>`);
 }
 
@@ -271,7 +319,6 @@ export function creatorPage(handle, data, base) {
 export function joinPage(data, base) {
   const body = `
 <section class="joinview" style="display:block">
-  <div class="artrule" style="background:var(--orange)"></div>
   <div class="wrap">
     <a class="back" href="${base}/">&larr; Back to the front page</a>
     <div class="joinhero">
@@ -349,7 +396,7 @@ export function joinPage(data, base) {
   });
 })();
 </script>`;
-  return shell({ base, title: `Become a SubPlotter — ${BRAND}`, desc: "Your videos, in writing. Under your name.", body })
+  return shell({ base, title: `Become a SubPlotter — ${BRAND}`, desc: "Your videos, in writing. Under your name.", body, rule: "var(--orange)" })
     .replace('<span id="panelcount-slot"></span>', `<span>${data.panel.length} creators writing here</span>`);
 }
 

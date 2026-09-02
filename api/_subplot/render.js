@@ -290,12 +290,12 @@ function rail(panel, base) {
         <h2>Editorial standards</h2>
         <ul class="stdlist">
           <li>Each article names the creator it came from and links the source video.</li>
-          <li>Claims keep the strength the creator gave them &mdash; a rumour stays a rumour.</li>
+          <li>Claims keep the strength the creator gave them - a rumour stays a rumour.</li>
           <li>AI assistance is disclosed on every article.</li>
           <li>Corrections: <span style="color:var(--ink)">corrections@subplot.tv</span></li>
         </ul>
       </div>
-      ${adSlot("front-rail", "300×600", "—", "ad-rail ad-frontrail")}
+      ${adSlot("front-rail", "300×600", "-", "ad-rail ad-frontrail")}
     </aside>`;
 }
 
@@ -311,8 +311,8 @@ const band = base => `
 const PAGE = 40;
 export function homePage(data, base, section = "all", page = 1) {
   const list = data.arts.filter(a => section === "all" || a.k === section);
-  if (!list.length) return shell({ base, title: `${BRAND} — ${CATS[section] || "Front Page"}`, desc: TAG, current: section,
-    body: `<main class="homeview"><div class="wrap"><div class="emptystate">${ch("reactor", 150)}<p class="empty">Nothing in this section yet &mdash; the Reactor is as surprised as you are.</p></div></div></main>` });
+  if (!list.length) return shell({ base, title: `${BRAND} - ${CATS[section] || "Front Page"}`, desc: TAG, current: section,
+    body: `<main class="homeview"><div class="wrap"><div class="emptystate">${ch("reactor", 150)}<p class="empty">Nothing in this section yet - the Reactor is as surprised as you are.</p></div></div></main>` });
   const lead = list.find(a => a.w >= 600) || list[0]; const rest = list.filter(a => a !== lead);
   const seconds = page === 1 ? rest.filter(a => a.w >= 400).slice(0, 3) : [];
   const wireAll = rest.filter(a => !seconds.includes(a));
@@ -361,7 +361,7 @@ export function homePage(data, base, section = "all", page = 1) {
     ${band(base)}
   </div>
 </main>`;
-  return shell({ base, title: section === "all" ? `${BRAND}` : `${CATS[section]} — ${BRAND}`, desc: TAG, current: section, body, trending: data.threads })
+  return shell({ base, title: section === "all" ? `${BRAND}` : `${CATS[section]} - ${BRAND}`, desc: TAG, current: section, body, trending: data.threads })
     .replace('<span id="panelcount-slot"></span>', `<span>${data.panel.length} creators writing here</span>`);
 }
 
@@ -400,11 +400,11 @@ export function articlePage(a, data, base) {
       ${thr.length ? `<section class="next"><div class="rule-h"><h2>Also on ${esc(inThread.t)}</h2><span class="note"><a href="${base}/t/${esc(inThread.slug)}" style="color:var(--blue)">${inThread.c} creators, ${inThread.n} takes &rarr;</a></span></div><div class="grid3">${thr.map(x => card(x, base)).join("")}</div></section>` : ""}
       ${more.length ? `<section class="next"><div class="rule-h"><h2>More from ${esc(a.c)}</h2><span class="note"><a href="${base}/c/${esc(slugH(a.c))}" style="color:var(--blue)">All &rarr;</a></span></div><div class="grid3">${more.map(x => card(x, base)).join("")}</div></section>` : ""}
     </div>
-    ${adSlot("article-rail", "300×600", "—", "ad-rail")}
+    ${adSlot("article-rail", "300×600", "-", "ad-rail")}
     </div>
   </div>
 </article>`;
-  return shell({ base, title: `${a.h} — ${BRAND}`, desc: a.s, current: a.k, body, rule: "var(--blue)", trending: data.threads, jsonld })
+  return shell({ base, title: `${a.h} - ${BRAND}`, desc: a.s, current: a.k, body, rule: "var(--blue)", trending: data.threads, jsonld })
     .replace('<span id="panelcount-slot"></span>', `<span>${data.panel.length} creators writing here</span>`);
 }
 
@@ -428,7 +428,7 @@ export function creatorPage(handle, data, base) {
     </div>
   </div>
 </main>`;
-  return shell({ base, title: `${name} — ${BRAND}`, desc: `${name}'s videos, in writing.`, body, trending: data.threads })
+  return shell({ base, title: `${name} - ${BRAND}`, desc: `${name}'s videos, in writing.`, body, trending: data.threads })
     .replace('<span id="panelcount-slot"></span>', `<span>${data.panel.length} creators writing here</span>`);
 }
 
@@ -447,19 +447,19 @@ export function joinPage(data, base) {
     <div class="rule-h"><h2>How it works</h2><span class="note">three steps, one of them yours</span></div>
     <div class="steps">
       <div class="step"><span class="n">01</span><h3>You keep making videos.</h3><p>Nothing changes on your channel. You upload as normal; we pick up each new video from your public captions.</p></div>
-      <div class="step"><span class="n">02</span><h3>We turn each one into an article.</h3><p>Our system drafts it from your transcript, then checks it line by line against what you actually said. Your claims stay your claims &mdash; a rumour stays a rumour. Nothing gets invented.</p></div>
+      <div class="step"><span class="n">02</span><h3>We turn each one into an article.</h3><p>Our system drafts it from your transcript, then checks it line by line against what you actually said. Your claims stay your claims - a rumour stays a rumour. Nothing gets invented.</p></div>
       <div class="step"><span class="n">03</span><h3>It runs under your name.</h3><p>Your byline, your channel link on every piece, your audience. Pull any article at any time. Leave whenever you like.</p></div>
     </div>
     <div class="honest"><span class="lbl">The honest bit</span>
-      <div><p>The first draft is written by AI, from your YouTube video transcript. A fidelity check then compares it with the video and holds anything that drifts. Every article says so in a short note at the end &mdash; readers don&rsquo;t mind how something was made; they mind being lied to about it.</p>
+      <div><p>The first draft is written by AI, from your YouTube video transcript. A fidelity check then compares it with the video and holds anything that drifts. Every article says so in a short note at the end - readers don&rsquo;t mind how something was made; they mind being lied to about it.</p>
         <p>What&rsquo;s never AI: the ideas, the takes, the jokes, the reporting, the personality. Those are yours, which is the whole point.</p></div>
     </div>
     <div class="twocol">
       <div><h3>What you get</h3><ul>
-        <li><b>An audience on top of your views, not instead of them.</b> Google and Discover surface articles, so these are readers your video wasn&rsquo;t going to reach &mdash; and every article points them at the video.</li>
+        <li><b>An audience on top of your views, not instead of them.</b> Google and Discover surface articles, so these are readers your video wasn&rsquo;t going to reach - and every article points them at the video.</li>
         <li><b>A link back on every piece.</b> Each article points at the video it came from.</li>
         <li><b>Half of what your articles earn.</b> A straight 50/50 split. No fees, no minimum term, no exclusivity. Paid monthly once your balance clears $50.</li>
-        <li><b>Company.</b> Your take sits alongside other creators covering the same thing &mdash; see Threads on the front page.</li></ul></div>
+        <li><b>Company.</b> Your take sits alongside other creators covering the same thing - see Threads on the front page.</li></ul></div>
       <div><h3>What we ask</h3><ul>
         <li><b>The videos are yours.</b> You own them, or hold the rights to have them adapted.</li>
         <li><b>Captions on.</b> We work from your public transcript; auto-captions are fine.</li>
@@ -468,7 +468,7 @@ export function joinPage(data, base) {
     </div>
     <div class="apply" id="apply">
       <div class="aside"><h2>Apply with your YouTube handle.</h2>
-        <p>That&rsquo;s all we really need &mdash; we look at the channel, the captions and the kind of videos you make, and if it&rsquo;s a fit we start.</p>
+        <p>That&rsquo;s all we really need - we look at the channel, the captions and the kind of videos you make, and if it&rsquo;s a fit we start.</p>
         <p>The terms are the same for everyone and they&rsquo;re on the form. Applying is the agreement, so there&rsquo;s nothing to negotiate, nothing to sign later, and nothing hidden.</p>
         <p>We&rsquo;re taking film, TV, games, comics, anime and everything adjacent. Long-form, reactions, breakdowns, lore, interviews.</p></div>
       <form class="form" id="applyform" method="post" action="${base}/api/apply">
@@ -489,9 +489,9 @@ export function joinPage(data, base) {
         <label class="consent"><input type="checkbox" name="consent" value="yes" required><span>I own these videos, or hold the rights to have them adapted. <b>By applying I give SUBPLOT permission to turn my public videos into articles, drafted with AI from my transcripts, and publish them under my handle on the standard terms above.</b> I can withdraw at any time and the articles come down.</span></label>
         <input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
         <button class="submit" type="submit" id="f-submit">Send application</button>
-        <p class="formnote" id="formnote">Applying is the agreement &mdash; there&rsquo;s no second contract. We check the channel and captions first; if it&rsquo;s a fit, your first articles appear within a week and we email you the links.</p>
+        <p class="formnote" id="formnote">Applying is the agreement - there&rsquo;s no second contract. We check the channel and captions first; if it&rsquo;s a fit, your first articles appear within a week and we email you the links.</p>
       </form>
-      <div class="done" id="applydone" hidden>${ch("reactor", 110)}<div><b>Got it &mdash; you&rsquo;re in the queue.</b><p>We&rsquo;ll check the channel and captions. If it&rsquo;s a fit, your first articles appear within a week and we&rsquo;ll email you the links. Change your mind at any point and they come down.</p></div></div>
+      <div class="done" id="applydone" hidden>${ch("reactor", 110)}<div><b>Got it - you&rsquo;re in the queue.</b><p>We&rsquo;ll check the channel and captions. If it&rsquo;s a fit, your first articles appear within a week and we&rsquo;ll email you the links. Change your mind at any point and they come down.</p></div></div>
     </div>
   </div>
 </section>
@@ -508,12 +508,12 @@ export function joinPage(data, base) {
       form.hidden = true; document.getElementById('applydone').hidden = false;
     } catch (err) {
       btn.disabled = false; btn.textContent = 'Send application';
-      document.getElementById('formnote').textContent = 'That didn’t go through — try again, or email hello@subplot.tv with your handle.';
+      document.getElementById('formnote').textContent = 'That didn’t go through - try again, or email hello@subplot.tv with your handle.';
     }
   });
 })();
 </script>`;
-  return shell({ base, title: `Become a SubPlotter — ${BRAND}`, desc: "Your videos, in writing. Under your name.", body, rule: "var(--orange)" })
+  return shell({ base, title: `Become a SubPlotter - ${BRAND}`, desc: "Your videos, in writing. Under your name.", body, rule: "var(--orange)" })
     .replace('<span id="panelcount-slot"></span>', `<span>${data.panel.length} creators writing here</span>`);
 }
 
@@ -533,7 +533,7 @@ export function threadPage(sl, data, base) {
     </div>
   </div>
 </main>`;
-  return shell({ base, title: `${s.t} — ${BRAND}`, desc: `${list.length} takes on ${s.t} from ${creators.length} creators.`, body, trending: data.threads })
+  return shell({ base, title: `${s.t} - ${BRAND}`, desc: `${list.length} takes on ${s.t} from ${creators.length} creators.`, body, trending: data.threads })
     .replace('<span id="panelcount-slot"></span>', `<span>${data.panel.length} creators writing here</span>`);
 }
 
@@ -552,12 +552,12 @@ export function aboutPage(data, base) {
     <div class="abouttext">
     <h1 class="headline" style="font-size:clamp(1.9rem,4vw,2.8rem);margin-top:1rem">Who we are</h1>
     <p>${BRAND} is a publication written by the people who actually watch the things it covers. Every article here started life as a video by one of the ${data.panel.length} creators on <a href="${base}/#panel" style="color:var(--blue)">The Panel</a>, and runs under that creator&rsquo;s name with a link to the video it came from. We don&rsquo;t have staff writers. We don&rsquo;t have anonymous bylines.</p>
-    <p>The name is the idea: the story under the story. Breakdowns, theories, reactions, opinions, reviews and lore &mdash; the second layer that people who love this stuff actually talk about.</p>
+    <p>The name is the idea: the story under the story. Breakdowns, theories, reactions, opinions, reviews and lore - the second layer that people who love this stuff actually talk about.</p>
 
     <h2 id="standards">Editorial standards</h2>
     <p><b>One creator, one byline.</b> Each article is adapted from a single creator&rsquo;s own video and published under their handle. If it isn&rsquo;t theirs, it isn&rsquo;t here.</p>
     <p><b>Claims keep their strength.</b> A rumour stays a rumour, a theory stays a theory, and a creator&rsquo;s opinion is presented as their opinion. Nothing is upgraded to fact on the way from video to page.</p>
-    <p><b>The source is always one click away.</b> Every article ends with the original video. If you want the full argument, the tone, the jokes &mdash; it&rsquo;s right there.</p>
+    <p><b>The source is always one click away.</b> Every article ends with the original video. If you want the full argument, the tone, the jokes - it&rsquo;s right there.</p>
     <p><b>Corrections.</b> If we&rsquo;ve got something wrong, tell us at corrections@subplot.tv and we&rsquo;ll fix it and say so.</p>
 
     <h2 id="ai">How we use AI</h2>
@@ -569,7 +569,7 @@ export function aboutPage(data, base) {
     <aside class="aboutrail">
       <div class="box">
         <h2>Want in?</h2>
-        <p class="note">Make videos about film, TV, games, comics or anime? Your videos, in writing, under your name &mdash; and half of what they earn.</p>
+        <p class="note">Make videos about film, TV, games, comics or anime? Your videos, in writing, under your name - and half of what they earn.</p>
         <div style="padding:0 1.3rem 1.2rem"><a class="cta" href="${base}/join">Become a SubPlotter</a></div>
       </div>
       <div class="box">
@@ -582,7 +582,7 @@ export function aboutPage(data, base) {
       </div>
       <div class="box">
         <h2>Corrections</h2>
-        <p class="note" style="border-bottom:0">Got something wrong? <span style="color:var(--ink)">corrections@subplot.tv</span> &mdash; we fix it and say so.</p>
+        <p class="note" style="border-bottom:0">Got something wrong? <span style="color:var(--ink)">corrections@subplot.tv</span> - we fix it and say so.</p>
       </div>
     </aside>
     </div>
@@ -591,11 +591,11 @@ export function aboutPage(data, base) {
     <div class="castgrid">${Object.entries(CAST_META).map(([k, m]) => `<figure>${ch(k, 150)}<b>${esc(m.name)}</b><span>${esc(m.line)}</span></figure>`).join("")}</div>
   </div>
 </main>`;
-  return shell({ base, title: `About — ${BRAND}`, desc: "Who we are, our editorial standards, and how we use AI.", body, current: "about" })
+  return shell({ base, title: `About - ${BRAND}`, desc: "Who we are, our editorial standards, and how we use AI.", body, current: "about" })
     .replace('<span id="panelcount-slot"></span>', `<span>${data.panel.length} creators writing here</span>`);
 }
 
 export function notFound(base) {
-  return shell({ base, title: `Not found — ${BRAND}`, desc: "", body: `<main class="homeview"><div class="wrap"><div class="notfound">${ch("goblin", 200)}<div><h1>That page isn&rsquo;t here.</h1><p>The goblin already knows how it ends, and isn&rsquo;t telling.</p><a href="${base}/">Back to the front page &rarr;</a></div></div></div></main>` })
+  return shell({ base, title: `Not found - ${BRAND}`, desc: "", body: `<main class="homeview"><div class="wrap"><div class="notfound">${ch("goblin", 200)}<div><h1>That page isn&rsquo;t here.</h1><p>The goblin already knows how it ends, and isn&rsquo;t telling.</p><a href="${base}/">Back to the front page &rarr;</a></div></div></div></main>` })
     .replace('<span id="panelcount-slot"></span>', "");
 }

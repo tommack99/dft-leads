@@ -44,6 +44,8 @@ function trimSignoff(html) {
   if ((q.match(/[.!?]/g) || []).length > 1) return html;      // more than one sentence: keep
   return html.slice(0, m.index).trimEnd();
 }
+// House style: no em dashes anywhere on the site, including article text from the pipeline.
+const noDash = t => String(t || "").replace(/\s*(?:\u2014|&mdash;|&#8212;)\s*/g, " - ");
 const cleanBrand = n => (n || "").replace(/\s*—\s*New$/, "").trim();
 const norm = t => String(t || "").trim().replace(/\s+and\s+/i, " & ");
 const STOP = new Set(["marvel","mcu","marvel studios","marvel cinematic universe","dc","pixar","reaction","sci-fi",
@@ -75,7 +77,7 @@ async function load() {
       const v = (String(a.link || "").match(/v=([\w-]+)/) || [])[1] || String(a.guid).replace(/^yt-/, "");
       arts.push({
         id: String(a.guid).replace(/^yt-/, ""),
-        h: a.headline, s: a.subheadline || "", body: trimSignoff(a.body_html || ""),
+        h: noDash(a.headline), s: noDash(a.subheadline), body: noDash(trimSignoff(a.body_html || "")),
         w: a.word_count || 0, rt: Math.max(1, Math.round((a.word_count || 0) / 220)),
         t: (a.tags || []).slice(0, 8), b: brand, c: a.creator,
         p: a.pubDate, u: a.uploadDate, v, evergreen,

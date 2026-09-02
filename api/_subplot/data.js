@@ -70,6 +70,15 @@ async function load() {
       });
     }
   });
+  // Some feeds record the display name as the creator instead of the handle.
+  // Map those onto the real handle where the brand already has one; otherwise derive one.
+  const handleByBrand = new Map();
+  for (const a of arts) if (a.c.startsWith("@")) handleByBrand.set(a.b.toLowerCase(), a.c);
+  for (const a of arts) {
+    if (a.c.startsWith("@")) continue;
+    const known = handleByBrand.get(a.c.toLowerCase()) || handleByBrand.get(a.b.toLowerCase());
+    a.c = known || ("@" + a.c.toLowerCase().replace(/[^a-z0-9_.-]/g, ""));
+  }
   arts.sort((x, y) => new Date(y.p) - new Date(x.p));
 
   // creators

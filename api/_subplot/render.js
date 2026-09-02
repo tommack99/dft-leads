@@ -27,6 +27,13 @@ a.lead,a.card,.takes a,.wire a,.roster a{text-decoration:none;color:inherit}
 .nav a.join:hover{border-bottom-color:var(--orange)}
 .top-meta a.joinlink{color:var(--blue);font-weight:500;font-family:var(--disp);font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;text-decoration:none}
 .top-meta a.joinlink:hover{color:var(--orange-ink)}
+.mobile-only{display:none}
+@media (max-width:48rem){.mobile-only{display:inline}.nav a.join{display:none}}
+.nav-in{-webkit-mask-image:linear-gradient(to right,#000 92%,transparent);mask-image:linear-gradient(to right,#000 92%,transparent)}
+@media (min-width:48rem){.nav-in{-webkit-mask-image:none;mask-image:none}}
+.about h2{font-family:var(--disp);font-weight:800;font-size:1.3rem;letter-spacing:-.02em;margin:2.4rem 0 .6rem}
+.about p{max-width:42rem;color:var(--ink-2)}
+.about p b{color:var(--ink)}
 .brandblock{text-decoration:none;color:inherit}
 .back{text-decoration:none}
 .band a.cta,.joinhero a.cta{text-decoration:none;display:inline-block}
@@ -74,6 +81,7 @@ function shell({ base, title, desc, body, current = "all", bodyClass = "" }) {
     <div class="top-meta">
       <b>${esc(new Date().toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "long", year: "numeric", timeZone: "Europe/London" }))}</b>
       <span id="panelcount-slot"></span>
+      <a class="joinlink mobile-only" href="${base}/join">Become a SubPlotter &rarr;</a>
     </div>
   </div>
   <nav class="nav"><div class="wrap nav-in">${nav}<a class="join" href="${base}/join">Become a SubPlotter</a></div></nav>
@@ -82,7 +90,7 @@ ${body}
 <footer class="foot">
   <div class="wrap foot-in">
     <div><p class="fm">${BRAND}</p><p>${esc(TAG)}</p></div>
-    <div><h3>About</h3><ul><li><a href="${base}/join">Become a SubPlotter</a></li><li>Who we are</li><li>Editorial standards</li><li>How we use AI</li></ul></div>
+    <div><h3>About</h3><ul><li><a href="${base}/join">Become a SubPlotter</a></li><li><a href="${base}/about">Who we are</a></li><li><a href="${base}/about#standards">Editorial standards</a></li><li><a href="${base}/about#ai">How we use AI</a></li></ul></div>
     <div><h3>Sections</h3><ul>${Object.entries(CATS).map(([k, n]) => `<li><a href="${base}/s/${k}">${esc(n)}</a></li>`).join("")}</ul></div>
     <div><h3>Contact</h3><p>hello@subplot.tv</p><p>corrections@subplot.tv</p><p class="legal">Terms &middot; Privacy &middot; Creator agreement</p></div>
   </div>
@@ -131,7 +139,7 @@ function wire(list, base) {
 
 function rail(panel, base) {
   return `
-    <aside class="rail">
+    <aside class="rail" id="panel">
       <div class="box">
         <h2>The Panel</h2>
         <p class="note">Every article is adapted from one creator&rsquo;s own video and runs under their name. No anonymous bylines.</p>
@@ -164,15 +172,15 @@ export function homePage(data, base, section = "all") {
   const list = data.arts.filter(a => section === "all" || a.k === section);
   if (!list.length) return shell({ base, title: `${BRAND} — ${CATS[section] || "Front Page"}`, desc: TAG, current: section,
     body: `<main class="homeview"><div class="wrap"><p class="empty">Nothing in this section yet.</p></div></main>` });
-  const lead = list[0]; const rest = list.slice(1);
-  const seconds = rest.slice(0, 3); const wireList = rest.slice(3);
+  const lead = list.find(a => a.w >= 600) || list[0]; const rest = list.filter(a => a !== lead);
+  const seconds = rest.filter(a => a.w >= 400).slice(0, 3); const wireList = rest.filter(a => !seconds.includes(a));
   const threads = data.threads.filter(t => section === "all" || t.k === section);
   const byId = id => data.arts.find(a => a.id === id);
   const body = `
 <main class="homeview">
   <div class="wrap">
     <a class="lead" href="${base}/a/${esc(lead.id)}">
-      <span class="plate"><img alt="" src="${esc(lead.thumb)}"></span>
+      <span class="plate"><img alt="" src="${esc(lead.thumb)}" onerror="this.onerror=null;this.src='${esc(lead.thumbSmall.replace("mqdefault","hqdefault"))}'"></span>
       <span class="leadgrid">
         <span><span class="kicker">${esc(CATS[lead.k])}</span>
           <h2 class="headline" style="margin-top:.45rem">${esc(lead.h)}</h2></span>
@@ -224,7 +232,7 @@ export function articlePage(a, data, base) {
       <div class="prose">${a.body}</div>
       <div class="rule-h" style="margin-top:2.6rem"><h2>Watch the original</h2><span class="note">${esc(a.c)} · YouTube</span></div>
       <div class="player" data-v="${esc(a.v)}" style="margin-top:1rem">
-        <img alt="" src="${esc(a.thumb)}">
+        <img alt="" src="${esc(a.thumb)}" onerror="this.onerror=null;this.src='${esc(a.thumbSmall.replace("mqdefault","hqdefault"))}'">
         <button class="play" aria-label="Play the original video"></button>
       </div>
       <p class="disclose">Adapted from ${esc(a.b)}&rsquo;s original video. Written with the help of AI from that video&rsquo;s transcript; the views and analysis are ${esc(a.b)}&rsquo;s own.</p>
@@ -342,6 +350,31 @@ export function joinPage(data, base) {
 })();
 </script>`;
   return shell({ base, title: `Become a SubPlotter — ${BRAND}`, desc: "Your videos, in writing. Under your name.", body })
+    .replace('<span id="panelcount-slot"></span>', `<span>${data.panel.length} creators writing here</span>`);
+}
+
+export function aboutPage(data, base) {
+  const body = `
+<main class="homeview">
+  <div class="wrap about">
+    <a class="back" href="${base}/">&larr; Back to the front page</a>
+    <h1 class="headline" style="font-size:clamp(1.9rem,4vw,2.8rem);margin-top:1rem">Who we are</h1>
+    <p>${BRAND} is a publication written by the people who actually watch the things it covers. Every article here started life as a video by one of the ${data.panel.length} creators on <a href="${base}/#panel" style="color:var(--blue)">The Panel</a>, and runs under that creator&rsquo;s name with a link to the video it came from. We don&rsquo;t have staff writers. We don&rsquo;t have anonymous bylines.</p>
+    <p>The name is the idea: the story under the story. Breakdowns, theories, reactions, opinions, reviews and lore &mdash; the second layer that people who love this stuff actually talk about.</p>
+
+    <h2 id="standards">Editorial standards</h2>
+    <p><b>One creator, one byline.</b> Each article is adapted from a single creator&rsquo;s own video and published under their handle. If it isn&rsquo;t theirs, it isn&rsquo;t here.</p>
+    <p><b>Claims keep their strength.</b> A rumour stays a rumour, a theory stays a theory, and a creator&rsquo;s opinion is presented as their opinion. Nothing is upgraded to fact on the way from video to page.</p>
+    <p><b>The source is always one click away.</b> Every article ends with the original video. If you want the full argument, the tone, the jokes &mdash; it&rsquo;s right there.</p>
+    <p><b>Corrections.</b> If we&rsquo;ve got something wrong, tell us at corrections@subplot.tv and we&rsquo;ll fix it and say so.</p>
+
+    <h2 id="ai">How we use AI</h2>
+    <p>The first draft of every article is written by AI, from the creator&rsquo;s own transcript. A fidelity check then compares the draft with the video and holds back anything that drifts from what was actually said. Every article carries a short note saying so.</p>
+    <p>What&rsquo;s never AI: the ideas, the takes, the jokes, the reporting, the personality. Those belong to the creator, which is the whole point.</p>
+    <p>Creators can pull any article at any time. Nothing publishes under a creator&rsquo;s name without their agreement.</p>
+  </div>
+</main>`;
+  return shell({ base, title: `About — ${BRAND}`, desc: "Who we are, our editorial standards, and how we use AI.", body })
     .replace('<span id="panelcount-slot"></span>', `<span>${data.panel.length} creators writing here</span>`);
 }
 

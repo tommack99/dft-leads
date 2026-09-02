@@ -29,6 +29,15 @@ export function categorise(tags, headline) {
   return "screen";
 }
 
+// YouTube-style sign-off ("What do you think…?") as the final paragraph reads as a template on a
+// site. Drop it from the rendered body only when it is a short, single, standalone question.
+function trimSignoff(html) {
+  const m = html.match(/<p>([^<]{12,180}\?)\s*<\/p>\s*$/);
+  if (!m) return html;
+  const q = m[1];
+  if ((q.match(/[.!?]/g) || []).length > 1) return html;      // more than one sentence: keep
+  return html.slice(0, m.index).trimEnd();
+}
 const cleanBrand = n => (n || "").replace(/\s*—\s*New$/, "").trim();
 const norm = t => String(t || "").trim().replace(/\s+and\s+/i, " & ");
 const STOP = new Set(["marvel","mcu","marvel studios","marvel cinematic universe","dc","pixar","reaction","sci-fi",
@@ -60,7 +69,7 @@ async function load() {
       const v = (String(a.link || "").match(/v=([\w-]+)/) || [])[1] || String(a.guid).replace(/^yt-/, "");
       arts.push({
         id: String(a.guid).replace(/^yt-/, ""),
-        h: a.headline, s: a.subheadline || "", body: a.body_html || "",
+        h: a.headline, s: a.subheadline || "", body: trimSignoff(a.body_html || ""),
         w: a.word_count || 0, rt: Math.max(1, Math.round((a.word_count || 0) / 220)),
         t: (a.tags || []).slice(0, 8), b: brand, c: a.creator,
         p: a.pubDate, u: a.uploadDate, v, evergreen,
@@ -89,27 +98,31 @@ async function load() {
   }
   const panel = [...byC.values()].sort((x, y) => y.n - x.n);
 
-  // threads: one subject, several creators
+  // threads: one subject, several creators — ranked by what's moving now, not by lifetime size
+  const RECENT = 21 * 864e5;
   const tagmap = new Map();
   for (const a of arts) {
-    for (const t of a.t) {
-      const n = norm(t); if (STOP.has(n.toLowerCase())) continue;
+    a.t.forEach((t, i) => {
+      const n = norm(t); if (STOP.has(n.toLowerCase())) return;
+      const prominent = i < 3 || a.h.toLowerCase().includes(n.toLowerCase());
+      if (!prominent) return;
       const list = tagmap.get(n) || []; if (!list.some(x => x.id === a.id)) list.push(a); tagmap.set(n, list);
-    }
+    });
   }
   const threads = [];
   for (const [t, items] of tagmap) {
-    const creators = new Set(items.map(i => i.c));
-    if (items.length >= 3 && creators.size >= 2) {
-      const recent = items.filter(i => Date.now() - new Date(i.p) < 21 * 864e5);
-      if (recent.length < 2) continue;
-      const cats = {}; items.forEach(i => cats[i.k] = (cats[i.k] || 0) + 1);
-      const k = Object.entries(cats).sort((a, b) => b[1] - a[1])[0][0];
-      threads.push({ t, n: items.length, c: creators.size, k,
-        items: items.sort((a, b) => b.w - a.w).slice(0, 6).map(i => i.id) });
-    }
+    const recent = items.filter(i => Date.now() - new Date(i.p) < RECENT).sort((a, b) => new Date(b.p) - new Date(a.p));
+    const creators = new Set(recent.map(i => i.c));
+    if (recent.length < 3 || creators.size < 2) continue;
+    const cats = {}; recent.forEach(i => cats[i.k] = (cats[i.k] || 0) + 1);
+    const k = Object.entries(cats).sort((a, b) => b[1] - a[1])[0][0];
+    // one take per creator first, then the rest, newest first
+    const seenC = new Set(); const firsts = [], rest = [];
+    for (const i of recent) (seenC.has(i.c) ? rest : (seenC.add(i.c), firsts)).push(i);
+    threads.push({ t, n: recent.length, c: creators.size, k, score: recent.length * creators.size,
+      items: firsts.concat(rest).slice(0, 6).map(i => i.id) });
   }
-  threads.sort((a, b) => b.n - a.n || b.c - a.c);
+  threads.sort((a, b) => b.score - a.score);
   return { arts, panel, threads: threads.slice(0, 3), loadedAt: new Date().toISOString() };
 }
 

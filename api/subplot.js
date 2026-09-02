@@ -3,7 +3,7 @@
 // Private preview: every response is noindex/nofollow and robots.txt disallows all.
 // Optional gate: set SUBPLOT_PASS in Vercel env to require a password (user "subplot").
 import { getData } from "./_subplot/data.js";
-import { homePage, articlePage, creatorPage, joinPage, notFound } from "./_subplot/render.js";
+import { homePage, articlePage, creatorPage, joinPage, aboutPage, notFound } from "./_subplot/render.js";
 
 const CATS = new Set(["marvel", "dc", "scifi", "gaming", "anime", "screen"]);
 
@@ -48,6 +48,7 @@ export default async function handler(req, res) {
   else if (path.startsWith("/a/")) { const a = data.arts.find(x => x.id === path.slice(3)); html = a ? articlePage(a, data, base) : null; }
   else if (path.startsWith("/c/")) html = creatorPage(decodeURIComponent(path.slice(3)), data, base);
   else if (path === "/join") html = joinPage(data, base);
+  else if (path === "/about") html = aboutPage(data, base);
   if (!html) { html = notFound(base); status = 404; res.setHeader("Cache-Control", "no-store"); }
   return res.status(status).send(html);
 }

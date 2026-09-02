@@ -49,7 +49,8 @@ a.lead,a.card,.takes a,.wire a,.roster a{text-decoration:none;color:inherit}
 .nav a{cursor:pointer;white-space:nowrap;font-family:var(--disp);font-weight:700;font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);padding:1.05rem 1.2rem;border-bottom:3px solid transparent;margin-bottom:-1px;text-decoration:none;transition:color .15s,border-color .15s}
 .nav a:hover{color:var(--blue)}
 .nav a[aria-current="true"]{color:var(--blue);border-bottom-color:var(--blue)}
-.nav a.join{margin-left:auto;color:var(--orange-ink)}
+.nav a.about-link{margin-left:auto;color:var(--ink-3)}
+.nav a.join{color:var(--orange-ink)}
 .nav a.join:hover{border-bottom-color:var(--orange)}
 .top-meta a.joinlink{color:var(--blue);font-weight:500;font-family:var(--disp);font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;text-decoration:none}
 .top-meta a.joinlink:hover{color:var(--orange-ink)}
@@ -185,7 +186,7 @@ function shell({ base, title, desc, body, current = "all", bodyClass = "", rule 
       <a class="joinlink mobile-only" href="${base}/join">Become a SubPlotter &rarr;</a>
     </div>
   </div>
-  <nav class="nav"><div class="wrap nav-in">${nav}<a class="join" href="${base}/join">Become a SubPlotter</a></div></nav>
+  <nav class="nav"><div class="wrap nav-in">${nav}<a class="about-link" href="${base}/about" ${current === "about" ? 'aria-current="true"' : ""}>About</a><a class="join" href="${base}/join">Become a SubPlotter</a></div></nav>
 </header>
 ${rule ? `<div class="artrule" style="background:${rule}"></div>` : ""}
 <div class="wrap">${adSlot("leaderboard", "970×90", "320×50", "ad-leader")}</div>
@@ -248,7 +249,7 @@ function rail(panel, base) {
     <aside class="rail" id="panel">
       <div class="box">
         <h2>The Panel</h2>
-        <p class="note">Every article is adapted from one creator&rsquo;s own video and runs under their name. No anonymous bylines.</p>
+        <p class="note">Every article is adapted from one creator&rsquo;s own video and runs under their name. No anonymous bylines. <a href="${base}/about" style="color:var(--blue);font-weight:700;text-decoration:none">How it works &rarr;</a></p>
         <ul class="roster">${panel.map(p => `
           <li><a href="${base}/c/${esc(slugH(p.handle))}"><span class="mono">${esc(initials(p.name))}</span>
             <span class="rn">${esc(p.handle)}</span>
@@ -511,7 +512,7 @@ export function aboutPage(data, base) {
     <div class="castgrid">${Object.entries(CAST_META).map(([k, m]) => `<figure>${ch(k, 150)}<b>${esc(m.name)}</b><span>${esc(m.line)}</span></figure>`).join("")}</div>
   </div>
 </main>`;
-  return shell({ base, title: `About — ${BRAND}`, desc: "Who we are, our editorial standards, and how we use AI.", body })
+  return shell({ base, title: `About — ${BRAND}`, desc: "Who we are, our editorial standards, and how we use AI.", body, current: "about" })
     .replace('<span id="panelcount-slot"></span>', `<span>${data.panel.length} creators writing here</span>`);
 }
 

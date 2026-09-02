@@ -62,6 +62,9 @@ a.lead,a.card,.takes a,.wire a,.roster a{text-decoration:none;color:inherit}
 .ad-leader{max-width:970px;height:90px;margin:1.4rem auto 0}
 .ad-inline{height:250px;max-width:336px;margin:1.6rem auto}
 .ad-rail{width:300px;height:600px;position:sticky;top:1.2rem}
+.ad-frontrail{width:auto}
+.rail{align-self:stretch}
+@media (max-width:62rem){.ad-frontrail{display:none}}
 .ad-infeed{height:250px;max-width:336px;margin:.6rem auto 1.2rem}
 .ad-anchor{position:fixed;left:0;right:0;bottom:0;height:50px;min-height:0;z-index:20;border-width:2px 0 0;background:var(--paper);box-shadow:0 -4px 16px rgba(14,14,22,.08)}
 .ad-anchor .close{position:absolute;right:.5rem;top:-1.4rem;font-family:var(--mono);font-size:.68rem;background:var(--paper);border:1px solid var(--rule-2);padding:.1rem .45rem;cursor:pointer}
@@ -204,6 +207,7 @@ function rail(panel, base) {
           <li>Corrections: <span style="color:var(--ink)">corrections@subplot.tv</span></li>
         </ul>
       </div>
+      ${adSlot("front-rail", "300×600", "—", "ad-rail ad-frontrail")}
     </aside>`;
 }
 

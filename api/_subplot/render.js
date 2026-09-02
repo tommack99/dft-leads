@@ -138,7 +138,7 @@ function rail(panel, base) {
         <p class="note">Every article is adapted from one creator&rsquo;s own video and runs under their name. No anonymous bylines.</p>
         <ul class="roster">${panel.map(p => `
           <li><a href="${base}/c/${esc(slugH(p.handle))}"><span class="mono">${esc(initials(p.name))}</span>
-            <span class="rn">${esc(p.name)}<span>${esc(p.handle)}</span></span>
+            <span class="rn">${esc(p.handle)}</span>
             <span class="rc">${p.n}</span></a></li>`).join("")}
         </ul>
       </div>

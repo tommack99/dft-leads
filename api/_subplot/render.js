@@ -194,7 +194,7 @@ function shell({ base, title, desc, body, current = "all", bodyClass = "", rule 
 <meta property="og:site_name" content="${BRAND}">
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(desc)}">
-<meta property="og:image" content="https://subplot.digitalfoxtalent.com/og.png">
+<meta property="og:image" content="https://subplot.tv/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="alternate" type="application/rss+xml" title="${BRAND}" href="${base}/feed.xml">
 ${jsonld}
@@ -391,7 +391,7 @@ export function articlePage(a, data, base) {
     author: { "@type": "Person", name: a.b, alternateName: a.c, url: "https://www.youtube.com/" + a.c },
     publisher: { "@type": "Organization", name: BRAND },
     isBasedOn: "https://www.youtube.com/watch?v=" + a.v,
-    mainEntityOfPage: "https://subplot.digitalfoxtalent.com" + base + "/a/" + a.id,
+    mainEntityOfPage: "https://subplot.tv" + base + "/a/" + a.id,
   }).replace(/</g, "\\u003c")}</script>`;
   const body = `
 <article class="artview" style="display:block">
@@ -554,7 +554,7 @@ export function threadPage(sl, data, base) {
 }
 
 export function rssFeed(data, base) {
-  const site = "https://subplot.digitalfoxtalent.com" + base;
+  const site = "https://subplot.tv" + base;
   const items = data.arts.slice(0, 50).map(a => `<item><title>${esc(a.h)}</title><link>${site}/a/${a.id}</link><guid isPermaLink="true">${site}/a/${a.id}</guid><pubDate>${new Date(a.p).toUTCString()}</pubDate><dc:creator>${esc(a.c)}</dc:creator><category>${esc(CATS[a.k])}</category><description>${esc(a.s)}</description><enclosure url="${esc(a.thumb)}" type="image/jpeg" length="0"/></item>`).join("");
   return `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>${BRAND}</title><link>${site}/</link><description>${esc(TAG)}</description><language>en</language><atom:link href="${site}/feed.xml" rel="self" type="application/rss+xml"/>${items}</channel></rss>`;
 }

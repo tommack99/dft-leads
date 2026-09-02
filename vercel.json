@@ -41,11 +41,31 @@
       "destination": "/api/apply"
     },
     {
+      "source": "/api/apply",
+      "has": [
+        {
+          "type": "host",
+          "value": "subplot.tv"
+        }
+      ],
+      "destination": "/api/apply"
+    },
+    {
       "source": "/:path((?!api/).*)",
       "has": [
         {
           "type": "host",
           "value": "subplot.digitalfoxtalent.com"
+        }
+      ],
+      "destination": "/api/subplot?path=:path"
+    },
+    {
+      "source": "/:path((?!api/).*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "subplot.tv"
         }
       ],
       "destination": "/api/subplot?path=:path"

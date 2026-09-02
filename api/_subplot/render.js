@@ -199,6 +199,7 @@ ${jsonld}
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Mono:wght@400;500&family=Mulish:wght@400;600;700&display=swap">
 <style>${CSS}${EXTRA_CSS}</style>
+<script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body class="${bodyClass}">
 <header class="top">

@@ -131,6 +131,10 @@ body[data-ads="off"] .ad{display:none}
 .castline .cast{height:62px;width:auto;display:block}
 @media (max-width:64rem){.castline{gap:6px}.castline .cast{height:48px}}
 @media (max-width:48rem){.castline{display:none}}
+.pager{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:1rem;padding:1.4rem 0 0;border-top:2px solid var(--ink);margin-top:.5rem}
+.pager a{font-family:var(--disp);font-weight:700;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);text-decoration:none}
+.pager span:last-child{text-align:right}
+.pager a:hover{color:var(--orange-ink)}
 .about h2{font-family:var(--disp);font-weight:800;font-size:1.3rem;letter-spacing:-.02em;margin:2.4rem 0 .6rem}
 .about p{max-width:42rem;color:var(--ink-2)}
 .about p b{color:var(--ink)}
@@ -282,17 +286,26 @@ const band = base => `
       <a class="cta" href="${base}/join">Become a SubPlotter</a>
     </section>`;
 
-export function homePage(data, base, section = "all") {
+const PAGE = 40;
+export function homePage(data, base, section = "all", page = 1) {
   const list = data.arts.filter(a => section === "all" || a.k === section);
   if (!list.length) return shell({ base, title: `${BRAND} — ${CATS[section] || "Front Page"}`, desc: TAG, current: section,
     body: `<main class="homeview"><div class="wrap"><div class="emptystate">${ch("reactor", 150)}<p class="empty">Nothing in this section yet &mdash; the Reactor is as surprised as you are.</p></div></div></main>` });
   const lead = list.find(a => a.w >= 600) || list[0]; const rest = list.filter(a => a !== lead);
-  const seconds = rest.filter(a => a.w >= 400).slice(0, 3); const wireList = rest.filter(a => !seconds.includes(a));
+  const seconds = page === 1 ? rest.filter(a => a.w >= 400).slice(0, 3) : [];
+  const wireAll = rest.filter(a => !seconds.includes(a));
+  const pages = Math.max(1, Math.ceil(wireAll.length / PAGE));
+  page = Math.min(Math.max(1, page), pages);
+  const wireList = wireAll.slice((page - 1) * PAGE, page * PAGE);
+  const sectionPath = section === "all" ? "" : "s/" + section;
+  const pageHref = n => `${base}/${sectionPath}${n > 1 ? "?p=" + n : ""}`;
+  const pager = pages > 1 ? `<nav class="pager"><span>${page < pages ? `<a href="${pageHref(page + 1)}">Older stories &rarr;</a>` : ""}</span><span class="meta">Page ${page} of ${pages}</span><span>${page > 1 ? `<a href="${pageHref(page - 1)}">&larr; Newer stories</a>` : ""}</span></nav>` : "";
   const threads = data.threads.filter(t => section === "all" || t.k === section);
   const byId = id => data.arts.find(a => a.id === id);
   const body = `
 <main class="homeview">
   <div class="wrap">
+    ${page > 1 ? `<div class="rule-h" style="margin-top:2rem"><h2>${section === "all" ? "Older stories" : "Older in " + esc(CATS[section])}</h2><span class="note">page ${page} of ${pages}</span></div>` : `
     <a class="lead" href="${base}/a/${esc(lead.id)}">
       <span class="plate"><img alt="" src="${esc(lead.thumb)}" onerror="this.onerror=null;this.src='${esc(lead.thumbSmall.replace("mqdefault","hqdefault"))}'"></span>
       <span class="leadgrid">
@@ -318,9 +331,9 @@ export function homePage(data, base, section = "all") {
       </div>
     </section>` : ""}
     <div class="rule-h"><h2>Latest${section === "all" ? " across the network" : " in " + esc(CATS[section])}</h2><span class="note">${list.length} stories</span></div>
-    <section class="grid3">${seconds.map(a => card(a, base)).join("")}</section>
+    <section class="grid3">${seconds.map(a => card(a, base)).join("")}</section>`}
     <div class="cols">
-      <div>${wire(wireList, base)}</div>
+      <div>${wire(wireList, base)}${pager}</div>
       ${rail(data.panel, base)}
     </div>
     ${band(base)}

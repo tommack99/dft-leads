@@ -48,8 +48,9 @@ export default async function handler(req, res) {
   res.setHeader("Cache-Control", pass ? "private, no-store" : "public, s-maxage=300, stale-while-revalidate=3600");
 
   let html = null; let status = 200;
-  if (path === "/") html = homePage(data, base);
-  else if (path.startsWith("/s/") && CATS.has(path.slice(3))) html = homePage(data, base, path.slice(3));
+  const pg = Math.max(1, parseInt(req.query.p, 10) || 1);
+  if (path === "/") html = homePage(data, base, "all", pg);
+  else if (path.startsWith("/s/") && CATS.has(path.slice(3))) html = homePage(data, base, path.slice(3), pg);
   else if (path.startsWith("/a/")) { const a = data.arts.find(x => x.id === path.slice(3)); html = a ? articlePage(a, data, base) : null; }
   else if (path.startsWith("/c/")) html = creatorPage(decodeURIComponent(path.slice(3)), data, base);
   else if (path === "/join") html = joinPage(data, base);

@@ -1,0 +1,53 @@
+// SUBPLOT — server-rendered site. Routed here by vercel.json for the SUBPLOT
+// host (and, for preview, the /subplot path on the roster host).
+// Private preview: every response is noindex/nofollow and robots.txt disallows all.
+// Optional gate: set SUBPLOT_PASS in Vercel env to require a password (user "subplot").
+import { getData } from "./_subplot/data.js";
+import { homePage, articlePage, creatorPage, joinPage, notFound } from "./_subplot/render.js";
+
+const CATS = new Set(["marvel", "dc", "scifi", "gaming", "anime", "screen"]);
+
+function unauthorised(res) {
+  res.setHeader("WWW-Authenticate", 'Basic realm="SUBPLOT preview"');
+  res.setHeader("Cache-Control", "no-store");
+  return res.status(401).send("Private preview.");
+}
+
+export default async function handler(req, res) {
+  res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive, nosnippet");
+
+  const pass = process.env.SUBPLOT_PASS;
+  if (pass) {
+    const h = req.headers.authorization || "";
+    const ok = h.startsWith("Basic ") && Buffer.from(h.slice(6), "base64").toString() === "subplot:" + pass;
+    if (!ok) return unauthorised(res);
+  }
+
+  const path = "/" + String(req.query.path || "").replace(/^\/+|\/+$/g, "");
+  const base = req.query.base === "subplot" ? "/subplot" : "";
+
+  if (path === "/robots.txt") {
+    res.setHeader("Content-Type", "text/plain");
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    return res.status(200).send("User-agent: *\nDisallow: /\n");
+  }
+
+  let data;
+  try { data = await getData(); }
+  catch (e) {
+    res.setHeader("Cache-Control", "no-store");
+    return res.status(502).send("The article feed isn't reachable right now: " + e.message);
+  }
+
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.setHeader("Cache-Control", pass ? "private, no-store" : "public, s-maxage=300, stale-while-revalidate=3600");
+
+  let html = null; let status = 200;
+  if (path === "/") html = homePage(data, base);
+  else if (path.startsWith("/s/") && CATS.has(path.slice(3))) html = homePage(data, base, path.slice(3));
+  else if (path.startsWith("/a/")) { const a = data.arts.find(x => x.id === path.slice(3)); html = a ? articlePage(a, data, base) : null; }
+  else if (path.startsWith("/c/")) html = creatorPage(decodeURIComponent(path.slice(3)), data, base);
+  else if (path === "/join") html = joinPage(data, base);
+  if (!html) { html = notFound(base); status = 404; res.setHeader("Cache-Control", "no-store"); }
+  return res.status(status).send(html);
+}

@@ -93,7 +93,10 @@ body[data-ads="off"] .ad{display:none}
 .joinhero{position:relative;grid-template-columns:1.2fr 1fr auto}
 .joinhero .mascot{align-self:end;margin-bottom:-6px}
 .joinhero .mascot .cast{height:220px;width:auto}
-.band{position:relative;grid-template-columns:auto 1fr auto;align-items:center}
+.band{position:relative;grid-template-columns:auto 1fr;align-items:center}
+.band-top{display:flex;align-items:center;justify-content:space-between;gap:1.5rem;flex-wrap:wrap}
+.band p{max-width:none;margin-top:.7rem}
+@media (max-width:64rem){.band p br{display:none}}
 .band .mascot .cast{height:120px;width:auto;margin:-1.2rem 0 -1.4rem}
 .notfound{display:grid;grid-template-columns:auto 1fr;gap:2rem;align-items:center;padding:3rem 0 4rem}
 .notfound .cast{height:200px;width:auto}
@@ -298,9 +301,10 @@ function rail(panel, base) {
 const band = base => `
     <section class="band">
       <div class="mascot">${ch("reactor", 120)}</div>
-      <div><h2>Make videos? Get read.</h2>
-      <p>SUBPLOT turns the videos you already make into articles, under your name, with a link back to every one. We split what they earn down the middle. Apply with your YouTube handle.</p></div>
-      <a class="cta" href="${base}/join">Become a SubPlotter</a>
+      <div class="band-body">
+        <div class="band-top"><h2>Make videos? Get read.</h2><a class="cta" href="${base}/join">Become a SubPlotter</a></div>
+        <p>SUBPLOT turns the videos you already make into articles, under your name, with a link back to every one.<br>We split what they earn down the middle. Apply with your YouTube handle.</p>
+      </div>
     </section>`;
 
 const PAGE = 40;

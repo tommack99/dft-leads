@@ -54,6 +54,28 @@ const STOP = new Set(["marvel","mcu","marvel studios","marvel cinematic universe
 
 let cache = { at: 0, data: null, pending: null };
 
+// YouTube view counts for recent articles (used to pick the front-page lead until the site
+// has its own read data). Needs YOUTUBE_API_KEY; silently skipped without it.
+const VIEWS_WINDOW = 14 * 864e5;
+async function addViews(arts) {
+  const key = process.env.YOUTUBE_API_KEY;
+  if (!key) return;
+  const recent = arts.filter(a => Date.now() - new Date(a.p) < VIEWS_WINDOW).slice(0, 150);
+  for (let i = 0; i < recent.length; i += 50) {
+    const batch = recent.slice(i, i + 50);
+    try {
+      const r = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${batch.map(a => a.v).join(",")}&key=${key}`);
+      if (!r.ok) continue;
+      const j = await r.json();
+      for (const it of j.items || []) {
+        const a = batch.find(x => x.v === it.id); if (!a) continue;
+        a.views = Number(it.statistics?.viewCount || 0);
+        a.ageDays = Math.max(1, (Date.now() - new Date(a.u || a.p)) / 864e5);
+      }
+    } catch { /* leave views undefined */ }
+  }
+}
+
 async function fetchJson(url) {
   const r = await fetch(url, { headers: { accept: "application/json" } });
   if (!r.ok) throw new Error(`${r.status} for ${url}`);
@@ -97,6 +119,7 @@ async function load() {
     a.c = known || ("@" + a.c.toLowerCase().replace(/[^a-z0-9_.-]/g, ""));
   }
   arts.sort((x, y) => new Date(y.p) - new Date(x.p));
+  await addViews(arts);
   if (APPROVED) { const kept = arts.filter(a => APPROVED.includes(a.c)); arts.length = 0; arts.push(...kept); }
 
   // creators

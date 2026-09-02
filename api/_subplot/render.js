@@ -313,11 +313,23 @@ const band = base => `
     </section>`;
 
 const PAGE = 40;
+// Front-page lead. Until the site has its own read data: the strongest recent video by YouTube
+// views per day since upload (last 14 days, proper article length). Without view data: the newest
+// long article that sits in a trending thread. Last resort: the newest long article.
+const LEAD_WINDOW = 14 * 864e5;
+function pickLead(list, data) {
+  const recent = list.filter(a => a.w >= 600 && Date.now() - new Date(a.p) < LEAD_WINDOW);
+  const withViews = recent.filter(a => a.views > 0);
+  if (withViews.length) return withViews.reduce((b, a) => (a.views / a.ageDays > b.views / b.ageDays ? a : b));
+  const inThread = new Set(data.threads.flatMap(t => t.items));
+  return recent.find(a => inThread.has(a.id)) || list.find(a => a.w >= 600) || list[0];
+}
+const fmtViews = n => n >= 1e6 ? (n / 1e6).toFixed(n >= 1e7 ? 0 : 1) + "M" : n >= 1e3 ? Math.round(n / 1e3) + "K" : String(n);
 export function homePage(data, base, section = "all", page = 1) {
   const list = data.arts.filter(a => section === "all" || a.k === section);
   if (!list.length) return shell({ base, title: `${BRAND} - ${CATS[section] || "Front Page"}`, desc: TAG, current: section,
     body: `<main class="homeview"><div class="wrap"><div class="emptystate">${ch("reactor", 150)}<p class="empty">Nothing in this section yet - the Reactor is as surprised as you are.</p></div></div></main>` });
-  const lead = list.find(a => a.w >= 600) || list[0]; const rest = list.filter(a => a !== lead);
+  const lead = pickLead(list, data); const rest = list.filter(a => a !== lead);
   const seconds = page === 1 ? rest.filter(a => a.w >= 400).slice(0, 3) : [];
   const wireAll = rest.filter(a => !seconds.includes(a));
   const pages = Math.max(1, Math.ceil(wireAll.length / PAGE));
@@ -339,7 +351,7 @@ export function homePage(data, base, section = "all", page = 1) {
           <h2 class="headline" style="margin-top:.45rem">${esc(lead.h)}</h2></span>
         <span class="leadside"><span class="dek">${esc(lead.s)}</span>
           <span class="leadmeta"><span class="who"><b>${esc(lead.c)}</b></span>
-            <span class="meta">${esc(fmt(lead.p))} · ${lead.w.toLocaleString("en-GB")} words · ${lead.rt} min read</span></span></span>
+            <span class="meta">${esc(fmt(lead.p))} · ${lead.w.toLocaleString("en-GB")} words · ${lead.rt} min read${lead.views ? ` · ${fmtViews(lead.views)} views on YouTube` : ""}</span></span></span>
       </span>
     </a>
     ${threads.length ? `

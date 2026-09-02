@@ -279,8 +279,8 @@ export function joinPage(data, base) {
       <div class="step"><span class="n">03</span><h3>It runs under your name.</h3><p>Your byline, your channel link on every piece, your audience. Pull any article at any time. Leave whenever you like.</p></div>
     </div>
     <div class="honest"><span class="lbl">The honest bit</span>
-      <div><p>The first draft is written by AI, from your transcript. A fidelity check then compares it with the video and holds anything that drifts. Every article says so in a short note at the end &mdash; readers don&rsquo;t mind how something was made; they mind being lied to about it.</p>
-        <p>What&rsquo;s never AI: the ideas, the takes, the jokes, the reporting. Those are yours, which is the whole point.</p></div>
+      <div><p>The first draft is written by AI, from your YouTube video transcript. A fidelity check then compares it with the video and holds anything that drifts. Every article says so in a short note at the end &mdash; readers don&rsquo;t mind how something was made; they mind being lied to about it.</p>
+        <p>What&rsquo;s never AI: the ideas, the takes, the jokes, the reporting, the personality. Those are yours, which is the whole point.</p></div>
     </div>
     <div class="twocol">
       <div><h3>What you get</h3><ul>

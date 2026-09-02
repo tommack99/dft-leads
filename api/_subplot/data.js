@@ -5,6 +5,12 @@
 const STORE = "https://api.apify.com/v2/key-value-stores/5yFLBuHJj59ySXY9e";
 const TTL_MS = 5 * 60 * 1000;
 
+// Creators allowed on the public site. null = everyone in the store (private preview).
+// At launch: set to the handles who have applied/agreed, e.g. ["@heavyspoilers", "@newrockstars"].
+export const APPROVED = null;
+
+export const slug = s => String(s).toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
 export const CATS = {
   marvel: "Marvel",
   dc: "DC",
@@ -89,6 +95,8 @@ async function load() {
     a.c = known || ("@" + a.c.toLowerCase().replace(/[^a-z0-9_.-]/g, ""));
   }
   arts.sort((x, y) => new Date(y.p) - new Date(x.p));
+  const kept = APPROVED ? arts.filter(a => APPROVED.includes(a.c)) : arts;
+  arts.length = 0; arts.push(...kept);
 
   // creators
   const byC = new Map();
@@ -109,6 +117,13 @@ async function load() {
       const list = tagmap.get(n) || []; if (!list.some(x => x.id === a.id)) list.push(a); tagmap.set(n, list);
     });
   }
+  const subjects = {};
+  for (const [t, items] of tagmap) {
+    if (items.length < 2) continue;
+    const sl = slug(t); if (!sl) continue;
+    const sorted = items.slice().sort((a, b) => new Date(b.p) - new Date(a.p));
+    if (!subjects[sl] || subjects[sl].items.length < sorted.length) subjects[sl] = { t, slug: sl, n: sorted.length, c: new Set(sorted.map(i => i.c)).size, items: sorted.map(i => i.id) };
+  }
   const threads = [];
   for (const [t, items] of tagmap) {
     const recent = items.filter(i => Date.now() - new Date(i.p) < RECENT).sort((a, b) => new Date(b.p) - new Date(a.p));
@@ -119,7 +134,7 @@ async function load() {
     // one take per creator first, then the rest, newest first
     const seenC = new Set(); const firsts = [], rest = [];
     for (const i of recent) (seenC.has(i.c) ? rest : (seenC.add(i.c), firsts)).push(i);
-    threads.push({ t, n: recent.length, c: creators.size, k, score: recent.length * creators.size,
+    threads.push({ t, slug: slug(t), n: recent.length, c: creators.size, k, score: recent.length * creators.size,
       items: firsts.concat(rest).slice(0, 6).map(i => i.id) });
   }
   threads.sort((a, b) => b.score - a.score);
@@ -130,7 +145,7 @@ async function load() {
     chosen.push(t); t.items.forEach(id => used.add(id));
     if (chosen.length === 3) break;
   }
-  return { arts, panel, threads: chosen, loadedAt: new Date().toISOString() };
+  return { arts, panel, threads: chosen, subjects, loadedAt: new Date().toISOString() };
 }
 
 export async function getData() {

@@ -1,6 +1,6 @@
 // SUBPLOT page templates. Pure functions: (data, base) -> HTML string.
 import { CSS } from "./css.js";
-import { CATS } from "./data.js";
+import { CATS, slug } from "./data.js";
 import { ch, CAST_META } from "./cast.js";
 
 const BRAND = "SUBPLOT";
@@ -135,6 +135,20 @@ body[data-ads="off"] .ad{display:none}
 .pager a{font-family:var(--disp);font-weight:700;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);text-decoration:none}
 .pager span:last-child{text-align:right}
 .pager a:hover{color:var(--orange-ink)}
+.trend{border-bottom:1px solid var(--rule);background:var(--paper)}
+.trend-in{display:flex;align-items:center;gap:.6rem;padding:.6rem 0;overflow-x:auto;scrollbar-width:none}
+.trend-in::-webkit-scrollbar{display:none}
+.trend-lbl{font-family:var(--disp);font-weight:800;font-size:.66rem;letter-spacing:.15em;text-transform:uppercase;color:var(--pink);margin-right:.3rem;white-space:nowrap}
+.chip{display:inline-flex;align-items:baseline;gap:.5rem;border:1.5px solid var(--ink);border-radius:999px;padding:.35rem .85rem;text-decoration:none;color:var(--ink);white-space:nowrap;transition:background .15s,color .15s}
+.chip b{font-family:var(--disp);font-weight:700;font-size:.8rem}
+.chip span{font-family:var(--mono);font-size:.66rem;color:var(--ink-3)}
+.chip:hover{background:var(--ink);color:#fff}.chip:hover span{color:#cfcfda}
+.thead{padding:2.4rem 0 1.4rem;border-bottom:1px solid var(--ink)}
+.thead h1{font-family:var(--disp);font-weight:800;font-size:clamp(1.9rem,4.4vw,3rem);letter-spacing:-.03em;margin:.3rem 0 0;line-height:1.05}
+.thead .kicker{color:var(--pink)}
+.thead p{margin:.5rem 0 0;color:var(--ink-2)}
+.next{margin-top:3rem}
+.next .grid3{padding-top:1.2rem}
 .about h2{font-family:var(--disp);font-weight:800;font-size:1.3rem;letter-spacing:-.02em;margin:2.4rem 0 .6rem}
 .about p{max-width:42rem;color:var(--ink-2)}
 .about p b{color:var(--ink)}
@@ -158,7 +172,7 @@ body[data-ads="off"] .ad{display:none}
 .wire .sub a:hover{text-decoration:underline}
 `;
 
-function shell({ base, title, desc, body, current = "all", bodyClass = "", rule = "" }) {
+function shell({ base, title, desc, body, current = "all", bodyClass = "", rule = "", trending = [], jsonld = "" }) {
   const nav = [["all", "All"], ...Object.entries(CATS)].map(([k, n]) =>
     `<a href="${base}/${k === "all" ? "" : "s/" + k}" ${k === current ? 'aria-current="true"' : ""}>${esc(n)}</a>`).join("");
   return `<!doctype html>
@@ -176,6 +190,8 @@ function shell({ base, title, desc, body, current = "all", bodyClass = "", rule 
 <meta property="og:description" content="${esc(desc)}">
 <meta property="og:image" content="https://subplot.digitalfoxtalent.com/og.png">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" type="application/rss+xml" title="${BRAND}" href="${base}/feed.xml">
+${jsonld}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Mono:wght@400;500&family=Mulish:wght@400;600;700&display=swap">
@@ -196,6 +212,7 @@ function shell({ base, title, desc, body, current = "all", bodyClass = "", rule 
     </div>
   </div>
   <nav class="nav"><div class="wrap nav-in">${nav}<a class="about-link" href="${base}/about" ${current === "about" ? 'aria-current="true"' : ""}>About</a><a class="join" href="${base}/join">Become a SubPlotter</a></div></nav>
+  ${trending.length ? `<div class="trend"><div class="wrap trend-in"><span class="trend-lbl">Trending</span>${trending.map(t => `<a class="chip" href="${base}/t/${esc(t.slug)}"><b>${esc(t.t)}</b><span>${t.c} creators · ${t.n} takes</span></a>`).join("")}</div></div>` : ""}
 </header>
 ${rule ? `<div class="artrule" style="background:${rule}"></div>` : ""}
 <div class="wrap">${adSlot("leaderboard", "970×90", "320×50", "ad-leader")}</div>
@@ -321,7 +338,7 @@ export function homePage(data, base, section = "all", page = 1) {
       <div class="rule-h"><h2>Threads</h2><span class="note">one subject, several creators</span></div>
       <div class="threads">${threads.map(t => `
         <section class="thread">
-          <div class="thread-top"><span class="kicker">Thread</span><h3>${esc(t.t)}</h3>
+          <div class="thread-top"><span class="kicker">Thread</span><h3><a href="${base}/t/${esc(t.slug)}" style="color:inherit;text-decoration:none">${esc(t.t)}</a></h3>
             <span class="count">${t.n} articles · ${t.c} creators</span></div>
           <ul class="takes">${t.items.map(byId).filter(Boolean).map(a => `
             <li><a href="${base}/a/${esc(a.id)}"><span class="stripe"></span>
@@ -339,11 +356,22 @@ export function homePage(data, base, section = "all", page = 1) {
     ${band(base)}
   </div>
 </main>`;
-  return shell({ base, title: section === "all" ? `${BRAND}` : `${CATS[section]} — ${BRAND}`, desc: TAG, current: section, body })
+  return shell({ base, title: section === "all" ? `${BRAND}` : `${CATS[section]} — ${BRAND}`, desc: TAG, current: section, body, trending: data.threads })
     .replace('<span id="panelcount-slot"></span>', `<span>${data.panel.length} creators writing here</span>`);
 }
 
 export function articlePage(a, data, base) {
+  const more = data.arts.filter(x => x.c === a.c && x.id !== a.id).slice(0, 3);
+  const inThread = Object.values(data.subjects || {}).filter(s => s.items.includes(a.id)).sort((x, y) => y.n - x.n)[0];
+  const thr = inThread ? inThread.items.filter(id => id !== a.id).map(id => data.arts.find(x => x.id === id)).filter(Boolean).filter(x => x.c !== a.c).slice(0, 3) : [];
+  const jsonld = `<script type="application/ld+json">${JSON.stringify({
+    "@context": "https://schema.org", "@type": "Article", headline: a.h, description: a.s,
+    datePublished: a.p, dateModified: a.p, image: [a.thumb], wordCount: a.w, articleSection: CATS[a.k], keywords: a.t.join(", "),
+    author: { "@type": "Person", name: a.b, alternateName: a.c, url: "https://www.youtube.com/" + a.c },
+    publisher: { "@type": "Organization", name: BRAND },
+    isBasedOn: "https://www.youtube.com/watch?v=" + a.v,
+    mainEntityOfPage: "https://subplot.digitalfoxtalent.com" + base + "/a/" + a.id,
+  }).replace(/</g, "\\u003c")}</script>`;
   const body = `
 <article class="artview" style="display:block">
   <div class="wrap">
@@ -364,12 +392,14 @@ export function articlePage(a, data, base) {
       </div>
       <p class="disclose">Adapted from ${esc(a.b)}&rsquo;s original video. Written with the help of AI from that video&rsquo;s transcript; the views and analysis are ${esc(a.b)}&rsquo;s own.</p>
       <div class="tags">${a.t.map(t => `<span>${esc(t)}</span>`).join("")}</div>
+      ${thr.length ? `<section class="next"><div class="rule-h"><h2>Also on ${esc(inThread.t)}</h2><span class="note"><a href="${base}/t/${esc(inThread.slug)}" style="color:var(--blue)">${inThread.c} creators, ${inThread.n} takes &rarr;</a></span></div><div class="grid3">${thr.map(x => card(x, base)).join("")}</div></section>` : ""}
+      ${more.length ? `<section class="next"><div class="rule-h"><h2>More from ${esc(a.c)}</h2><span class="note"><a href="${base}/c/${esc(slugH(a.c))}" style="color:var(--blue)">All &rarr;</a></span></div><div class="grid3">${more.map(x => card(x, base)).join("")}</div></section>` : ""}
     </div>
     ${adSlot("article-rail", "300×600", "—", "ad-rail")}
     </div>
   </div>
 </article>`;
-  return shell({ base, title: `${a.h} — ${BRAND}`, desc: a.s, current: a.k, body, rule: "var(--blue)" })
+  return shell({ base, title: `${a.h} — ${BRAND}`, desc: a.s, current: a.k, body, rule: "var(--blue)", trending: data.threads, jsonld })
     .replace('<span id="panelcount-slot"></span>', `<span>${data.panel.length} creators writing here</span>`);
 }
 
@@ -393,7 +423,7 @@ export function creatorPage(handle, data, base) {
     </div>
   </div>
 </main>`;
-  return shell({ base, title: `${name} — ${BRAND}`, desc: `${name}'s videos, in writing.`, body })
+  return shell({ base, title: `${name} — ${BRAND}`, desc: `${name}'s videos, in writing.`, body, trending: data.threads })
     .replace('<span id="panelcount-slot"></span>', `<span>${data.panel.length} creators writing here</span>`);
 }
 
@@ -480,6 +510,32 @@ export function joinPage(data, base) {
 </script>`;
   return shell({ base, title: `Become a SubPlotter — ${BRAND}`, desc: "Your videos, in writing. Under your name.", body, rule: "var(--orange)" })
     .replace('<span id="panelcount-slot"></span>', `<span>${data.panel.length} creators writing here</span>`);
+}
+
+export function threadPage(sl, data, base) {
+  const s = (data.subjects || {})[sl]; if (!s) return null;
+  const list = s.items.map(id => data.arts.find(a => a.id === id)).filter(Boolean);
+  const creators = [...new Set(list.map(a => a.c))];
+  const body = `
+<main class="homeview">
+  <div class="wrap">
+    <div class="thead"><span class="kicker">Thread</span><h1>${esc(s.t)}</h1>
+      <p>${list.length} take${list.length === 1 ? "" : "s"} from ${creators.length} creator${creators.length === 1 ? "" : "s"}: ${creators.map(c => `<a href="${base}/c/${esc(slugH(c))}" style="color:var(--blue);text-decoration:none;font-weight:700">${esc(c)}</a>`).join(", ")}.</p></div>
+    <section class="grid3">${list.filter(a => a.w >= 400).slice(0, 3).map(a => card(a, base)).join("")}</section>
+    <div class="cols">
+      <div>${wire(list.filter(a => !(list.filter(x => x.w >= 400).slice(0, 3)).includes(a)), base)}</div>
+      ${rail(data.panel, base)}
+    </div>
+  </div>
+</main>`;
+  return shell({ base, title: `${s.t} — ${BRAND}`, desc: `${list.length} takes on ${s.t} from ${creators.length} creators.`, body, trending: data.threads })
+    .replace('<span id="panelcount-slot"></span>', `<span>${data.panel.length} creators writing here</span>`);
+}
+
+export function rssFeed(data, base) {
+  const site = "https://subplot.digitalfoxtalent.com" + base;
+  const items = data.arts.slice(0, 50).map(a => `<item><title>${esc(a.h)}</title><link>${site}/a/${a.id}</link><guid isPermaLink="true">${site}/a/${a.id}</guid><pubDate>${new Date(a.p).toUTCString()}</pubDate><dc:creator>${esc(a.c)}</dc:creator><category>${esc(CATS[a.k])}</category><description>${esc(a.s)}</description><enclosure url="${esc(a.thumb)}" type="image/jpeg" length="0"/></item>`).join("");
+  return `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>${BRAND}</title><link>${site}/</link><description>${esc(TAG)}</description><language>en</language><atom:link href="${site}/feed.xml" rel="self" type="application/rss+xml"/>${items}</channel></rss>`;
 }
 
 export function aboutPage(data, base) {

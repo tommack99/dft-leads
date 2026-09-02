@@ -3,7 +3,7 @@
 // Private preview: every response is noindex/nofollow and robots.txt disallows all.
 // Optional gate: set SUBPLOT_PASS in Vercel env to require a password (user "subplot").
 import { getData } from "./_subplot/data.js";
-import { homePage, articlePage, creatorPage, joinPage, aboutPage, notFound } from "./_subplot/render.js";
+import { homePage, articlePage, creatorPage, joinPage, aboutPage, threadPage, rssFeed, notFound } from "./_subplot/render.js";
 import { CAST } from "./_subplot/cast.js";
 import { OG_PNG, APPLE_PNG } from "./_subplot/images.js";
 
@@ -44,6 +44,7 @@ export default async function handler(req, res) {
     return res.status(502).send("The article feed isn't reachable right now: " + e.message);
   }
 
+  if (path === "/feed.xml") { res.setHeader("Content-Type", "application/rss+xml; charset=utf-8"); res.setHeader("Cache-Control", "public, s-maxage=600"); return res.status(200).send(rssFeed(data, base)); }
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", pass ? "private, no-store" : "public, s-maxage=300, stale-while-revalidate=3600");
 
@@ -53,6 +54,7 @@ export default async function handler(req, res) {
   else if (path.startsWith("/s/") && CATS.has(path.slice(3))) html = homePage(data, base, path.slice(3), pg);
   else if (path.startsWith("/a/")) { const a = data.arts.find(x => x.id === path.slice(3)); html = a ? articlePage(a, data, base) : null; }
   else if (path.startsWith("/c/")) html = creatorPage(decodeURIComponent(path.slice(3)), data, base);
+  else if (path.startsWith("/t/")) html = threadPage(path.slice(3), data, base);
   else if (path === "/join") html = joinPage(data, base);
   else if (path === "/about") html = aboutPage(data, base);
   if (!html) { html = notFound(base); status = 404; res.setHeader("Cache-Control", "no-store"); }

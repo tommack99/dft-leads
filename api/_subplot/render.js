@@ -41,7 +41,10 @@ function withInArticleAds(bodyHtml, every = 5) {
 const EXTRA_CSS = String.raw`
 .card{text-decoration:none;color:inherit}
 a.lead,a.card,.takes a,.wire a,.roster a{text-decoration:none;color:inherit}
-.wire a{width:100%;display:grid;grid-template-columns:1fr auto;gap:0 1rem;align-items:stretch;cursor:pointer;transition:background .15s}
+.wire a{width:100%;display:grid;grid-template-columns:auto 1fr auto;gap:0 1.1rem;align-items:start;cursor:pointer;transition:background .15s}
+.wire .wthumb{display:block;width:124px;aspect-ratio:16/9;margin:1.05rem 0;border-radius:10px;overflow:hidden;background:var(--paper-2);border:1.5px solid var(--ink)}
+.wire .wthumb img{display:block;width:100%;height:100%;object-fit:cover}
+@media (max-width:34rem){.wire a{grid-template-columns:auto 1fr}.wire .wthumb{width:88px;margin:.9rem 0}}
 .wire a:hover{background:var(--paper-2)}
 .wire a:hover .txt h3{color:var(--blue)}
 .takes a{display:grid;width:100%;grid-template-columns:2px 1fr;gap:0 .7rem;cursor:pointer;align-items:stretch}
@@ -267,8 +270,9 @@ function wire(list, base) {
     <section class="daygroup"><div class="daylabel">${esc(dayLabel(g.p))}</div><ul class="wire">
     ${g.items.map(a => `
       <li><a href="${base}/a/${esc(a.id)}">
+        <span class="wthumb"><img src="${esc(a.thumbSmall)}" alt="" loading="lazy" decoding="async"></span>
         <span class="txt"><h3>${esc(a.h)}</h3>
-          <span class="sub"><b>${esc(a.b)}</b><span>${esc(CATS[a.k])}</span></span></span>
+          <span class="sub"><b>${esc(a.c)}</b><span>${esc(CATS[a.k])}</span></span></span>
         <span class="rt">${a.rt} min</span>
       </a></li>`).join("")}
     </ul></section>`).join("");

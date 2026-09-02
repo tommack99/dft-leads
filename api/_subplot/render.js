@@ -126,6 +126,11 @@ body[data-ads="off"] .ad{display:none}
 .aboutrail .cta{display:inline-block;background:var(--blue);color:#fff;font-family:var(--disp);font-weight:700;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;padding:.75rem 1.2rem;border-radius:999px;text-decoration:none}
 .aboutrail .cta:hover{background:var(--blue-ink)}
 @media (max-width:60rem){.aboutcols{grid-template-columns:1fr}.aboutrail{position:static}}
+.plotline{position:relative}
+.castline{position:absolute;right:6px;bottom:11px;display:flex;align-items:flex-end;gap:10px;pointer-events:none}
+.castline .cast{height:62px;width:auto;display:block}
+@media (max-width:64rem){.castline{gap:6px}.castline .cast{height:48px}}
+@media (max-width:48rem){.castline{display:none}}
 .about h2{font-family:var(--disp);font-weight:800;font-size:1.3rem;letter-spacing:-.02em;margin:2.4rem 0 .6rem}
 .about p{max-width:42rem;color:var(--ink-2)}
 .about p b{color:var(--ink)}
@@ -177,7 +182,7 @@ function shell({ base, title, desc, body, current = "all", bodyClass = "", rule 
   <div class="wrap top-in">
     <a class="brandblock" href="${base}/">
       <span class="wordmark">${BRAND}</span>
-      <span class="plotline"></span>
+      <span class="plotline"><span class="castline">${["lorekeeper","goblin","theorist","critic","speedrunner","reactor","subplot"].map(n => ch(n, 62)).join("")}</span></span>
       <span class="tagline">${esc(TAG)}</span>
     </a>
     <div class="top-meta">

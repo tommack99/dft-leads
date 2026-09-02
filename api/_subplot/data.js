@@ -54,7 +54,7 @@ async function load() {
     for (const a of res.value) {
       if (!a || !a.guid || !a.headline || !a.thumbnail || seen.has(a.guid)) continue;
       if (/^unable to generate/i.test(a.headline)) continue;
-      const brand = cleanBrand(a.displayName || a.feedTitle);
+      const brand = cleanBrand(a.displayName);        // feeds without a displayName are old playlist experiments — skip
       if (!brand || !a.creator) continue;
       seen.add(a.guid);
       const v = (String(a.link || "").match(/v=([\w-]+)/) || [])[1] || String(a.guid).replace(/^yt-/, "");

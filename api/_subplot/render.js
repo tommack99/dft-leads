@@ -11,6 +11,10 @@ const fmt = p => new Date(p).toLocaleDateString("en-GB", { day: "numeric", month
 const dayLabel = p => new Date(p).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
 const dayKey = p => String(p).slice(0, 10);
 const initials = n => n.replace(/[^A-Za-z ]/g, "").split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase();
+// Creator mark: their YouTube profile picture when we have it, initials when we don't.
+const mark = (name, url) => url
+  ? `<span class="mono av"><img src="${esc(url)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"></span>`
+  : `<span class="mono">${esc(initials(name))}</span>`;
 const slugH = h => h.replace(/^@/, "");
 
 // ---- Ad slots. Placeholders for now; each becomes one network tag at launch.
@@ -90,7 +94,9 @@ body[data-ads="off"] .ad{display:none}
 .band .cta,.joinhero .cta,.submit,.nav a.join{border-radius:999px}
 .nav a.join{border:1.5px solid var(--orange);padding:.45rem 1rem;margin:.55rem 0 .55rem auto;border-bottom-width:1.5px}
 .nav a.join:hover{background:var(--orange);color:#fff}
-.mono{border-radius:8px}
+.mono{border-radius:8px;overflow:hidden}
+.mono.av{background:var(--paper-2)}
+.mono.av img{width:100%;height:100%;object-fit:cover;display:block}
 .tags span{border-radius:999px;padding:.22rem .7rem}
 .cast{display:block;overflow:visible}
 .joinhero{position:relative;grid-template-columns:1.2fr 1fr auto}
@@ -285,7 +291,7 @@ function rail(panel, base) {
         <h2>The Panel</h2>
         <p class="note">Every article is adapted from one creator&rsquo;s own video and runs under their name. No anonymous bylines. <a href="${base}/about" style="color:var(--blue);font-weight:700;text-decoration:none">How it works &rarr;</a></p>
         <ul class="roster">${panel.map(p => `
-          <li><a href="${base}/c/${esc(slugH(p.handle))}"><span class="mono">${esc(initials(p.name))}</span>
+          <li><a href="${base}/c/${esc(slugH(p.handle))}">${mark(p.name, p.av)}
             <span class="rn">${esc(p.handle)}</span>
             <span class="rc">${p.n}</span></a></li>`).join("")}
         </ul>
@@ -402,7 +408,7 @@ export function articlePage(a, data, base) {
       <span class="kicker">${esc(CATS[a.k])}</span>
       <h1 class="headline">${esc(a.h)}</h1>
       <p class="dek">${esc(a.s)}</p>
-      <div class="authorbar"><span class="mono">${esc(initials(a.b))}</span>
+      <div class="authorbar">${mark(a.b, data.avatars && data.avatars[a.c])}
         <span class="nm"><b><a href="${base}/c/${esc(slugH(a.c))}" style="color:inherit;text-decoration:none">${esc(a.c)}</a></b><span>${esc(fmt(a.p))}</span></span>
         <span class="meta">${a.w.toLocaleString("en-GB")} words · ${a.rt} min read</span></div>
       <div class="prose">${withInArticleAds(a.body)}</div>
@@ -432,7 +438,7 @@ export function creatorPage(handle, data, base) {
 <main class="homeview">
   <div class="wrap">
     <div class="chead">
-      <span class="mono">${esc(initials(name))}</span>
+      ${mark(name, data.avatars && data.avatars[h])}
       <div><h1>${esc(h)}</h1>
         <p>${list.length} article${list.length === 1 ? "" : "s"} on ${BRAND} &middot; <a class="yt" href="https://www.youtube.com/${esc(h)}" target="_blank" rel="noopener">Channel on YouTube</a></p>
         <span class="meta">Every piece below is adapted from one of ${esc(name)}&rsquo;s own videos, with the video at the end.</span></div>

@@ -54,6 +54,36 @@ const STOP = new Set(["marvel","mcu","marvel studios","marvel cinematic universe
 
 let cache = { at: 0, data: null, pending: null };
 
+// Creator profile pictures from YouTube, keyed by @handle. Channel art changes rarely,
+// so these are cached for a day, well beyond the 5-minute article cache.
+const AV_TTL = 24 * 3600e3;
+const avCache = new Map();
+async function avatars(handles) {
+  const key = process.env.YOUTUBE_API_KEY;
+  const out = {};
+  const now = Date.now();
+  const missing = [];
+  for (const h of handles) {
+    const hit = avCache.get(h);
+    if (hit && now - hit.at < AV_TTL) { if (hit.url) out[h] = hit.url; }
+    else missing.push(h);
+  }
+  if (key && missing.length) {
+    await Promise.allSettled(missing.map(async h => {
+      try {
+        const r = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=snippet&forHandle=${encodeURIComponent(h)}&key=${key}`);
+        if (!r.ok) throw new Error(r.status);
+        const j = await r.json();
+        const t = j.items && j.items[0] && j.items[0].snippet && j.items[0].snippet.thumbnails;
+        const url = t && (t.medium || t.default || {}).url;
+        avCache.set(h, { at: Date.now(), url: url || null });
+        if (url) out[h] = url;
+      } catch { avCache.set(h, { at: Date.now(), url: null }); }
+    }));
+  }
+  return out;
+}
+
 // YouTube view counts for recent articles (used to pick the front-page lead until the site
 // has its own read data). Needs YOUTUBE_API_KEY; silently skipped without it.
 const VIEWS_WINDOW = 14 * 864e5;
@@ -129,6 +159,8 @@ async function load() {
     e.n++; byC.set(a.c, e);
   }
   const panel = [...byC.values()].sort((x, y) => y.n - x.n);
+  const av = await avatars(panel.map(p => p.handle));
+  for (const p of panel) p.av = av[p.handle] || "";
 
   // threads: one subject, several creators — ranked by what's moving now, not by lifetime size
   const RECENT = 21 * 864e5;
@@ -169,7 +201,7 @@ async function load() {
     chosen.push(t); t.items.forEach(id => used.add(id));
     if (chosen.length === 3) break;
   }
-  return { arts, panel, threads: chosen, subjects, loadedAt: new Date().toISOString() };
+  return { arts, panel, threads: chosen, subjects, avatars: av, loadedAt: new Date().toISOString() };
 }
 
 export async function getData() {

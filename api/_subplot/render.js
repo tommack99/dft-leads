@@ -97,11 +97,10 @@ body[data-ads="off"] .ad{display:none}
 .band .cta,.joinhero .cta,.submit,.nav a.join{border-radius:999px}
 .nav a.join{border:1.5px solid var(--orange);padding:.45rem 1rem;margin:.55rem 0 .55rem auto;border-bottom-width:1.5px}
 .nav a.join:hover{background:var(--orange);color:#fff}
-.evbox .note{margin:.1rem 0 1rem;font-size:.78rem;line-height:1.5}
 .evlist{list-style:none;margin:0;padding:0}
 .evlist li{border-top:1px solid var(--rule)}
 .evlist li:first-child{border-top:0}
-.evlist a{display:block;padding:.9rem 0;text-decoration:none;color:inherit}
+.evlist a{display:block;padding:1rem 1.3rem;text-decoration:none;color:inherit}
 .evlist a:hover b{color:var(--blue)}
 .evtx{min-width:0;display:flex;flex-direction:column;gap:.35rem}
 .evtx b{font-family:var(--disp);font-weight:600;font-size:.84rem;line-height:1.32;letter-spacing:-.01em}

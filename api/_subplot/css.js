@@ -89,7 +89,9 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;text-align:
 .takes button:hover .tk span{color:var(--blue)}
 
 /* ============ 3-up ============ */
-.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:2.2rem;padding:1.6rem 0 0}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:2.2rem;padding:1.6rem 0 0}
+@media (max-width:52rem){.grid3{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:34rem){.grid3{grid-template-columns:1fr}}
 .grid3 .headline{font-size:var(--s-1)}
 
 /* ============ wire + rail ============ */

@@ -101,11 +101,9 @@ body[data-ads="off"] .ad{display:none}
 .evlist{list-style:none;margin:0;padding:0}
 .evlist li{border-top:1px solid var(--rule)}
 .evlist li:first-child{border-top:0}
-.evlist a{display:grid;grid-template-columns:auto 1fr;gap:.85rem;align-items:start;padding:.85rem 0;text-decoration:none;color:inherit}
+.evlist a{display:block;padding:.9rem 0;text-decoration:none;color:inherit}
 .evlist a:hover b{color:var(--blue)}
-.evthumb{display:block;width:64px;aspect-ratio:16/9;border-radius:8px;overflow:hidden;background:var(--paper-2);border:1.5px solid var(--ink)}
-.evthumb img{display:block;width:100%;height:100%;object-fit:cover}
-.evtx{min-width:0;display:flex;flex-direction:column;gap:.3rem}
+.evtx{min-width:0;display:flex;flex-direction:column;gap:.35rem}
 .evtx b{font-family:var(--disp);font-weight:600;font-size:.84rem;line-height:1.32;letter-spacing:-.01em}
 .evtx span{font-family:var(--mono);font-size:.68rem;color:var(--ink-3)}
 .ad.live{border:0;background:none;min-height:0;display:block}
@@ -309,7 +307,6 @@ function evergreenBox(data, base) {
         <p class="note">Lore, trivia and explainers that don&rsquo;t date. Rotates through the day.</p>
         <ul class="evlist">${list.map(a => `
           <li><a href="${base}/a/${esc(a.id)}">
-            <span class="evthumb"><img src="${esc(a.thumbSmall)}" alt="" loading="lazy" decoding="async"></span>
             <span class="evtx"><b>${esc(a.h)}</b><span>${esc(a.c)}</span></span></a></li>`).join("")}
         </ul>
       </div>`;
@@ -327,6 +324,7 @@ function rail(panel, base, data) {
             <span class="rc">${p.n}</span></a></li>`).join("")}
         </ul>
       </div>
+      ${data ? evergreenBox(data, base) : ""}
       <div class="box">
         <h2>Editorial standards</h2>
         <ul class="stdlist">
@@ -336,7 +334,6 @@ function rail(panel, base, data) {
           <li>Corrections: <span style="color:var(--ink)">corrections@subplot.tv</span></li>
         </ul>
       </div>
-      ${data ? evergreenBox(data, base) : ""}
       ${adSlot("front-rail", "300×600", "-", "ad-rail ad-frontrail")}
     </aside>`;
 }

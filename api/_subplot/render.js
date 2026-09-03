@@ -87,6 +87,14 @@ body.has-anchor{padding-bottom:56px}
 @media (min-width:48rem){.ad-anchor{display:none}body.has-anchor{padding-bottom:0}}
 @media (max-width:48rem){.ad-leader{height:50px;max-width:320px}}
 body[data-ads="off"] .ad{display:none}
+.ad.live{display:block;border:0;background:none;min-height:0;height:auto;place-items:initial}
+.ad.live::before{content:"Advertisement";display:block;font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);text-align:center;margin:0 0 .4rem}
+.ad.live.ad-leader{height:auto}
+.ad.live.ad-inline{height:auto;max-width:100%;margin:2rem auto}
+.ad.live.ad-infeed{height:auto;max-width:100%}
+.ad.live.ad-rail{height:auto;width:300px;position:sticky;top:1.2rem}
+.ad.live.ad-anchor{height:auto;padding:.2rem 0 .1rem}
+.ad.live.ad-anchor::before{display:none}
 /* cast-influenced: soft corners, thin ink line, pill buttons */
 .thumb,.lead .plate,.player,.thread,.box,.ad,.honest,.terms,.done,.source,.field input,.field select,.field .handle span,.band,.step{border-radius:14px}
 .thumb,.player{overflow:hidden}

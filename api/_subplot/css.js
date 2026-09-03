@@ -213,6 +213,7 @@ body[data-view="join"] .homeview{display:none}
 .top-meta .joinlink{color:var(--blue);font-weight:500;cursor:pointer;font-family:var(--disp);font-size:.74rem;letter-spacing:.06em;text-transform:uppercase}
 .top-meta .joinlink:hover{color:var(--orange-ink)}
 .foot .legal{font-family:var(--mono);font-size:.68rem;color:var(--ink-3)}
+.foot .legal a{color:inherit;text-decoration:none}.foot .legal a:hover{color:var(--blue)}
 @media (max-width:52rem){.joinhero,.twocol,.apply,.band,.honest,.row2{grid-template-columns:1fr}.steps{grid-template-columns:1fr}}
 
 /* ============ video ============ */

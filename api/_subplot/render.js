@@ -229,7 +229,7 @@ ${body}
     <div><p class="fm">${ch("subplot", 44)}${BRAND}</p><p>${esc(TAG)}</p></div>
     <div><h3>About</h3><ul><li><a href="${base}/join">Become a SubPlotter</a></li><li><a href="${base}/about">Who we are</a></li><li><a href="${base}/about#standards">Editorial standards</a></li><li><a href="${base}/about#ai">How we use AI</a></li></ul></div>
     <div><h3>Sections</h3><ul>${Object.entries(CATS).map(([k, n]) => `<li><a href="${base}/s/${k}">${esc(n)}</a></li>`).join("")}</ul></div>
-    <div><h3>Contact</h3><p>hello@subplot.tv</p><p>corrections@subplot.tv</p><p class="legal">Terms &middot; Privacy &middot; Creator agreement</p></div>
+    <div><h3>Contact</h3><p>hello@subplot.tv</p><p>corrections@subplot.tv</p><p class="legal"><a href="${base}/contact">Contact</a> &middot; <a href="${base}/terms">Terms</a> &middot; <a href="${base}/privacy">Privacy</a> &middot; <a href="${base}/creators">Creator agreement</a></p></div>
   </div>
   <div class="protolabel"><div class="wrap">Private preview &middot; not indexed &middot; articles read live from the production feed</div></div>
 </footer>
@@ -502,7 +502,7 @@ export function joinPage(data, base) {
         </div>
         <div class="terms"><span class="lbl">Standard terms</span>
           <p><b>50 / 50</b> on everything your articles earn &middot; non-exclusive, so run them anywhere else you like &middot; no fees, no minimum term &middot; leave any time and we take the articles down &middot; paid monthly from $50.</p></div>
-        <label class="consent"><input type="checkbox" name="consent" value="yes" required><span>I own these videos, or hold the rights to have them adapted. <b>By applying I give SUBPLOT permission to turn my public videos into articles, drafted with AI from my transcripts, and publish them under my handle on the standard terms above.</b> I can withdraw at any time and the articles come down.</span></label>
+        <label class="consent"><input type="checkbox" name="consent" value="yes" required><span>I own these videos, or hold the rights to have them adapted. <b>By applying I give SUBPLOT permission to turn my public videos into articles, drafted with AI from my transcripts, and publish them under my handle on the standard terms above and the <a href="${base}/creators" target="_blank" style="color:var(--blue)">Creator Agreement</a>.</b> I can withdraw at any time and the articles come down.</span></label>
         <input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
         <button class="submit" type="submit" id="f-submit">Send application</button>
         <p class="formnote" id="formnote">Applying is the agreement - there&rsquo;s no second contract. We check the channel and captions first; if it&rsquo;s a fit, your first articles appear within a week and we email you the links.</p>
@@ -614,4 +614,12 @@ export function aboutPage(data, base) {
 export function notFound(base) {
   return shell({ base, title: `Not found - ${BRAND}`, desc: "", body: `<main class="homeview"><div class="wrap"><div class="notfound">${ch("goblin", 200)}<div><h1>That page isn&rsquo;t here.</h1><p>The goblin already knows how it ends, and isn&rsquo;t telling.</p><a href="${base}/">Back to the front page &rarr;</a></div></div></div></main>` })
     .replace('<span id="panelcount-slot"></span>', "");
+}
+
+// Legal + contact pages (copy lives in legal.js)
+import { contactBody, privacyBody, termsBody, creatorsBody } from "./legal.js";
+const LEGAL = { contact: ["Contact", "How to reach SUBPLOT.", contactBody], privacy: ["Privacy", "How SUBPLOT handles your data.", privacyBody], terms: ["Terms of use", "The rules for using SUBPLOT.", termsBody], creators: ["Creator Agreement", "The deal for SubPlotters, in full.", creatorsBody] };
+export function legalPage(kind, data, base) {
+  const d = LEGAL[kind]; if (!d) return null;
+  return shell({ base, title: `${d[0]} - ${BRAND}`, desc: d[1], body: d[2](base), current: kind === "contact" ? "about" : "" });
 }

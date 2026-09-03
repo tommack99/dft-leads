@@ -3,7 +3,7 @@
 // Private preview: every response is noindex/nofollow and robots.txt disallows all.
 // Optional gate: set SUBPLOT_PASS in Vercel env to require a password (user "subplot").
 import { getData } from "./_subplot/data.js";
-import { homePage, articlePage, creatorPage, joinPage, aboutPage, threadPage, rssFeed, notFound } from "./_subplot/render.js";
+import { homePage, articlePage, creatorPage, joinPage, aboutPage, threadPage, rssFeed, notFound, legalPage } from "./_subplot/render.js";
 import { CAST } from "./_subplot/cast.js";
 import { OG_PNG, APPLE_PNG } from "./_subplot/images.js";
 
@@ -34,7 +34,8 @@ export default async function handler(req, res) {
   if (path === "/robots.txt") {
     res.setHeader("Content-Type", "text/plain");
     res.setHeader("Cache-Control", "public, max-age=3600");
-    return res.status(200).send("User-agent: *\nDisallow: /\n");
+    // Private preview: block indexing crawlers, but let the ad crawler read pages so ads can be matched.
+    return res.status(200).send("User-agent: Mediapartners-Google\nAllow: /\n\nUser-agent: *\nDisallow: /\n");
   }
 
   let data;
@@ -57,6 +58,7 @@ export default async function handler(req, res) {
   else if (path.startsWith("/t/")) html = threadPage(path.slice(3), data, base);
   else if (path === "/join") html = joinPage(data, base);
   else if (path === "/about") html = aboutPage(data, base);
+  else if (["/contact", "/privacy", "/terms", "/creators"].includes(path)) html = legalPage(path.slice(1), data, base);
   if (!html) { html = notFound(base); status = 404; res.setHeader("Cache-Control", "no-store"); }
   return res.status(status).send(html);
 }

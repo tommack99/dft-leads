@@ -19,6 +19,8 @@ export const APPROVED_HANDLES = [
   "@chaostrektv",                 // ChaosTrek
   "@wesnemo",                     // WesNemo
   "@film_paradise",               // Film Paradise
+  "@lorereloaded",                // Lore Reloaded
+  "@arealknowitall",              // Mr. Know-It-All (no articles yet; appears when his feed fills)
 ];
 export const APPROVED = process.env.SUBPLOT_APPROVED_ONLY ? APPROVED_HANDLES : null;
 

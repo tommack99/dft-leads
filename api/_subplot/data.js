@@ -23,6 +23,7 @@ export const APPROVED_HANDLES = [
   "@arealknowitall",              // Mr. Know-It-All (no articles yet; appears when his feed fills)
   "@coltonogburnchannel",         // Colton Ogburn
   "@everythingalways",            // Everything Always
+  "@gique_",                      // GIQUE (DFT-owned; dormant channel, evergreen back catalogue)
 ];
 export const APPROVED = process.env.SUBPLOT_APPROVED_ONLY ? APPROVED_HANDLES : null;
 

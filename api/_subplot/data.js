@@ -54,33 +54,59 @@ const STOP = new Set(["marvel","mcu","marvel studios","marvel cinematic universe
 
 let cache = { at: 0, data: null, pending: null };
 
-// Creator profile pictures from YouTube, keyed by @handle. Channel art changes rarely,
-// so these are cached for a day, well beyond the 5-minute article cache.
-const AV_TTL = 24 * 3600e3;
-const avCache = new Map();
-async function avatars(handles) {
-  const key = process.env.YOUTUBE_API_KEY;
+// Real channel identity, resolved from the videos themselves. The store's `creator` field
+// is not reliable — four of its handles point at the wrong channel or at no channel at all —
+// so the video's own channel is the source of truth for the handle and the profile picture.
+// Cached for a day; channel art rarely changes.
+const CH_TTL = 24 * 3600e3;
+const chCache = new Map();                       // brand (lowercased) -> { at, handle, av, title }
+
+async function ytJson(path, key, ids) {
+  const r = await fetch(`https://www.googleapis.com/youtube/v3/${path}&id=${ids.join(",")}&key=${key}`);
+  if (!r.ok) throw new Error(`${r.status} from YouTube ${path}`);
+  return r.json();
+}
+
+// Resolves one channel per brand and rewrites each article's handle to the real one.
+// Returns brand -> { handle, av, title }.
+async function resolveChannels(arts) {
   const out = {};
   const now = Date.now();
-  const missing = [];
-  for (const h of handles) {
-    const hit = avCache.get(h);
-    if (hit && now - hit.at < AV_TTL) { if (hit.url) out[h] = hit.url; }
-    else missing.push(h);
+  const sample = new Map();                      // brand -> a video to resolve it from
+  for (const a of arts) {
+    const b = a.b.toLowerCase();
+    const hit = chCache.get(b);
+    if (hit && now - hit.at < CH_TTL) { out[a.b] = hit; continue; }
+    if (!sample.has(b) && a.v) sample.set(b, { brand: a.b, v: a.v });
   }
-  if (key && missing.length) {
-    await Promise.allSettled(missing.map(async h => {
-      try {
-        const r = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=snippet&forHandle=${encodeURIComponent(h)}&key=${key}`);
-        if (!r.ok) throw new Error(r.status);
-        const j = await r.json();
-        const t = j.items && j.items[0] && j.items[0].snippet && j.items[0].snippet.thumbnails;
-        const url = t && (t.medium || t.default || {}).url;
-        avCache.set(h, { at: Date.now(), url: url || null });
-        if (url) out[h] = url;
-      } catch { avCache.set(h, { at: Date.now(), url: null }); }
-    }));
+  const key = process.env.YOUTUBE_API_KEY;
+  if (key && sample.size) {
+    try {
+      const wanted = [...sample.values()];
+      const chByVideo = new Map();
+      for (let i = 0; i < wanted.length; i += 50) {
+        const j = await ytJson("videos?part=snippet", key, wanted.slice(i, i + 50).map(w => w.v));
+        for (const it of j.items || []) chByVideo.set(it.id, it.snippet.channelId);
+      }
+      const chIds = [...new Set(chByVideo.values())];
+      const info = new Map();
+      for (let i = 0; i < chIds.length; i += 50) {
+        const j = await ytJson("channels?part=snippet", key, chIds.slice(i, i + 50));
+        for (const c of j.items || []) {
+          const t = c.snippet.thumbnails || {};
+          info.set(c.id, { handle: c.snippet.customUrl || "", av: (t.medium || t.default || {}).url || "", title: c.snippet.title || "" });
+        }
+      }
+      for (const w of wanted) {
+        const c = info.get(chByVideo.get(w.v));
+        if (!c || !c.handle) continue;
+        const rec = { at: Date.now(), handle: c.handle, av: c.av, title: c.title };
+        chCache.set(w.brand.toLowerCase(), rec);
+        out[w.brand] = rec;
+      }
+    } catch { /* fall back to whatever the store gave us */ }
   }
+  for (const a of arts) { const c = out[a.b]; if (c) a.c = c.handle; }
   return out;
 }
 
@@ -148,6 +174,7 @@ async function load() {
     const known = handleByBrand.get(a.c.toLowerCase()) || handleByBrand.get(a.b.toLowerCase());
     a.c = known || ("@" + a.c.toLowerCase().replace(/[^a-z0-9_.-]/g, ""));
   }
+  const channels = await resolveChannels(arts);
   arts.sort((x, y) => new Date(y.p) - new Date(x.p));
   await addViews(arts);
   if (APPROVED) { const kept = arts.filter(a => APPROVED.includes(a.c)); arts.length = 0; arts.push(...kept); }
@@ -159,8 +186,8 @@ async function load() {
     e.n++; byC.set(a.c, e);
   }
   const panel = [...byC.values()].sort((x, y) => y.n - x.n);
-  const av = await avatars(panel.map(p => p.handle));
-  for (const p of panel) p.av = av[p.handle] || "";
+  const av = {};
+  for (const p of panel) { const c = channels[p.name]; p.av = (c && c.av) || ""; if (p.av) av[p.handle] = p.av; }
 
   // threads: one subject, several creators — ranked by what's moving now, not by lifetime size
   const RECENT = 21 * 864e5;

@@ -95,6 +95,7 @@ body[data-ads="off"] .ad{display:none}
 .ad.live.ad-rail{height:auto;width:300px;position:sticky;top:1.2rem}
 .ad.live.ad-anchor{height:auto;padding:.2rem 0 .1rem}
 .ad.live.ad-anchor::before{display:none}
+.ad.live:has(ins[data-ad-status="unfilled"]){display:none}
 /* cast-influenced: soft corners, thin ink line, pill buttons */
 .thumb,.lead .plate,.player,.thread,.box,.ad,.honest,.terms,.done,.source,.field input,.field select,.field .handle span,.band,.step{border-radius:14px}
 .thumb,.player{overflow:hidden}

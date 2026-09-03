@@ -24,6 +24,7 @@ export const APPROVED_HANDLES = [
   "@coltonogburnchannel",         // Colton Ogburn
   "@everythingalways",            // Everything Always
   "@gique_",                      // GIQUE (DFT-owned; dormant channel, evergreen back catalogue)
+  "@downtoearthkh",               // Down to Earth with Kristian Harloff (MSN-banned, but that is platform-side and does not apply here)
 ];
 export const APPROVED = process.env.SUBPLOT_APPROVED_ONLY ? APPROVED_HANDLES : null;
 

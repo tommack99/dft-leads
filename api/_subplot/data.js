@@ -22,6 +22,7 @@ export const APPROVED_HANDLES = [
   "@lorereloaded",                // Lore Reloaded
   "@arealknowitall",              // Mr. Know-It-All (no articles yet; appears when his feed fills)
   "@coltonogburnchannel",         // Colton Ogburn
+  "@everythingalways",            // Everything Always
 ];
 export const APPROVED = process.env.SUBPLOT_APPROVED_ONLY ? APPROVED_HANDLES : null;
 

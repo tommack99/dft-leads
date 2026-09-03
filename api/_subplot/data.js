@@ -247,7 +247,24 @@ async function load() {
     chosen.push(t); t.items.forEach(id => used.add(id));
     if (chosen.length === 3) break;
   }
-  return { arts, panel, threads: chosen, subjects, avatars: av, loadedAt: new Date().toISOString() };
+  // Evergreen picks. A third of the site comes from the evergreen feeds: lore, trivia and
+  // explainers that never enter a thread (not recent) and sink out of the wire (not new), but
+  // don't date. Surface them deliberately instead: one article per creator, rotated every six
+  // hours so the shelf changes through the day, and rendered without dates.
+  const SLOT = Math.floor(Date.now() / (6 * 3600e3));
+  const hash = str => { let h = 0; for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0; return Math.abs(h); };
+  const everBy = new Map();
+  for (const a of arts) {
+    if (!a.evergreen || a.w < 400) continue;
+    const l = everBy.get(a.c) || []; l.push(a); everBy.set(a.c, l);
+  }
+  const evergreen = [...everBy.values()]
+    .map(list => list[SLOT % list.length])
+    .sort((x, y) => hash(x.id + SLOT) - hash(y.id + SLOT))
+    .slice(0, 5)
+    .map(a => a.id);
+
+  return { arts, panel, threads: chosen, subjects, avatars: av, evergreen, loadedAt: new Date().toISOString() };
 }
 
 export async function getData() {

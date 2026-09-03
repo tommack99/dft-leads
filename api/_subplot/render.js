@@ -97,6 +97,17 @@ body[data-ads="off"] .ad{display:none}
 .band .cta,.joinhero .cta,.submit,.nav a.join{border-radius:999px}
 .nav a.join{border:1.5px solid var(--orange);padding:.45rem 1rem;margin:.55rem 0 .55rem auto;border-bottom-width:1.5px}
 .nav a.join:hover{background:var(--orange);color:#fff}
+.evbox .note{margin:.1rem 0 1rem;font-size:.78rem;line-height:1.5}
+.evlist{list-style:none;margin:0;padding:0}
+.evlist li{border-top:1px solid var(--rule)}
+.evlist li:first-child{border-top:0}
+.evlist a{display:grid;grid-template-columns:auto 1fr;gap:.85rem;align-items:start;padding:.85rem 0;text-decoration:none;color:inherit}
+.evlist a:hover b{color:var(--blue)}
+.evthumb{display:block;width:64px;aspect-ratio:16/9;border-radius:8px;overflow:hidden;background:var(--paper-2);border:1.5px solid var(--ink)}
+.evthumb img{display:block;width:100%;height:100%;object-fit:cover}
+.evtx{min-width:0;display:flex;flex-direction:column;gap:.3rem}
+.evtx b{font-family:var(--disp);font-weight:600;font-size:.84rem;line-height:1.32;letter-spacing:-.01em}
+.evtx span{font-family:var(--mono);font-size:.68rem;color:var(--ink-3)}
 .ad.live{border:0;background:none;min-height:0;display:block}
 .mono{border-radius:8px;overflow:hidden}
 .mono.av{background:var(--paper-2)}
@@ -289,7 +300,22 @@ function wire(list, base) {
     </ul></section>`).join("");
 }
 
-function rail(panel, base) {
+function evergreenBox(data, base) {
+  const list = (data.evergreen || []).map(id => data.arts.find(a => a.id === id)).filter(Boolean);
+  if (list.length < 3) return "";
+  return `
+      <div class="box evbox">
+        <h2>Always worth reading</h2>
+        <p class="note">Lore, trivia and explainers that don&rsquo;t date. Rotates through the day.</p>
+        <ul class="evlist">${list.map(a => `
+          <li><a href="${base}/a/${esc(a.id)}">
+            <span class="evthumb"><img src="${esc(a.thumbSmall)}" alt="" loading="lazy" decoding="async"></span>
+            <span class="evtx"><b>${esc(a.h)}</b><span>${esc(a.c)}</span></span></a></li>`).join("")}
+        </ul>
+      </div>`;
+}
+
+function rail(panel, base, data) {
   return `
     <aside class="rail" id="panel">
       <div class="box">
@@ -310,6 +336,7 @@ function rail(panel, base) {
           <li>Corrections: <span style="color:var(--ink)">corrections@subplot.tv</span></li>
         </ul>
       </div>
+      ${data ? evergreenBox(data, base) : ""}
       ${adSlot("front-rail", "300×600", "-", "ad-rail ad-frontrail")}
     </aside>`;
 }
@@ -383,7 +410,7 @@ export function homePage(data, base, section = "all", page = 1) {
     <section class="grid3">${seconds.map(a => card(a, base)).join("")}</section>`}
     <div class="cols">
       <div>${wire(wireList, base)}${pager}</div>
-      ${rail(data.panel, base)}
+      ${rail(data.panel, base, data)}
     </div>
     ${band(base)}
   </div>
@@ -451,7 +478,7 @@ export function creatorPage(handle, data, base) {
     <section class="grid3">${list.slice(0, 3).map(a => card(a, base)).join("")}</section>
     <div class="cols">
       <div>${wire(list.slice(3), base)}</div>
-      ${rail(data.panel, base)}
+      ${rail(data.panel, base, data)}
     </div>
   </div>
 </main>`;
@@ -556,7 +583,7 @@ export function threadPage(sl, data, base) {
     <section class="grid3">${list.filter(a => a.w >= 400).slice(0, 3).map(a => card(a, base)).join("")}</section>
     <div class="cols">
       <div>${wire(list.filter(a => !(list.filter(x => x.w >= 400).slice(0, 3)).includes(a)), base)}</div>
-      ${rail(data.panel, base)}
+      ${rail(data.panel, base, data)}
     </div>
   </div>
 </main>`;

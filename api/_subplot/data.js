@@ -5,9 +5,22 @@
 const STORE = "https://api.apify.com/v2/key-value-stores/5yFLBuHJj59ySXY9e";
 const TTL_MS = 5 * 60 * 1000;
 
-// Creators allowed on the public site. null = everyone in the store (private preview).
-// At launch: set to the handles who have applied/agreed, e.g. ["@heavyspoilers", "@newrockstars"].
-export const APPROVED = null;
+// Creators who have agreed to SUBPLOT, from the Article Rights board (monday 18427697857,
+// "Subplot" column) plus the SubPlotter Applications board. Handles are the REAL YouTube
+// handles, which are not always what the article store records.
+//
+// The list is only enforced when SUBPLOT_APPROVED_ONLY is set in the environment. While the
+// site is a private preview it shows everything; setting that env var is the single switch
+// that makes it launch-ready, with no deploy needed.
+export const APPROVED_HANDLES = [
+  "@breakdownsandblockbusters",   // Breakdowns & Blockbusters
+  "@thekristianharloff",          // Kristian Harloff
+  "@chaosgaming",                 // Chaos
+  "@chaostrektv",                 // ChaosTrek
+  "@wesnemo",                     // WesNemo
+  "@film_paradise",               // Film Paradise
+];
+export const APPROVED = process.env.SUBPLOT_APPROVED_ONLY ? APPROVED_HANDLES : null;
 
 export const slug = s => String(s).toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 

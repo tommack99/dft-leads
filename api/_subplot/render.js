@@ -2,6 +2,7 @@
 import { CSS } from "./css.js";
 import { CATS, slug } from "./data.js";
 import { ch, CAST_META } from "./cast.js";
+import { headTag as adHead, unit as adUnit } from "./ads.js";
 
 const BRAND = "SUBPLOT";
 const TAG = "The story under the story. Breakdowns, theories, reactions, opinions, reviews and lore from the people who actually watch it.";
@@ -20,6 +21,8 @@ const slugH = h => h.replace(/^@/, "");
 // ---- Ad slots. Placeholders for now; each becomes one network tag at launch.
 // Names are stable so reports (and the 50/50 attribution by page) can key on them.
 export function adSlot(name, desktop, mobile = desktop, extraClass = "") {
+  const live = adUnit(name, extraClass);
+  if (live) return live;
   return `<div class="ad ${extraClass}" data-slot="${name}" data-desktop="${desktop}" data-mobile="${mobile}">
     <span class="ad-lbl">Ad</span><span class="ad-meta">${name} · ${desktop}${mobile !== desktop ? " / " + mobile : ""}</span></div>`;
 }
@@ -94,6 +97,7 @@ body[data-ads="off"] .ad{display:none}
 .band .cta,.joinhero .cta,.submit,.nav a.join{border-radius:999px}
 .nav a.join{border:1.5px solid var(--orange);padding:.45rem 1rem;margin:.55rem 0 .55rem auto;border-bottom-width:1.5px}
 .nav a.join:hover{background:var(--orange);color:#fff}
+.ad.live{border:0;background:none;min-height:0;display:block}
 .mono{border-radius:8px;overflow:hidden}
 .mono.av{background:var(--paper-2)}
 .mono.av img{width:100%;height:100%;object-fit:cover;display:block}
@@ -209,6 +213,7 @@ ${jsonld}
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Mono:wght@400;500&family=Mulish:wght@400;600;700&display=swap">
 <style>${CSS}${EXTRA_CSS}</style>
 <script defer src="/_vercel/insights/script.js"></script>
+${adHead()}
 </head>
 <body class="${bodyClass}">
 <header class="top">

@@ -5,6 +5,7 @@
 import { getData } from "./_subplot/data.js";
 import { homePage, articlePage, creatorPage, joinPage, aboutPage, threadPage, rssFeed, notFound, legalPage } from "./_subplot/render.js";
 import { CAST } from "./_subplot/cast.js";
+import { adsTxt } from "./_subplot/ads.js";
 import { OG_PNG, APPLE_PNG } from "./_subplot/images.js";
 
 const CATS = new Set(["marvel", "dc", "scifi", "gaming", "anime", "screen"]);
@@ -31,6 +32,13 @@ export default async function handler(req, res) {
   if (path === "/favicon.svg") { res.setHeader("Content-Type", "image/svg+xml"); res.setHeader("Cache-Control", "public, max-age=86400"); return res.status(200).send(CAST.favicon); }
   if (path === "/apple-touch-icon.png") { res.setHeader("Content-Type", "image/png"); res.setHeader("Cache-Control", "public, max-age=86400"); return res.status(200).send(Buffer.from(APPLE_PNG, "base64")); }
   if (path === "/og.png") { res.setHeader("Content-Type", "image/png"); res.setHeader("Cache-Control", "public, max-age=86400"); return res.status(200).send(Buffer.from(OG_PNG, "base64")); }
+  if (path === "/ads.txt") {
+    res.setHeader("Content-Type", "text/plain");
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    const t = adsTxt();
+    if (!t) return res.status(404).send("");
+    return res.status(200).send(t);
+  }
   if (path === "/robots.txt") {
     res.setHeader("Content-Type", "text/plain");
     res.setHeader("Cache-Control", "public, max-age=3600");

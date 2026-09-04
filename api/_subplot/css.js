@@ -322,6 +322,8 @@ body.grid .wrap{max-width:none;padding:0}
 /* footer */
 .pfoot{border-top:1px solid var(--rule);padding:2rem clamp(1.1rem,3vw,2rem);max-width:96rem;margin:0 auto;display:flex;flex-wrap:wrap;gap:1rem;justify-content:space-between;font-size:.82rem;color:var(--ink-3)}
 .pfoot a{color:var(--ink-2);text-decoration:none;margin-left:1.1rem}
+/* editorial ornaments that read as a mistake once the platform chrome is around them */
+body.grid .joinhero{border-bottom:0}
 @media(max-width:1080px){ .pshell{grid-template-columns:1fr} .prail{display:none} .pgrid{grid-template-columns:repeat(2,1fr)} .phero{grid-template-columns:1fr} .pcrs{grid-template-columns:repeat(2,1fr)} }
 @media(max-width:640px){ .pgrid{grid-template-columns:1fr} .psearch{display:none} }
 `;

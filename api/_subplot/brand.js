@@ -34,7 +34,7 @@ export const BRANDS = {
   },
   wordie: {
     key: "wordie",
-    name: "WORDIE",
+    name: "Wordie",
     domain: "wordie.media",
     tagline: "Every video, in writing. Your words, your name, your channel - just for the people who would rather read.",
     memberWord: "Wordie",

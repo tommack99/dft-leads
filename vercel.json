@@ -79,7 +79,7 @@
       "has": [
         {
           "type": "host",
-          "value": "wordie.tv"
+          "value": "wordie.media"
         }
       ],
       "destination": "/api/apply"
@@ -89,7 +89,7 @@
       "has": [
         {
           "type": "host",
-          "value": "wordie.tv"
+          "value": "wordie.media"
         }
       ],
       "destination": "/api/subplot?path=:path"

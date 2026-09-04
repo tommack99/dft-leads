@@ -1,7 +1,7 @@
 // SUBPLOT page templates. Pure functions: (data, base) -> HTML string.
 import { CSS, GRID_CSS } from "./css.js";
 import { CATS, slug, slugFor } from "./data.js";
-import { brand, brandCss, member, joinCta, mail, siteUrl, hasCast, audience, fontHref, hasShareCard, layout, wordmark } from "./brand.js";
+import { brand, brandCss, member, joinCta, mail, siteUrl, hasCast, audience, taking, fontHref, hasShareCard, layout, wordmark } from "./brand.js";
 import { ch, CAST_META } from "./cast.js";
 import { headTag as adHead, unit as adUnit } from "./ads.js";
 
@@ -671,7 +671,7 @@ export function joinPage(data, base) {
       <div class="aside"><h2>Apply with your YouTube handle.</h2>
         <p>That&rsquo;s all we really need - we look at the channel, the captions and the kind of videos you make, and if it&rsquo;s a fit we start.</p>
         <p>The terms are the same for everyone and they&rsquo;re on the form. Applying is the agreement, so there&rsquo;s nothing to negotiate, nothing to sign later, and nothing hidden.</p>
-        <p>We&rsquo;re taking film, TV, games, comics, anime and everything adjacent. Long-form, reactions, breakdowns, lore, interviews.</p></div>
+        <p>${taking()}</p></div>
       <form class="form" id="applyform" method="post" action="${base}/api/apply">
         <div class="field"><label for="f-handle">YouTube handle</label>
           <div class="handle"><span>youtube.com/</span><input id="f-handle" name="handle" placeholder="@yourchannel" required autocomplete="off"></div></div>

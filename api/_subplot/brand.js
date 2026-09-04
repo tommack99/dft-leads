@@ -24,6 +24,7 @@ export const BRANDS = {
     memberWord: "SubPlotter",
     signup: "curated",              // approved list in CREATORS, edited by us
     audience: "about film, TV, games, comics or anime",
+    taking: "We&rsquo;re taking film, TV, games, comics, anime and everything adjacent. Long-form, reactions, breakdowns, lore, interviews.",
     cast: true,                     // the seven characters in cast.js
     accent: null,                   // null = the default palette in css.js
     type: null,                     // null = the default type in css.js
@@ -40,6 +41,7 @@ export const BRANDS = {
     memberWord: "Wordie",
     signup: "open",                 // OAuth proves the channel, checks and a human gate it
     audience: "on any subject",     // open platform: not an entertainment site
+    taking: "We&rsquo;re taking channels on any subject &mdash; tech, travel, finance, fitness, food, history, gaming, film, whatever you make. If there are words in it, it works.",
     cast: false,                    // typographic, no characters - Tom's call, 4 Sep 2026
     accent: { ink: "#12121C", tint: "#0F7B6C", tintInk: "#0A5A4E", wash: "#E6F4F1", warm: "#F0A202" },
     type: {
@@ -78,6 +80,7 @@ export const mail = box => `${box}@${active.domain}`;          // hello@ / corre
 export const siteUrl = () => `https://${active.domain}`;
 export const hasCast = () => active.cast !== false;
 export const audience = () => active.audience;
+export const taking = () => active.taking;
 export const faviconSvg = () => active.favicon;              // null = fall back to the cast favicon
 export const assetKey = () => active.assets;                 // null = this brand has no card yet
 export const hasShareCard = () => !!active.assets;

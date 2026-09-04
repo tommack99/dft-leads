@@ -1,7 +1,7 @@
 // SUBPLOT monthly revenue statement.
 //
 // Pulls last month's AdSense earnings broken down by URL channel, maps each channel to the
-// creator whose articles sit under that URL prefix, applies the 50/50 split, and writes one
+// creator whose articles sit under that URL prefix, applies the 60/40 split, and writes one
 // row per creator onto Platform Revenue - Money In (all platforms), the same board MSN and
 // Meta already report into.
 //
@@ -24,7 +24,7 @@ import { archiveMonth } from "./_subplot/archive.js";
 
 const BOARD = 18427528293;
 const PLATFORM = "SUBPLOT";
-const CREATOR_SHARE = 0.5;
+const CREATOR_SHARE = 0.6;                      // 60% to the creator, flat, no fee
 const HOUSE_ROW = "House (non-article pages)";
 
 const COL = {

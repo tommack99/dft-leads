@@ -30,7 +30,7 @@ const mark = (name, url) => url
 const slugH = h => h.replace(/^@/, "");
 
 // ---- Ad slots. Placeholders for now; each becomes one network tag at launch.
-// Names are stable so reports (and the 50/50 attribution by page) can key on them.
+// Names are stable so reports (and the per-creator attribution by page) can key on them.
 export function adSlot(name, desktop, mobile = desktop, extraClass = "") {
   const live = adUnit(name, extraClass);
   if (live) return live;
@@ -366,7 +366,7 @@ const band = base => `
       ${hasCast() ? `<div class="mascot">${ch("reactor", 120)}</div>` : ""}
       <div class="band-body">
         <div class="band-top"><h2>Make videos? Get read.</h2><a class="cta" href="${base}/join">${joinCta()}</a></div>
-        <p>${BRAND_()} turns the videos you already make into articles, under your name, with a link back to every one.<br>We split what they earn down the middle. Apply with your YouTube handle.</p>
+        <p>${BRAND_()} turns the videos you already make into articles, under your name, with a link back to every one.<br>You keep 60% of what they earn. Apply with your YouTube handle.</p>
       </div>
     </section>`;
 
@@ -537,7 +537,7 @@ export function joinPage(data, base) {
       <div><h3>What you get</h3><ul>
         <li><b>An audience on top of your views, not instead of them.</b> Google and Discover surface articles, so these are readers your video wasn&rsquo;t going to reach - and every article points them at the video.</li>
         <li><b>A link back on every piece.</b> Each article points at the video it came from.</li>
-        <li><b>Half of what your articles earn.</b> A straight 50/50 split. No fees, no minimum term, no exclusivity. Paid monthly once your balance clears $50.</li>
+        <li><b>60% of what your articles earn.</b> Sixty to you, forty to us. No fees, no minimum term, no exclusivity. Paid monthly once your balance clears $50.</li>
         <li><b>Company.</b> Your take sits alongside other creators covering the same thing - see Threads on the front page.</li></ul></div>
       <div><h3>What we ask</h3><ul>
         <li><b>The videos are yours.</b> You own them, or hold the rights to have them adapted.</li>
@@ -564,7 +564,7 @@ export function joinPage(data, base) {
             <select id="f-size" name="size"><option value="">Rather not say</option><option>Under 10k</option><option>10k &ndash; 100k</option><option>100k &ndash; 500k</option><option>500k &ndash; 1M</option><option>Over 1M</option></select></div>
         </div>
         <div class="terms"><span class="lbl">Standard terms</span>
-          <p><b>50 / 50</b> on everything your articles earn &middot; non-exclusive, so run them anywhere else you like &middot; no fees, no minimum term &middot; leave any time and we take the articles down &middot; paid monthly from $50.</p></div>
+          <p><b>60% to you</b> on everything your articles earn &middot; non-exclusive, so run them anywhere else you like &middot; no fees, no minimum term &middot; leave any time and we take the articles down &middot; paid monthly from $50.</p></div>
         <label class="consent"><input type="checkbox" name="consent" value="yes" required><span>I own these videos, or hold the rights to have them adapted. <b>By applying I give ${BRAND_()} permission to turn my public videos into articles, drafted with AI from my transcripts, and publish them under my handle on the standard terms above and the <a href="${base}/creators" target="_blank" style="color:var(--blue)">Creator Agreement</a>.</b> I can withdraw at any time and the articles come down.</span></label>
         <input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
         <input type="hidden" name="source" id="f-source" value="direct">
@@ -650,7 +650,7 @@ export function aboutPage(data, base) {
     <aside class="aboutrail">
       <div class="box">
         <h2>Want in?</h2>
-        <p class="note">Make videos ${audience()}? Your videos, in writing, under your name - and half of what they earn.</p>
+        <p class="note">Make videos ${audience()}? Your videos, in writing, under your name - and 60% of what they earn.</p>
         <div style="padding:0 1.3rem 1.2rem"><a class="cta" href="${base}/join">${joinCta()}</a></div>
       </div>
       <div class="box">

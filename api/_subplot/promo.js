@@ -18,7 +18,7 @@ export const PROMO = [
     id: "money",
     kicker: "Write for SUBPLOT",
     head: "Your videos are already articles. They just haven't been written yet.",
-    line: "We turn them into pieces under your name and split what they earn 50/50.",
+    line: "We turn them into pieces under your name, and you keep 60% of what they earn.",
     cta: "See the terms",
     face: "subplot", wash: "#EFEEFD", edge: "#2218E8",
   },
@@ -99,7 +99,7 @@ export function joinBlock(base) {
     <div class="jtx">
       <span class="pk">Write for SUBPLOT</span>
       <h2>Make videos? Your next one could be an article here.</h2>
-      <p>We turn your videos into articles under your name, linked back to the original. Fifty-fifty on what they earn, non-exclusive, no fees, and you can leave whenever you like.</p>
+      <p>We turn your videos into articles under your name, linked back to the original. You keep 60% of what they earn, non-exclusive, no fees, and you can leave whenever you like.</p>
       <a class="jcta" href="${base}/join?v=footer">Become a SubPlotter &rarr;</a>
     </div>
   </section>`;

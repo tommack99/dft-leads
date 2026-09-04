@@ -246,7 +246,7 @@ function pcard(data, a, base) {
     </a>`;
 }
 
-function platformShell({ base, head, body, current, footNote }) {
+function platformShell({ base, head, body, current, footNote, searchQ }) {
   const w = wordmark() || { head: BRAND_(), tail: "" };
   const nav = [
     ["", "Home", "M3 10.5 12 3l9 7.5V21H3z"],
@@ -256,7 +256,7 @@ function platformShell({ base, head, body, current, footNote }) {
 <body class="grid">
 <header class="pbar"><div class="pbar-in">
   <a class="plogo" href="${base}/">${hasCast() ? "" : BIRDIE_SM}<b>${esc(w.head)}<i>${esc(w.tail)}</i></b></a>
-  <form class="psearch" action="${base}/" method="get"><input name="q" placeholder="Search creators, shows, franchises" aria-label="Search"></form>
+  <form class="psearch" action="${base}/" method="get"><input name="q" value="${esc(searchQ || "")}" placeholder="Search creators, shows, franchises" aria-label="Search"></form>
   <a class="pjoin" href="${base}/join">${joinCta()}</a>
 </div></header>
 <div class="pshell">
@@ -274,7 +274,7 @@ function platformShell({ base, head, body, current, footNote }) {
 </body></html>`;
 }
 
-function shell({ base, title, desc, body, current = "all", bodyClass = "", rule = "", trending = [], jsonld = "" }) {
+function shell({ base, title, desc, body, current = "all", bodyClass = "", rule = "", trending = [], jsonld = "", searchQ = "" }) {
   const nav = [["all", "All"], ...Object.entries(CATS)].map(([k, n]) =>
     `<a href="${base}/${k === "all" ? "" : "s/" + k}" ${k === current ? 'aria-current="true"' : ""}>${esc(n)}</a>`).join("");
   const head = `<!doctype html>
@@ -302,7 +302,7 @@ ${jsonld}
 ${adHead()}
 </head>`;
   // A layout:"grid" brand gets the platform chrome instead of the masthead and wire.
-  if (layout() === "grid") return platformShell({ base, head, body, current, footNote: "" });
+  if (layout() === "grid") return platformShell({ base, head, body, current, footNote: "", searchQ });
   return `${head}
 <body class="${bodyClass}">
 <header class="top">
@@ -442,8 +442,18 @@ function pickLead(list, data) {
 const fmtViews = n => n >= 1e6 ? (n / 1e6).toFixed(n >= 1e7 ? 0 : 1) + "M" : n >= 1e3 ? Math.round(n / 1e3) + "K" : String(n);
 // The grid front page: one hero, two stacked seconds, a card grid, then a creator strip.
 // Image-led, but every headline is complete and carries its standfirst.
-function gridHome(data, base, section, page) {
-  const list = data.arts.filter(a => section === "all" || a.k === section);
+function gridHome(data, base, section, page, q = "") {
+  // A search box that does nothing is worse than no search box.
+  const needle = q.toLowerCase();
+  const hit = a => !needle || [a.h, a.s, a.b, a.c].some(v => String(v || "").toLowerCase().includes(needle));
+  const list = data.arts.filter(a => (section === "all" || a.k === section) && hit(a));
+  if (needle) {
+    const found = list.slice(0, 60);
+    return shell({ base, current: section, searchQ: q, title: `${esc(q)} - ${BRAND_()}`, desc: `Search results for ${q}.`,
+      body: `<div class="psech"><h2>${found.length} result${found.length === 1 ? "" : "s"} for &ldquo;${esc(q)}&rdquo;</h2><a href="${base}/">Clear &rarr;</a></div>
+        ${found.length ? `<section class="pgrid">${found.map(a => pcard(data, a, base)).join("")}</section>`
+                       : `<p class="pstand">Nothing matched. Try a creator name, a franchise, or part of a headline.</p>`}` });
+  }
   if (!list.length) return shell({ base, current: section, title: `${BRAND_()} - ${CATS[section] || "Home"}`, desc: TAG_(),
     body: `<div class="psech"><h2>Nothing here yet</h2></div><p class="pstand">No articles in this section so far. ${joinCta()} and yours could be the first.</p>` });
 
@@ -499,8 +509,8 @@ function gridHome(data, base, section, page) {
     .replace('<span id="panelcount-slot"></span>', "");
 }
 
-export function homePage(data, base, section = "all", page = 1) {
-  if (layout() === "grid") return gridHome(data, base, section, page);
+export function homePage(data, base, section = "all", page = 1, q = "") {
+  if (layout() === "grid") return gridHome(data, base, section, page, q);
   const list = data.arts.filter(a => section === "all" || a.k === section);
   if (!list.length) return shell({ base, title: `${BRAND_()} - ${CATS[section] || "Front Page"}`, desc: TAG_(), current: section,
     body: `<main class="homeview"><div class="wrap"><div class="emptystate">${ch("reactor", 150)}<p class="empty">Nothing in this section yet - the Reactor is as surprised as you are.</p></div></div></main>` });

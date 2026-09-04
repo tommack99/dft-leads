@@ -1,7 +1,7 @@
 // SUBPLOT page templates. Pure functions: (data, base) -> HTML string.
 import { CSS, GRID_CSS } from "./css.js";
-import { CATS, slug, slugFor } from "./data.js";
-import { brand, brandCss, member, joinCta, mail, siteUrl, hasCast, audience, taking, fontHref, hasShareCard, layout, wordmark } from "./brand.js";
+import { cats, slug, slugFor } from "./data.js";
+import { brand, brandCss, member, joinCta, mail, siteUrl, hasCast, audience, taking, fontHref, hasShareCard, layout, wordmark, searchHint } from "./brand.js";
 import { ch, CAST_META } from "./cast.js";
 import { headTag as adHead, unit as adUnit } from "./ads.js";
 
@@ -256,13 +256,13 @@ function platformShell({ base, head, body, current, footNote, searchQ }) {
 <body class="grid">
 <header class="pbar"><div class="pbar-in">
   <a class="plogo" href="${base}/">${hasCast() ? "" : BIRDIE_SM}<b>${esc(w.head)}<i>${esc(w.tail)}</i></b></a>
-  <form class="psearch" action="${base}/" method="get"><input name="q" value="${esc(searchQ || "")}" placeholder="Search creators, shows, franchises" aria-label="Search"></form>
+  <form class="psearch" action="${base}/" method="get"><input name="q" value="${esc(searchQ || "")}" placeholder="${esc(searchHint())}" aria-label="Search"></form>
   <a class="pjoin" href="${base}/join">${joinCta()}</a>
 </div></header>
 <div class="pshell">
   <aside class="prail">
     ${nav.map(([href, label, d]) => `<a class="pnav" href="${base}/${href}" ${label.toLowerCase() === current ? 'aria-current="true"' : ""}><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg><span>${label}</span></a>`).join("")}
-    ${Object.entries(CATS).length ? `<h4>Sections</h4>${Object.entries(CATS).map(([k, n]) => `<a class="pnav" href="${base}/s/${k}" ${k === current ? 'aria-current="true"' : ""}><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8"/></svg><span>${esc(n)}</span></a>`).join("")}` : ""}
+    ${Object.entries(cats()).length ? `<h4>Sections</h4>${Object.entries(cats()).map(([k, n]) => `<a class="pnav" href="${base}/s/${k}" ${k === current ? 'aria-current="true"' : ""}><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8"/></svg><span>${esc(n)}</span></a>`).join("")}` : ""}
     <div class="pcta"><b>Make videos?</b><p>Your uploads become articles under your name. You write nothing, and we split the ad revenue 50/50.</p><a href="${base}/join">${joinCta()}</a></div>
   </aside>
   <main class="pmain">${body}</main>
@@ -275,7 +275,7 @@ function platformShell({ base, head, body, current, footNote, searchQ }) {
 }
 
 function shell({ base, title, desc, body, current = "all", bodyClass = "", rule = "", trending = [], jsonld = "", searchQ = "" }) {
-  const nav = [["all", "All"], ...Object.entries(CATS)].map(([k, n]) =>
+  const nav = [["all", "All"], ...Object.entries(cats())].map(([k, n]) =>
     `<a href="${base}/${k === "all" ? "" : "s/" + k}" ${k === current ? 'aria-current="true"' : ""}>${esc(n)}</a>`).join("");
   const head = `<!doctype html>
 <html lang="en">
@@ -328,7 +328,7 @@ ${body}
   <div class="wrap foot-in">
     <div><p class="fm">${art("subplot", 44)}${BRAND_()}</p><p>${esc(TAG_())}</p></div>
     <div><h3>About</h3><ul><li><a href="${base}/join">${joinCta()}</a></li><li><a href="${base}/about">Who we are</a></li><li><a href="${base}/about#standards">Editorial standards</a></li><li><a href="${base}/about#ai">How we use AI</a></li></ul></div>
-    <div><h3>Sections</h3><ul>${Object.entries(CATS).map(([k, n]) => `<li><a href="${base}/s/${k}">${esc(n)}</a></li>`).join("")}</ul></div>
+    <div><h3>Sections</h3><ul>${Object.entries(cats()).map(([k, n]) => `<li><a href="${base}/s/${k}">${esc(n)}</a></li>`).join("")}</ul></div>
     <div><h3>Contact</h3><p>${mail("hello")}</p><p>${mail("corrections")}</p><p class="legal"><a href="${base}/contact">Contact</a> &middot; <a href="${base}/terms">Terms</a> &middot; <a href="${base}/privacy">Privacy</a> &middot; <a href="${base}/creators">Creator agreement</a></p></div>
   </div>
   <div class="protolabel"><div class="wrap">Private preview &middot; not indexed &middot; articles read live from the production feed</div></div>
@@ -355,7 +355,7 @@ document.addEventListener('click', e => {
 const card = (a, base) => `
   <a class="card" href="${base}${artPath(a)}">
     <span class="thumb"><img alt="" loading="lazy" src="${esc(a.thumbSmall)}"></span>
-    <span class="kicker">${esc(CATS[a.k])}</span>
+    <span class="kicker">${esc(cats()[a.k])}</span>
     <span class="headline">${esc(a.h)}</span>
     <span class="who"><b>${esc(a.c)}</b> · ${a.rt} min</span>
   </a>`;
@@ -372,7 +372,7 @@ function wire(list, base) {
       <li><a href="${base}${artPath(a)}">
         <span class="wthumb"><img src="${esc(a.thumbSmall)}" alt="" loading="lazy" decoding="async"></span>
         <span class="txt"><h3>${esc(a.h)}</h3>
-          <span class="sub"><b>${esc(a.c)}</b><span>${esc(CATS[a.k])}</span></span></span>
+          <span class="sub"><b>${esc(a.c)}</b><span>${esc(cats()[a.k])}</span></span></span>
         <span class="rt">${a.rt} min</span>
       </a></li>`).join("")}
     </ul></section>`).join("");
@@ -442,6 +442,34 @@ function pickLead(list, data) {
 const fmtViews = n => n >= 1e6 ? (n / 1e6).toFixed(n >= 1e7 ? 0 : 1) + "M" : n >= 1e3 ? Math.round(n / 1e3) + "K" : String(n);
 // The grid front page: one hero, two stacked seconds, a card grid, then a creator strip.
 // Image-led, but every headline is complete and carries its standfirst.
+// The front page before a single article exists. Shown only when the store is completely
+// empty, which for an open platform means "not launched yet" rather than "something broke".
+function launchState(base) {
+  const secs = Object.entries(cats());
+  return shell({ base, current: "all", title: `${BRAND_()} - ${TAG_().split(".")[0]}`, desc: TAG_(),
+    body: `<section class="plaunch">
+      <span class="pkick">Open for creators</span>
+      <h1>The first articles are being written by the people who join now.</h1>
+      <p class="plead">${BRAND_()} turns a YouTube video into an article under the creator&rsquo;s own name.
+        Nothing is published here until a creator signs up and asks for it, so the front page stays
+        empty until the first of them does.</p>
+      <div class="plaunch-cta">
+        <a class="pbtn" href="${base}/join">${joinCta()}</a>
+        <a class="pbtn-2" href="${base}/about">How it works</a>
+      </div>
+      <ul class="pproof">
+        <li><b>50/50</b><span>of the ad revenue your articles earn</span></li>
+        <li><b>0 words</b><span>you write &mdash; the article comes from your video</span></li>
+        <li><b>Non-exclusive</b><span>your videos stay entirely yours</span></li>
+      </ul>
+      <div class="pscope">
+        <h2>What we&rsquo;re taking</h2>
+        <p class="pstand">${taking()}</p>
+        <div class="pchips">${secs.map(([k, n]) => `<span>${esc(n)}</span>`).join("")}</div>
+      </div>
+    </section>` });
+}
+
 function gridHome(data, base, section, page, q = "") {
   // A search box that does nothing is worse than no search box.
   const needle = q.toLowerCase();
@@ -454,7 +482,12 @@ function gridHome(data, base, section, page, q = "") {
         ${found.length ? `<section class="pgrid">${found.map(a => pcard(data, a, base)).join("")}</section>`
                        : `<p class="pstand">Nothing matched. Try a creator name, a franchise, or part of a headline.</p>`}` });
   }
-  if (!list.length) return shell({ base, current: section, title: `${BRAND_()} - ${CATS[section] || "Home"}`, desc: TAG_(),
+  // Nothing published anywhere yet is a different page from an empty section. A brand-new
+  // open platform should read as new, not as broken, so the front page says what it is and
+  // what it wants instead of apologising for having no articles.
+  if (!data.arts.length && section === "all") return launchState(base);
+
+  if (!list.length) return shell({ base, current: section, title: `${BRAND_()} - ${cats()[section] || "Home"}`, desc: TAG_(),
     body: `<div class="psech"><h2>Nothing here yet</h2></div><p class="pstand">No articles in this section so far. ${joinCta()} and yours could be the first.</p>` });
 
   const lead = pickLead(list, data);
@@ -478,12 +511,12 @@ function gridHome(data, base, section, page, q = "") {
   }).join("");
 
   const body = `
-    ${page > 1 ? `<div class="psech"><h2>${section === "all" ? "More stories" : "More in " + esc(CATS[section])}</h2><span class="hd">page ${page} of ${pages}</span></div>` : `
+    ${page > 1 ? `<div class="psech"><h2>${section === "all" ? "More stories" : "More in " + esc(cats()[section])}</h2><span class="hd">page ${page} of ${pages}</span></div>` : `
     <section class="phero">
       <a class="pbig" href="${base}${artPath(lead)}">
         ${thumbOf(lead)}
         <span class="pbigtxt">
-          <span class="pkick">${esc(CATS[lead.k] || "Latest")}</span>
+          <span class="pkick">${esc(cats()[lead.k] || "Latest")}</span>
           <h2>${esc(lead.h)}</h2>
           ${lead.s ? `<p class="pstand">${esc(lead.s)}</p>` : ""}
           ${pby(data, lead, lead.views ? `${fmtViews(lead.views)} views` : "")}
@@ -504,7 +537,7 @@ function gridHome(data, base, section, page, q = "") {
     <section class="pcrs">${strip}</section>` : ""}`;
 
   return shell({ base, current: section, body,
-    title: section === "all" ? `${BRAND_()} - ${TAG_().split(".")[0]}` : `${CATS[section]} - ${BRAND_()}`,
+    title: section === "all" ? `${BRAND_()} - ${TAG_().split(".")[0]}` : `${cats()[section]} - ${BRAND_()}`,
     desc: TAG_() })
     .replace('<span id="panelcount-slot"></span>', "");
 }
@@ -512,7 +545,7 @@ function gridHome(data, base, section, page, q = "") {
 export function homePage(data, base, section = "all", page = 1, q = "") {
   if (layout() === "grid") return gridHome(data, base, section, page, q);
   const list = data.arts.filter(a => section === "all" || a.k === section);
-  if (!list.length) return shell({ base, title: `${BRAND_()} - ${CATS[section] || "Front Page"}`, desc: TAG_(), current: section,
+  if (!list.length) return shell({ base, title: `${BRAND_()} - ${cats()[section] || "Front Page"}`, desc: TAG_(), current: section,
     body: `<main class="homeview"><div class="wrap"><div class="emptystate">${ch("reactor", 150)}<p class="empty">Nothing in this section yet - the Reactor is as surprised as you are.</p></div></div></main>` });
   const lead = pickLead(list, data); const rest = list.filter(a => a !== lead);
   const seconds = page === 1 ? rest.filter(a => a.w >= 400).slice(0, 3) : [];
@@ -528,11 +561,11 @@ export function homePage(data, base, section = "all", page = 1, q = "") {
   const body = `
 <main class="homeview">
   <div class="wrap">
-    ${page > 1 ? `<div class="rule-h" style="margin-top:2rem"><h2>${section === "all" ? "Older stories" : "Older in " + esc(CATS[section])}</h2><span class="note">page ${page} of ${pages}</span></div>` : `
+    ${page > 1 ? `<div class="rule-h" style="margin-top:2rem"><h2>${section === "all" ? "Older stories" : "Older in " + esc(cats()[section])}</h2><span class="note">page ${page} of ${pages}</span></div>` : `
     <a class="lead" href="${base}${artPath(lead)}">
       <span class="plate"><img alt="" src="${esc(lead.thumb)}" onerror="this.onerror=null;this.src='${esc(lead.thumbSmall.replace("mqdefault","hqdefault"))}'"></span>
       <span class="leadgrid">
-        <span><span class="kicker">${esc(CATS[lead.k])}</span>
+        <span><span class="kicker">${esc(cats()[lead.k])}</span>
           <h2 class="headline" style="margin-top:.45rem">${esc(lead.h)}</h2></span>
         <span class="leadside"><span class="dek">${esc(lead.s)}</span>
           <span class="leadmeta"><span class="who"><b>${esc(lead.c)}</b></span>
@@ -553,7 +586,7 @@ export function homePage(data, base, section = "all", page = 1, q = "") {
         </section>`).join("")}
       </div>
     </section>` : ""}
-    <div class="rule-h"><h2>Latest${section === "all" ? " across the network" : " in " + esc(CATS[section])}</h2><span class="note">${list.length} stories</span></div>
+    <div class="rule-h"><h2>Latest${section === "all" ? " across the network" : " in " + esc(cats()[section])}</h2><span class="note">${list.length} stories</span></div>
     <section class="grid3">${seconds.map(a => card(a, base)).join("")}</section>`}
     <div class="cols">
       <div>${wire(wireList, base)}${pager}</div>
@@ -562,7 +595,7 @@ export function homePage(data, base, section = "all", page = 1, q = "") {
     ${band(base)}
   </div>
 </main>`;
-  return shell({ base, title: section === "all" ? `${BRAND_()}` : `${CATS[section]} - ${BRAND_()}`, desc: TAG_(), current: section, body, trending: data.threads })
+  return shell({ base, title: section === "all" ? `${BRAND_()}` : `${cats()[section]} - ${BRAND_()}`, desc: TAG_(), current: section, body, trending: data.threads })
     .replace('<span id="panelcount-slot"></span>', `<span>${data.panel.length} creators writing here</span>`);
 }
 
@@ -572,7 +605,7 @@ export function articlePage(a, data, base) {
   const thr = inThread ? inThread.items.filter(id => id !== a.id).map(id => data.arts.find(x => x.id === id)).filter(Boolean).filter(x => x.c !== a.c).slice(0, 3) : [];
   const jsonld = `<script type="application/ld+json">${JSON.stringify({
     "@context": "https://schema.org", "@type": "Article", headline: a.h, description: a.s,
-    datePublished: a.p, dateModified: a.p, image: [a.thumb], wordCount: a.w, articleSection: CATS[a.k], keywords: a.t.join(", "),
+    datePublished: a.p, dateModified: a.p, image: [a.thumb], wordCount: a.w, articleSection: cats()[a.k], keywords: a.t.join(", "),
     author: { "@type": "Person", name: a.b, alternateName: a.c, url: "https://www.youtube.com/" + a.c },
     publisher: { "@type": "Organization", name: BRAND_() },
     isBasedOn: "https://www.youtube.com/watch?v=" + a.v,
@@ -584,7 +617,7 @@ export function articlePage(a, data, base) {
     <a class="back" href="${base}/">&larr; Back to the front page</a>
     <div class="artwrap">
     <div class="artmain">
-      <span class="kicker">${esc(CATS[a.k])}</span>
+      <span class="kicker">${esc(cats()[a.k])}</span>
       <h1 class="headline">${esc(a.h)}</h1>
       <p class="dek">${esc(a.s)}</p>
       <div class="authorbar">${mark(a.b, data.avatars && data.avatars[a.c])}
@@ -740,7 +773,7 @@ export function threadPage(sl, data, base) {
 
 export function rssFeed(data, base) {
   const site = siteUrl() + base;
-  const items = data.arts.slice(0, 50).map(a => `<item><title>${esc(a.h)}</title><link>${site}${artPath(a)}</link><guid isPermaLink="true">${site}${artPath(a)}</guid><pubDate>${new Date(a.p).toUTCString()}</pubDate><dc:creator>${esc(a.c)}</dc:creator><category>${esc(CATS[a.k])}</category><description>${esc(a.s)}</description><enclosure url="${esc(a.thumb)}" type="image/jpeg" length="0"/></item>`).join("");
+  const items = data.arts.slice(0, 50).map(a => `<item><title>${esc(a.h)}</title><link>${site}${artPath(a)}</link><guid isPermaLink="true">${site}${artPath(a)}</guid><pubDate>${new Date(a.p).toUTCString()}</pubDate><dc:creator>${esc(a.c)}</dc:creator><category>${esc(cats()[a.k])}</category><description>${esc(a.s)}</description><enclosure url="${esc(a.thumb)}" type="image/jpeg" length="0"/></item>`).join("");
   return `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>${BRAND_()}</title><link>${site}/</link><description>${esc(TAG_())}</description><language>en</language><atom:link href="${site}/feed.xml" rel="self" type="application/rss+xml"/>${items}</channel></rss>`;
 }
 

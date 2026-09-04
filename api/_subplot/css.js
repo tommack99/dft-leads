@@ -322,6 +322,26 @@ body.grid .wrap{max-width:none;padding:0}
 /* footer */
 .pfoot{border-top:1px solid var(--rule);padding:2rem clamp(1.1rem,3vw,2rem);max-width:96rem;margin:0 auto;display:flex;flex-wrap:wrap;gap:1rem;justify-content:space-between;font-size:.82rem;color:var(--ink-3)}
 .pfoot a{color:var(--ink-2);text-decoration:none;margin-left:1.1rem}
+/* launch state - the front page before the first article exists */
+.plaunch{max-width:62rem;padding:clamp(3rem,8vw,6rem) 0 4rem}
+.plaunch .pkick{margin-bottom:1.4rem}
+.plaunch h1{font-family:var(--disp);font-size:clamp(1.95rem,4.4vw,3.15rem);line-height:1.1;letter-spacing:-.032em;font-weight:800;margin:0 0 1.3rem;max-width:17em}
+.plead{font-size:clamp(1rem,1.5vw,1.14rem);line-height:1.65;color:var(--ink-2);margin:0 0 2.3rem;max-width:44em}
+.plaunch-cta{display:flex;flex-wrap:wrap;gap:.85rem;margin-bottom:3.4rem}
+.pbtn{background:var(--tint);color:#fff;font-family:var(--disp);font-weight:700;font-size:.92rem;padding:.85rem 1.8rem;border-radius:999px;text-decoration:none}
+.pbtn:hover{background:var(--blue-ink)}
+.pbtn-2{border:1px solid var(--rule-2);color:var(--ink);font-family:var(--disp);font-weight:700;font-size:.92rem;padding:.85rem 1.6rem;border-radius:999px;text-decoration:none}
+.pbtn-2:hover{background:var(--paper-2)}
+.pproof{list-style:none;margin:0 0 3.6rem;padding:2rem 0 0;border-top:1px solid var(--rule);display:grid;grid-template-columns:repeat(3,1fr);gap:1.9rem}
+.pproof li{display:grid;gap:.4rem;align-content:start}
+.pproof b{font-family:var(--disp);font-size:1.5rem;letter-spacing:-.024em;color:var(--tint)}
+.pproof span{font-size:.9rem;line-height:1.55;color:var(--ink-2)}
+.pscope{border-top:1px solid var(--rule);padding-top:2rem}
+.pscope h2{font-family:var(--disp);font-size:1.16rem;letter-spacing:-.02em;margin:0 0 .7rem}
+.pscope .pstand{font-size:.95rem;line-height:1.6;color:var(--ink-2);margin:0 0 1.4rem;max-width:46em}
+.pchips{display:flex;flex-wrap:wrap;gap:.55rem}
+.pchips span{border:1px solid var(--rule);border-radius:999px;padding:.42rem 1rem;font-size:.85rem;color:var(--ink-2)}
+@media(max-width:720px){ .pproof{grid-template-columns:1fr;gap:1.4rem} }
 /* editorial ornaments that read as a mistake once the platform chrome is around them */
 body.grid .joinhero{border-bottom:0}
 @media(max-width:1080px){ .pshell{grid-template-columns:1fr} .prail{display:none} .pgrid{grid-template-columns:repeat(2,1fr)} .phero{grid-template-columns:1fr} .pcrs{grid-template-columns:repeat(2,1fr)} }

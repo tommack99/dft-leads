@@ -32,6 +32,29 @@ export const BRANDS = {
     layout: "editorial",            // lead story, wire list, rail
     wordmark: null,                 // null = the plain wordmark in css.js
     assets: "subplot",              // which pair in images.js
+    feedStore: "5yFLBuHJj59ySXY9e", // Apify KV store the publisher writes to
+    // How an article gets filed. Order matters - first hit wins - and `fallback` catches
+    // anything unmatched, so every article lands in a section that exists in `sections`.
+    topics: {
+      order: ["dc", "anime", "gaming", "marvel", "scifi"],
+      fallback: "screen",
+      kw: {
+        dc:     ["dc","batman","lanterns","green lantern","john stewart","superman","hal jordan","dark knight","the flash","wonder woman"],
+        anime:  ["dragon ball","goku","vegeta","ultra instinct","toonami","anime","one piece","naruto","jujutsu","demon slayer"],
+        gaming: ["gta","call of duty","elder scrolls","warhammer","grand theft auto","gaming","blood angels","miniature","police chase","outlaws","playstation","xbox","nintendo","ps5"],
+        marvel: ["marvel","mcu","deadpool","wolverine","avengers","doom","secret wars","scarlet witch","spider-man","vision","x-men","kang","loki","franklin richards","hugh jackman","ryan reynolds","robert downey","kevin feige","elizabeth olsen","cassandra nova","infinity stones","doomsday","hunter b-15","fantastic four"],
+        scifi:  ["star trek","star wars","stargate","voth","strange new worlds","prometheus","sci-fi","galaxy's edge","harry potter","ghosts","moaning myrtle","transformers","optimus","lord of the rings","dune","alien","predator"],
+      },
+    },
+    searchHint: "Search creators, shows, franchises",
+    sections: {                     // an entertainment site: six franchises
+      marvel: "Marvel",
+      dc: "DC",
+      scifi: "Sci-Fi & Fantasy",
+      gaming: "Gaming",
+      anime: "Anime",
+      screen: "Screen",
+    },
   },
   wordie: {
     key: "wordie",
@@ -54,6 +77,39 @@ export const BRANDS = {
     favicon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#0F7B6C"/><circle cx="24" cy="27" r="9.5" fill="#fff"/><circle cx="44" cy="27" r="9.5" fill="#fff"/><circle cx="25.8" cy="28.6" r="5.1" fill="#12121C"/><circle cx="45.8" cy="28.6" r="5.1" fill="#12121C"/><path d="M27 41 C30 38 38 38 41 41 L34 51 Z" fill="#F0A202"/></svg>',
     layout: "grid",                 // thumbnail grid, the idiom YouTubers already read
     wordmark: { head: "Word", tail: "ie" },   // two-tone, sentence case
+    feedStore: "YhkBlKFJ0wkpaOmck", // Wordie's OWN store. SUBPLOT's creators agreed to
+                                    // SUBPLOT, not to Wordie - their work must not appear here
+    topics: {
+      // Narrow before broad: a Formula 1 video is sport, not cars-as-tech, so sport is
+      // tested before tech. `screen` is the fallback because a video about a film or show
+      // is the most common thing a channel makes that matches no specialist keyword.
+      order: ["gaming", "money", "health", "food", "travel", "sport", "science", "tech", "culture"],
+      fallback: "screen",
+      kw: {
+        gaming:  ["gaming","gameplay","playstation","xbox","nintendo","ps5","steam","speedrun","esports","minecraft","fortnite","roblox","valorant","league of legends","call of duty","gta","elden ring","zelda","pokemon","indie game"],
+        money:   ["stocks","investing","crypto","bitcoin","etf","dividend","portfolio","recession","inflation","interest rate","mortgage","side hustle","startup","entrepreneur","business","marketing","dropshipping","real estate","personal finance","budgeting","salary","tax","s&p","nasdaq","dow jones","index fund","401k","pension","savings","debt","valuation","earnings","hedge fund","bear market","bull market"],
+        health:  ["workout","gym","hypertrophy","lifting","powerlifting","running","marathon","yoga","pilates","calisthenics","weight loss","protein","nutrition","sleep","mobility","physio","mental health","meditation"],
+        food:    ["recipe","cooking","baking","sourdough","bbq","grill","air fryer","meal prep","restaurant","street food","chef","taste test","kitchen","pasta","coffee","espresso","cocktail","brewing"],
+        travel:  ["travel","flight","airline","business class","hotel","hostel","backpacking","road trip","itinerary","visa","passport","cruise","van life","digital nomad","tokyo","bali","iceland","airport","abroad","expat","tourist","layover","weeks in","days in","a day in","border crossing","train journey"],
+        sport:   ["nfl","nba","mlb","nhl","premier league","la liga","champions league","formula 1","f1","motogp","ufc","boxing","wrestling","olympics","world cup","tennis","golf","cycling","transfer window"],
+        science: ["nasa","spacex","rocket","telescope","black hole","quantum","physics","chemistry","biology","evolution","archaeology","ancient","roman","medieval","world war","cold war","history of","documentary","climate","geology","empire","dynasty","civilisation","civilization","pharaoh","revolution","battle of","the fall of","century","bc","ad "],
+        tech:    ["iphone","android","macbook","laptop","gpu","cpu","nvidia","apple","google","microsoft","samsung","linux","windows","coding","programming","javascript","python","developer","self-hosted","ai","chatgpt","llm","robot","ev","tesla","drone","3d printing","smart home","review of the"],
+        culture: ["album","single","tour","concert","festival","spotify","rapper","guitar","piano","producer","beat","songwriting","band","k-pop","musical","art","painting","fashion","photography","book","novel"],
+      },
+    },
+    searchHint: "Search creators, channels, topics",
+    sections: {                     // an open platform: what YouTubers actually make, not franchises
+      tech: "Tech",
+      gaming: "Gaming",
+      screen: "Film & TV",
+      money: "Money & Business",
+      health: "Health & Fitness",
+      food: "Food",
+      travel: "Travel",
+      science: "Science & History",
+      culture: "Music & Culture",
+      sport: "Sport",
+    },
     // No share card yet. Rather than serve SUBPLOT's - cast, clapperboard and all -
     // Wordie advertises no og:image and 404s /og.png until it has its own.
     assets: null,
@@ -86,6 +142,10 @@ export const assetKey = () => active.assets;                 // null = this bran
 export const hasShareCard = () => !!active.assets;
 export const layout = () => active.layout || "editorial";
 export const wordmark = () => active.wordmark;              // null = plain single-colour
+export const sections = () => active.sections;              // the site's categories, per brand
+export const feedStore = () => active.feedStore;            // which Apify store this brand reads
+export const topics = () => active.topics;                  // how this brand files an article
+export const searchHint = () => active.searchHint;
 
 // Google Fonts URL for whichever type the brand uses.
 export const fontHref = () =>

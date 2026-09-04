@@ -2,7 +2,9 @@
 // store youtube-mrss-feeds) and shapes it for the site. Server-side only.
 // Cached per lambda instance for TTL_MS; the CDN caches rendered pages on top.
 
-const STORE = "https://api.apify.com/v2/key-value-stores/5yFLBuHJj59ySXY9e";
+import { feedStore, sections, topics } from "./brand.js";
+
+const STORE = () => "https://api.apify.com/v2/key-value-stores/" + feedStore();
 const TTL_MS = 5 * 60 * 1000;
 
 // Creators who have agreed to SUBPLOT, from the Article Rights board (monday 18427697857,
@@ -50,28 +52,18 @@ export const APPROVED = process.env.SUBPLOT_APPROVED_ONLY ? APPROVED_HANDLES : n
 
 export const slug = s => String(s).toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
-export const CATS = {
-  marvel: "Marvel",
-  dc: "DC",
-  scifi: "Sci-Fi & Fantasy",
-  gaming: "Gaming",
-  anime: "Anime",
-  screen: "Screen",
-};
+// The site's sections now live in brand.js, because they are a brand difference: SUBPLOT is
+// six franchises, Wordie is whatever a YouTuber makes. Kept as a function, not a constant,
+// so it answers for whichever brand is active on this request.
+export const cats = () => sections();
 
-const KW = {
-  dc:     ["dc","batman","lanterns","green lantern","john stewart","superman","hal jordan","dark knight","the flash","wonder woman"],
-  anime:  ["dragon ball","goku","vegeta","ultra instinct","toonami","anime","one piece","naruto","jujutsu","demon slayer"],
-  gaming: ["gta","call of duty","elder scrolls","warhammer","grand theft auto","gaming","blood angels","miniature","police chase","outlaws","playstation","xbox","nintendo","ps5"],
-  marvel: ["marvel","mcu","deadpool","wolverine","avengers","doom","secret wars","scarlet witch","spider-man","vision","x-men","kang","loki","franklin richards","hugh jackman","ryan reynolds","robert downey","kevin feige","elizabeth olsen","cassandra nova","infinity stones","doomsday","hunter b-15","fantastic four"],
-  scifi:  ["star trek","star wars","stargate","voth","strange new worlds","prometheus","sci-fi","galaxy's edge","harry potter","ghosts","moaning myrtle","transformers","optimus","lord of the rings","dune","alien","predator"],
-};
-const ORDER = ["dc","anime","gaming","marvel","scifi"];
-
+// Which section an article lands in. The keyword map is a brand difference and lives in
+// brand.js, so a category key can never come back that this brand has no section for.
 export function categorise(tags, headline) {
+  const { order, fallback, kw } = topics();
   const blob = ((tags || []).join(" ") + " " + (headline || "")).toLowerCase();
-  for (const k of ORDER) if (KW[k].some(w => blob.includes(w))) return k;
-  return "screen";
+  for (const k of order) if (kw[k].some(w => blob.includes(w))) return k;
+  return fallback;
 }
 
 // YouTube-style sign-off ("What do you think…?") as the final paragraph reads as a template on a
@@ -91,7 +83,11 @@ const STOP = new Set(["marvel","mcu","marvel studios","marvel cinematic universe
   "gaming community","interview","movie industry","stargate lore","easter egg","dc studios","hbo","star wars",
   "stargate","dragon ball","dragon ball z","x-men","ghosts","ryan reynolds","hugh jackman","netflix","disney"]);
 
-let cache = { at: 0, data: null, pending: null };
+// Keyed by brand. This used to be a single global, which meant one warm lambda could
+// serve SUBPLOT's articles to Wordie and vice versa - the store split alone does not
+// prevent that, because both brands run in the same process.
+const caches = new Map();
+const cacheFor = k => { if (!caches.has(k)) caches.set(k, { at: 0, data: null, pending: null }); return caches.get(k); };
 
 // Real channel identity, resolved from the videos themselves. The store's `creator` field
 // is not reliable — four of its handles point at the wrong channel or at no channel at all —
@@ -216,9 +212,9 @@ async function fetchJson(url) {
 }
 
 async function load() {
-  const keys = (await fetchJson(STORE + "/keys?limit=1000")).data.items
+  const keys = (await fetchJson(STORE() + "/keys?limit=1000")).data.items
     .map(i => i.key).filter(k => k.endsWith("__items"));
-  const results = await Promise.allSettled(keys.map(k => fetchJson(STORE + "/records/" + k)));
+  const results = await Promise.allSettled(keys.map(k => fetchJson(STORE() + "/records/" + k)));
   const seen = new Set(); const arts = [];
   results.forEach((res, i) => {
     if (res.status !== "fulfilled" || !Array.isArray(res.value)) return;
@@ -327,9 +323,11 @@ async function load() {
 }
 
 export async function getData() {
+  const key = feedStore();
+  const cache = cacheFor(key);
   const now = Date.now();
   if (cache.data && now - cache.at < TTL_MS) return cache.data;
-  if (!cache.pending) cache.pending = load().then(d => { cache = { at: Date.now(), data: d, pending: null }; return d; })
+  if (!cache.pending) cache.pending = load().then(d => { caches.set(key, { at: Date.now(), data: d, pending: null }); return d; })
     .catch(err => { cache.pending = null; if (cache.data) return cache.data; throw err; });
   return cache.pending;
 }

@@ -3,7 +3,8 @@
 // Private preview: every response is noindex/nofollow and robots.txt disallows all.
 // Optional gate: set SUBPLOT_PASS in Vercel env to require a password (user "subplot").
 import { getData } from "./_subplot/data.js";
-import { homePage, articlePage, creatorPage, joinPage, aboutPage, threadPage, rssFeed, notFound, legalPage, artPath } from "./_subplot/render.js";
+import { listMonths, readMonth } from "./_subplot/archive.js";
+import { homePage, articlePage, creatorPage, joinPage, aboutPage, threadPage, rssFeed, notFound, legalPage, artPath, revenuePage } from "./_subplot/render.js";
 import { CAST } from "./_subplot/cast.js";
 import { adsTxt } from "./_subplot/ads.js";
 import { OG_PNG, APPLE_PNG } from "./_subplot/images.js";
@@ -28,6 +29,28 @@ export default async function handler(req, res) {
 
   const path = "/" + String(req.query.path || "").replace(/^\/+|\/+$/g, "");
   const base = req.query.base === "subplot" ? "/subplot" : "";
+
+  // The revenue archive is money data: its own gate, and it FAILS CLOSED. No password set in
+  // the environment means the page does not exist, whatever the rest of the site is doing.
+  if (path === "/revenue") {
+    const rp = process.env.SUBPLOT_REVENUE_PASS;
+    if (!rp) return res.status(404).send("Not found");
+    const h = req.headers.authorization || "";
+    if (!(h.startsWith("Basic ") && Buffer.from(h.slice(6), "base64").toString() === "revenue:" + rp)) {
+      res.setHeader("WWW-Authenticate", 'Basic realm="SUBPLOT revenue"');
+      return res.status(401).send("Authentication required");
+    }
+    try {
+      const months = await listMonths();
+      const want = months.includes(String(req.query.month)) ? String(req.query.month) : months[0];
+      const month = want ? await readMonth(want) : null;
+      const d = await getData();
+      res.setHeader("Cache-Control", "no-store");
+      return res.status(200).send(revenuePage(months, month, d, base));
+    } catch (e) {
+      return res.status(500).send("Revenue archive unavailable: " + String(e.message || e));
+    }
+  }
 
   if (path === "/favicon.svg") { res.setHeader("Content-Type", "image/svg+xml"); res.setHeader("Cache-Control", "public, max-age=86400"); return res.status(200).send(CAST.favicon); }
   if (path === "/apple-touch-icon.png") { res.setHeader("Content-Type", "image/png"); res.setHeader("Cache-Control", "public, max-age=86400"); return res.status(200).send(Buffer.from(APPLE_PNG, "base64")); }

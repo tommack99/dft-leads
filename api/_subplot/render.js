@@ -670,3 +670,50 @@ export function legalPage(kind, data, base) {
   const d = LEGAL[kind]; if (!d) return null;
   return shell({ base, title: `${d[0]} - ${BRAND}`, desc: d[1], body: d[2](base), current: kind === "contact" ? "about" : "" });
 }
+
+// ---- Revenue archive (private). Reads the append-only archive, not monday, so this page and
+// the finance board can be compared against each other rather than sharing one source.
+export function revenuePage(months, month, data, base) {
+  const m = month;
+  const row = (label, val, cls = "") => `<td class="${cls}">${val}</td>`;
+  const cash = n => "$" + Number(n || 0).toFixed(2);
+  const body = `
+<main class="homeview">
+  <div class="wrap about">
+    <a class="back" href="${base}/">&larr; Back to the front page</a>
+    <h1 class="headline" style="font-size:clamp(1.7rem,3.5vw,2.4rem);margin:1rem 0 .3rem">Revenue</h1>
+    <p class="meta" style="margin:0 0 1.6rem">What Google reported, month by month. The finance board is worked from the same figures; this is the independent copy.</p>
+    ${months.length ? `<p class="meta" style="margin:0 0 1.4rem">${months.map(x => x === (m && m.month)
+      ? `<b>${esc(x)}</b>` : `<a href="${base}/revenue?month=${esc(x)}">${esc(x)}</a>`).join(" &nbsp;·&nbsp; ")}</p>` : ""}
+    ${!m ? `<div class="box" style="padding:1.3rem"><p class="note" style="border:0;padding:0;margin:0">No months archived yet. The first statement is written after the account is approved and the monthly job has run.</p></div>` : `
+    <div class="box" style="padding:1.3rem;margin-bottom:1.4rem">
+      <p class="note" style="border:0;padding:0;margin:0">
+        Site total <b>${cash(m.siteTotal)}</b> &nbsp;·&nbsp; attributed to creators <b>${cash(m.attributed)}</b>
+        &nbsp;·&nbsp; house <b>${cash(m.house)}</b> &nbsp;·&nbsp;
+        ${m.warnings && m.warnings.reconciles ? "reconciles" : `<span style="color:var(--red,#c0392b)">DOES NOT RECONCILE</span>`}
+      </p>
+      ${m.warnings && (m.warnings.creatorsWithNoChannel || []).length ? `<p class="note" style="border:0;padding:.6rem 0 0;margin:0;color:var(--red,#c0392b)">No URL channel, earnings unattributed: ${esc((m.warnings.creatorsWithNoChannel || []).join(", "))}</p>` : ""}
+      ${m.warnings && (m.warnings.unrecognisedChannels || []).length ? `<p class="note" style="border:0;padding:.6rem 0 0;margin:0;color:var(--red,#c0392b)">Channels not matched to a creator: ${esc((m.warnings.unrecognisedChannels || []).map(u => u.channel).join(", "))}</p>` : ""}
+    </div>
+    <div style="overflow-x:auto"><table class="revtbl">
+      <thead><tr><th>Creator</th><th>Revenue</th><th>Creator payout</th><th>DFT net</th><th>Page views</th></tr></thead>
+      <tbody>${(m.statements || []).map(s => `<tr>
+        <td><b>${esc(s.creator)}</b><span class="meta"> @${esc(s.slug)}</span></td>
+        ${row("", cash(s.revenue), "num")}${row("", cash(s.payout), "num")}${row("", cash(s.dftNet), "num")}
+        ${row("", (s.pageViews || 0).toLocaleString("en-GB"), "num")}</tr>`).join("")}
+        <tr class="house"><td><b>House</b><span class="meta"> home, sections, threads, join</span></td>
+        ${row("", cash(m.house), "num")}${row("", "$0.00", "num")}${row("", cash(m.house), "num")}${row("", "", "num")}</tr>
+      </tbody>
+    </table></div>
+    <p class="meta" style="margin-top:1.2rem">Archived ${esc(String(m.archivedAt || "").slice(0, 10))}. Records are written once and never rewritten.</p>`}
+  </div>
+</main>`;
+  return shell({ base, title: `Revenue - ${BRAND}`, body: `<style>
+.revtbl{width:100%;border-collapse:collapse;font-size:.92rem}
+.revtbl th{text-align:left;font-family:var(--disp);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);padding:.7rem 1rem;border-bottom:1.5px solid var(--ink)}
+.revtbl td{padding:.85rem 1rem;border-bottom:1px solid var(--rule)}
+.revtbl td.num{text-align:right;font-family:var(--mono)}
+.revtbl tr.house td{background:var(--paper-2)}
+.revtbl .meta{font-size:.78rem}
+</style>` + body, trending: data.threads });
+}

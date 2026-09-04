@@ -20,6 +20,7 @@
 // Manual run: /api/adsense-monthly?month=2026-08&dry=1  (dry returns the statement, writes nothing)
 
 import { CREATORS } from "./_subplot/data.js";
+import { archiveMonth } from "./_subplot/archive.js";
 
 const BOARD = 18427528293;
 const PLATFORM = "SUBPLOT";
@@ -173,6 +174,11 @@ export default async function handler(req, res) {
     };
     if (dry) return res.status(200).json({ dry: true, ...summary });
 
+    // Archive BEFORE writing any board row. If the archive cannot be written we stop here,
+    // leaving nothing half-written, and a retry starts clean. The archive keeps the raw rows
+    // Google returned as well as the computed split, so a statement can always be rebuilt.
+    const archived = await archiveMonth(label, { ...summary, raw: { byChannel, siteTotal } });
+
     const already = await existing(period);
     const source = `AdSense URL channels, ${label}, pulled ${new Date().toISOString().slice(0, 10)}`;
     const written = [];
@@ -200,7 +206,7 @@ export default async function handler(req, res) {
       written.push(HOUSE_ROW);
     }
 
-    return res.status(200).json({ ...summary, written, skipped: [...already] });
+    return res.status(200).json({ ...summary, archived, written, skipped: [...already] });
   } catch (e) {
     // Fail loudly. A silent zero month is worse than an error.
     return res.status(500).json({ error: String(e.message || e), month: label });

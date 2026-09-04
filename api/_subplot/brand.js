@@ -23,7 +23,7 @@ export const BRANDS = {
   wordie: {
     key: "wordie",
     name: "WORDIE",
-    domain: "wordie.tv",
+    domain: "wordie.media",
     tagline: "Every video, in writing. Your words, your name, your channel - just for the people who would rather read.",
     memberWord: "Wordie",
     signup: "open",                 // OAuth proves the channel, checks and a human gate it
@@ -31,7 +31,7 @@ export const BRANDS = {
   },
 };
 
-const HOSTS = { "subplot.tv": "subplot", "wordie.tv": "wordie" };
+const HOSTS = { "subplot.tv": "subplot", "wordie.media": "wordie" };
 
 export function brandFor(host = "") {
   const h = String(host).toLowerCase().replace(/^www\./, "").split(":")[0];

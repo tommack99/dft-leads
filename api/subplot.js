@@ -4,6 +4,7 @@
 // Optional gate: set SUBPLOT_PASS in Vercel env to require a password (user "subplot").
 import { getData } from "./_subplot/data.js";
 import { brandFor, setBrand } from "./_subplot/brand.js";
+import { runHealth } from "./_subplot/health.js";
 import { listMonths, readMonth } from "./_subplot/archive.js";
 import { homePage, articlePage, creatorPage, joinPage, aboutPage, threadPage, rssFeed, notFound, legalPage, artPath, revenuePage } from "./_subplot/render.js";
 import { CAST } from "./_subplot/cast.js";
@@ -38,6 +39,17 @@ export default async function handler(req, res) {
 
   const path = "/" + String(req.query.path || "").replace(/^\/+|\/+$/g, "");
   const base = req.query.base === "subplot" ? "/subplot" : "";
+
+  // Daily health check, run by cron as /api/subplot?path=__health. Not a page: it is refused
+  // unless it comes from Vercel's scheduler or carries CRON_SECRET, and it is never reachable
+  // from the public site path because the host rewrite strips nothing else onto this route.
+  if (path === "/__health") {
+    const secret = process.env.CRON_SECRET;
+    const fromCron = req.headers["x-vercel-cron"] || (secret && req.headers.authorization === "Bearer " + secret);
+    if (!fromCron && req.query.key !== secret) return res.status(404).send("Not found");
+    res.setHeader("Cache-Control", "no-store");
+    return runHealth(req, res);
+  }
 
   // The revenue archive is money data: its own gate, and it FAILS CLOSED. No password set in
   // the environment means the page does not exist, whatever the rest of the site is doing.

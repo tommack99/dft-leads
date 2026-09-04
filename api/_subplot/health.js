@@ -5,10 +5,13 @@
 // since the last run, and raises a single row on the task queue so a pattern gets seen rather
 // than quietly absorbed. Nothing is raised on a clean day.
 //
-// Manual run: /api/subplot-health?dry=1
+// Manual run: /api/subplot?path=__health&dry=1
+//
+// Lives here rather than as its own /api file: the Vercel Hobby plan caps a deployment at 12
+// serverless functions and the project is at the cap, so a thirteenth fails the whole build.
 
-import { getData } from "./_subplot/data.js";
-import { readRecord, putRecord } from "./_subplot/archive.js";
+import { getData } from "./data.js";
+import { readRecord, putRecord } from "./archive.js";
 
 const KEY = "health-missing-videos";
 const BOARD = 6932885261;                       // Business Development Tasks - the single queue
@@ -24,11 +27,7 @@ const monday = async (query, variables) => {
   return j.data;
 };
 
-export default async function handler(req, res) {
-  const secret = process.env.CRON_SECRET;
-  if (secret && req.headers.authorization !== "Bearer " + secret && !req.headers["x-vercel-cron"]) {
-    return res.status(401).json({ error: "unauthorized" });
-  }
+export async function runHealth(req, res) {
   const dry = req.query.dry === "1";
 
   try {

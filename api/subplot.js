@@ -5,6 +5,7 @@
 import { getData } from "./_subplot/data.js";
 import { brandFor, setBrand } from "./_subplot/brand.js";
 import { runHealth } from "./_subplot/health.js";
+import { setDesign } from "./_subplot/design.js";
 import { listMonths, readMonth } from "./_subplot/archive.js";
 import { homePage, articlePage, creatorPage, joinPage, aboutPage, threadPage, rssFeed, notFound, legalPage, artPath, revenuePage } from "./_subplot/render.js";
 import { CAST } from "./_subplot/cast.js";
@@ -39,6 +40,17 @@ export default async function handler(req, res) {
 
   const path = "/" + String(req.query.path || "").replace(/^\/+|\/+$/g, "");
   const base = req.query.base === "subplot" ? "/subplot" : "";
+
+  // Design preview. ?d=2 switches on the new look, ?d=1 switches it off, and the choice is
+  // remembered in a cookie so links keep it while you click around. Nobody who has not asked
+  // for it ever sees it, and the page is identical to production without the flag.
+  const dq = String(req.query.d || "");
+  if (dq === "1" || dq === "2") {
+    res.setHeader("Set-Cookie", `subplot_design=${dq}; Path=/; Max-Age=${dq === "2" ? 604800 : 0}; SameSite=Lax`);
+  }
+  const cookieDesign = /(?:^|;\s*)subplot_design=2\b/.test(req.headers.cookie || "") ? 2 : 1;
+  const activeDesign = dq === "2" ? 2 : dq === "1" ? 1 : cookieDesign;
+  setDesign(activeDesign);
 
   // Daily health check, run by cron as /api/subplot?path=__health. Not a page: it is refused
   // unless it comes from Vercel's scheduler or carries CRON_SECRET, and it is never reachable
@@ -110,7 +122,7 @@ export default async function handler(req, res) {
 
   if (path === "/feed.xml") { res.setHeader("Content-Type", "application/rss+xml; charset=utf-8"); res.setHeader("Cache-Control", "public, s-maxage=600"); return res.status(200).send(rssFeed(data, base)); }
   res.setHeader("Content-Type", "text/html; charset=utf-8");
-  res.setHeader("Cache-Control", pass ? "private, no-store" : "public, s-maxage=300, stale-while-revalidate=3600");
+  res.setHeader("Cache-Control", pass || activeDesign === 2 ? "private, no-store" : "public, s-maxage=300, stale-while-revalidate=3600");
 
   let html = null; let status = 200;
   const pg = Math.max(1, parseInt(req.query.p, 10) || 1);

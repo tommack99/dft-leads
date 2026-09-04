@@ -2,6 +2,8 @@
 import { CSS } from "./css.js";
 import { CATS, slug, slugFor } from "./data.js";
 import { brand, brandCss, member, joinCta, mail, siteUrl, hasCast, audience, fontHref, hasShareCard } from "./brand.js";
+import { design } from "./design.js";
+import { CSS2, FONTS2 } from "./design2.js";
 import { ch, CAST_META } from "./cast.js";
 import { headTag as adHead, unit as adUnit } from "./ads.js";
 
@@ -235,8 +237,8 @@ ${hasShareCard() ? `<meta property="og:image" content="https://${brand().domain}
 ${jsonld}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="${fontHref()}">
-<style>${CSS}${EXTRA_CSS}${brandCss()}</style>
+<link rel="stylesheet" href="${design() === 2 ? FONTS2 : fontHref()}">
+<style>${CSS}${EXTRA_CSS}${brandCss()}${design() === 2 ? CSS2 : ""}</style>
 <script defer src="/_vercel/insights/script.js"></script>
 ${adHead()}
 </head>

@@ -84,25 +84,16 @@ export const BRANDS = {
     favicon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#0F7B6C"/><circle cx="24" cy="27" r="9.5" fill="#fff"/><circle cx="44" cy="27" r="9.5" fill="#fff"/><circle cx="25.8" cy="28.6" r="5.1" fill="#12121C"/><circle cx="45.8" cy="28.6" r="5.1" fill="#12121C"/><path d="M27 41 C30 38 38 38 41 41 L34 51 Z" fill="#F0A202"/></svg>',
     layout: "grid",                 // thumbnail grid, the idiom YouTubers already read
     wordmark: { head: "Word", tail: "ie" },   // two-tone, sentence case
-    // TEMPORARY PREVIEW, 4 Sep 2026, on Tom's instruction. REVERT BEFORE LAUNCH.
-    // Wordie's own store (YhkBlKFJ0wkpaOmck) is empty and the actor cannot fill it until its
-    // three API keys are set, so Wordie reads SUBPLOT's store to review the layout against
-    // real articles. Recorded as "Temp - preview only" on board 18429671241. None of these
-    // creators has granted Wordie anything: the Creator Agreement licenses a named brand on
-    // a named domain. noindex is not the same as unpublished - do not share the URL or lift
-    // noindex while this reads 5yFLBuHJj59ySXY9e. Revert: put YhkBlKFJ0wkpaOmck back.
-    feedStore: "5yFLBuHJj59ySXY9e",
-    // Named explicitly rather than leaning on SUBPLOT_APPROVED_ONLY, because that variable is
-    // Production-scoped and wordie.media is a Preview deployment - so the env-var gate was
-    // simply absent here and resolved to "show everything". On 4 Sep that put seven creators
-    // on wordie.media who are not on this list, including one who has explicitly never
-    // approved article publication anywhere. This list gates unconditionally. Never widen it
-    // to make more content appear; it is the whole safety mechanism for the preview.
-    approvedHandles: [
-      "@breakdownsandblockbusters", "@thekristianharloff", "@chaosgaming", "@chaostrektv",
-      "@wesnemo", "@film_paradise", "@lorereloaded", "@arealknowitall",
-      "@coltonogburnchannel", "@everythingalways", "@gique_", "@downtoearthkh",
-    ],
+    feedStore: "YhkBlKFJ0wkpaOmck", // Wordie's OWN store. SUBPLOT's creators agreed to
+                                    // SUBPLOT, not to Wordie - their work must not appear here
+    // EMPTY LIST, NOT null, and the difference matters. An empty list means "nobody is
+    // approved for Wordie yet", and it FAILS CLOSED: no handle can pass it. null would fall
+    // through to the SUBPLOT_APPROVED_ONLY env var, which is Production-scoped and therefore
+    // absent on the Preview deployment wordie.media runs from - i.e. no gate at all. That is
+    // exactly how seven creators who had approved nothing appeared here on 4 Sep. The signup
+    // flow adds a handle here only once that creator's approval is recorded on board
+    // 18429671241. Never set this back to null.
+    approvedHandles: [],
     topics: {
       // Narrow before broad: a Formula 1 video is sport, not cars-as-tech, so sport is
       // tested before tech. `screen` is the fallback because a video about a film or show
@@ -140,13 +131,36 @@ export const BRANDS = {
   },
 };
 
-const HOSTS = { "subplot.tv": "subplot", "wordie.media": "wordie" };
+// Which host is which publication. EXACT MATCH ONLY, and anything absent is not a
+// publication at all. This used to end "...: BRANDS.subplot", so every unrecognised host -
+// a new domain, a deployment alias, the project's own dft-leads.vercel.app - silently became
+// SUBPLOT. That is the same shape as the roster rewrite that leaked the rates board: an
+// unconditioned default catching everything nobody thought to name. Fail closed instead.
+const HOSTS = {
+  "subplot.tv": "subplot",
+  "subplot.digitalfoxtalent.com": "subplot",   // legacy, normally 308s to subplot.tv first
+  "wordie.media": "wordie",
+};
 
+// Vercel gives every deployment throwaway aliases. Only the BRANCH alias carries anything
+// trustworthy - the git branch in its own name. The hash alias (dft-leads-<hash>-<team>
+// .vercel.app) says nothing, which is why it used to render the Wordie build as SUBPLOT.
+// Named one by one rather than captured by a pattern. A team slug contains hyphens too
+// (tom-james-projects-dft), so any "grab the branch bit" regex guesses wrong - the first
+// version of this line read the branch as "wordie-tom-james-projects". Naming both is
+// duller and correct, and a new branch simply gets no publication until it is added here.
+const BRANCH_ALIASES = [
+  [/^dft-leads-git-wordie-[a-z0-9-]+\.vercel\.app$/, "wordie"],
+  [/^dft-leads-git-main-[a-z0-9-]+\.vercel\.app$/,   "subplot"],
+];
+
+// Returns null for a host this project does not publish on. Callers must handle that, and
+// must not substitute a brand of their own choosing.
 export function brandFor(host = "") {
-  const h = String(host).toLowerCase().replace(/^www\./, "").split(":")[0];
-  // "contains" not "startsWith": Vercel branch previews are dft-leads-git-wordie-<team>
-  // .vercel.app, and they need to render as Wordie so the brand can be reviewed safely.
-  return BRANDS[HOSTS[h]] || (h.includes("wordie") ? BRANDS.wordie : BRANDS.subplot);
+  const h = String(host).toLowerCase().replace(/^www\./, "").split(":")[0].trim();
+  if (HOSTS[h]) return BRANDS[HOSTS[h]];
+  for (const [re, key] of BRANCH_ALIASES) if (re.test(h)) return BRANDS[key];
+  return null;
 }
 
 let active = BRANDS.subplot;

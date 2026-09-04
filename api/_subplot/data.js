@@ -171,6 +171,38 @@ async function addViews(arts) {
   }
 }
 
+// Articles whose source video has gone (deleted, made private, or pulled) must not stay on the
+// site: the whole premise is that every piece links back to a video you can watch, and a dead
+// link plus YouTube's grey placeholder thumbnail is worse than no article.
+//
+// videos.list only returns ids that still exist and are public, so anything missing from the
+// response is provably gone. Guarded hard: if a batch errors, or comes back completely empty
+// when we asked about real ids, that looks like an API problem rather than 50 dead videos, so
+// we leave those articles alone. Losing the whole site to a bad API key is the worse failure.
+async function pruneMissing(arts) {
+  const key = process.env.YOUTUBE_API_KEY;
+  if (!key) return [];
+  const gone = [];
+  for (let i = 0; i < arts.length; i += 50) {
+    const batch = arts.slice(i, i + 50).filter(a => a.v);
+    if (!batch.length) continue;
+    try {
+      const r = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=id&id=${batch.map(a => a.v).join(",")}&key=${key}`);
+      if (!r.ok) continue;
+      const j = await r.json();
+      const live = new Set((j.items || []).map(it => it.id));
+      if (!live.size) continue;                 // whole batch missing = suspect the API, not the videos
+      for (const a of batch) if (!live.has(a.v)) gone.push(a);
+    } catch { /* leave the batch alone */ }
+  }
+  if (gone.length) {
+    const ids = new Set(gone.map(a => a.id));
+    const kept = arts.filter(a => !ids.has(a.id));
+    arts.length = 0; arts.push(...kept);
+  }
+  return gone.map(a => ({ id: a.id, creator: a.c, headline: a.h }));
+}
+
 async function fetchJson(url) {
   const r = await fetch(url, { headers: { accept: "application/json" } });
   if (!r.ok) throw new Error(`${r.status} for ${url}`);
@@ -216,6 +248,7 @@ async function load() {
   const channels = await resolveChannels(arts);
   arts.sort((x, y) => new Date(y.p) - new Date(x.p));
   await addViews(arts);
+  const removed = await pruneMissing(arts);
   if (APPROVED) { const kept = arts.filter(a => APPROVED.includes(a.c)); arts.length = 0; arts.push(...kept); }
 
   // creators
@@ -284,7 +317,7 @@ async function load() {
     .slice(0, 5)
     .map(a => a.id);
 
-  return { arts, panel, threads: chosen, subjects, avatars: av, evergreen, loadedAt: new Date().toISOString() };
+  return { arts, panel, threads: chosen, subjects, avatars: av, evergreen, removed, loadedAt: new Date().toISOString() };
 }
 
 export async function getData() {

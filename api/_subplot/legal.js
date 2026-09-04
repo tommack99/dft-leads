@@ -1,14 +1,14 @@
 // Legal + contact pages, brand-aware. One set of documents, both publications. Plain, short, honest. Operator named here (not on the masthead).
 // v1 September 2026. Drafted without a lawyer; review before public launch.
 import { esc } from "./render.js";
-import { brand, member, joinCta, mail, audience } from "./brand.js";
+import { brand, member, joinCta, mail, audience, usesGoogleAuth, legalUpdated } from "./brand.js";
 
 const B = () => brand().name;
 const DOMAIN = () => brand().domain;
 
 export const OPERATOR = "Digital Fox Talent LLC";
 export const OPERATOR_SHORT = "the operator";
-const UPDATED = "3 September 2026";
+const UPDATED = () => legalUpdated();   // the two policies differ, so they change on different dates
 
 // Simple document page: title, dek, then prose sections.
 function docPage({ base, title, dek, sections, aside }) {
@@ -45,24 +45,25 @@ export function contactBody(base) {
 
 export function privacyBody(base) {
   return docPage({
-    base, title: "Privacy", dek: `How ${B()} handles your data. Last updated ${UPDATED}.`,
+    base, title: "Privacy", dek: `How ${B()} handles your data. Last updated ${UPDATED()}.`,
     sections: [
       ["Who we are", `${B()} (${DOMAIN()}) is published by ${OPERATOR}. Questions about this policy go to <a href="mailto:${mail("hello")}">${mail("hello")}</a>.`],
       ["What we collect when you read", `Reading ${B()} does not require an account and we do not ask you for anything. We use Vercel Web Analytics, which counts visits and page views without cookies and without identifying you. Videos are embedded through YouTube's privacy-enhanced player and only load after you press play; from that point YouTube's own <a href="https://policies.google.com/privacy" rel="noopener">privacy policy</a> applies.`],
       ["Advertising", `We show ads served by third-party advertising networks, which may use cookies or similar technologies to measure ads and, where you have consented, to personalise them. Where the law requires it (including the UK and EEA) you will see a consent banner before any such cookie is set, and you can change your choice at any time from the link in the footer. Google's use of advertising data is described at <a href="https://policies.google.com/technologies/ads" rel="noopener">policies.google.com/technologies/ads</a>.`],
       ["What we collect when you apply as a creator", `The application form asks for your YouTube handle, your name, an email address, what you make and roughly how big your channel is. We keep that in our work-management system (monday.com) to review the application, contact you, and, if you join, to run and pay your account. We do not sell or share it with anyone else, and if you ask us to delete it we will, unless we need to keep a record of a payment.`],
+      ...(usesGoogleAuth() ? [["Verifying your channel with Google", `When you apply we ask you to sign in with Google and grant one read-only permission (<code>youtube.readonly</code>). We use it once, at that moment, to ask YouTube which channels your Google account owns, so we can confirm you own the channel you are claiming. Confirming that is the only reason we ask for it.<br><br>We keep the channel's public ID and the date we checked it. We do not keep the access token. We do not read your analytics, your private or unlisted videos, your subscribers or your comments, and we never post, edit or delete anything on your channel. Everything we publish is drawn from what is already public on it.<br><br>You can withdraw the permission whenever you like at <a href="https://myaccount.google.com/permissions" rel="noopener">myaccount.google.com/permissions</a>. Because we hold no token, withdrawing it does not by itself remove articles we have already published - email <a href="mailto:${mail("hello")}">${mail("hello")}</a> and we will take them down.<br><br>${B()}'s use of information received from Google APIs follows the <a href="https://developers.google.com/terms/api-services-user-data-policy" rel="noopener">Google API Services User Data Policy</a>, including its Limited Use requirements.`]] : []),
       ["Email", `If you email us we keep the message for as long as we need it to reply and act on it.`],
       ["Your rights", `You can ask what we hold about you, ask us to correct or delete it, or object to how we use it, by emailing <a href="mailto:${mail("hello")}">${mail("hello")}</a>. If you are in the UK or EEA you also have the right to complain to your data-protection regulator.`],
       ["Children", `${B()} is not directed at children under 13 and we do not knowingly collect information from them.`],
       ["Changes", `If this policy changes we update the date at the top. Substantive changes are noted on the About page.`],
     ],
-    aside: railBox("In short", `<p class="note" style="border:0;padding:0;margin:0">No accounts, no tracking cookies of our own. Ads and YouTube embeds are third parties, and you get a consent choice where the law gives you one. Creator applications are kept only to run the programme.</p>`),
+    aside: railBox("In short", `<p class="note" style="border:0;padding:0;margin:0">${usesGoogleAuth() ? "No account needed to read, and no tracking cookies of our own." : "No accounts, no tracking cookies of our own."} Ads and YouTube embeds are third parties, and you get a consent choice where the law gives you one. Creator applications are kept only to run the programme.${usesGoogleAuth() ? " Signing in with Google proves you own your channel and nothing more." : ""}</p>`),
   });
 }
 
 export function termsBody(base) {
   return docPage({
-    base, title: "Terms of use", dek: `The rules for using ${B()}. Last updated ${UPDATED}.`,
+    base, title: "Terms of use", dek: `The rules for using ${B()}. Last updated ${UPDATED()}.`,
     sections: [
       ["The site", `${B()} (${DOMAIN()}) is published by ${OPERATOR}. By using the site you agree to these terms. If you are a creator publishing here, the <a href="${base}/creators">Creator Agreement</a> also applies to you.`],
       ["What the articles are", `Every article is adapted from a single creator's own video and published under that creator's name. The first draft is written with the help of AI from the video's transcript, then checked against the video. Opinions, theories, reactions and reviews are the creator's own and are presented as such; nothing here is a statement of fact by ${B()} unless it says so. Where an article reports a rumour, it is a rumour.`],

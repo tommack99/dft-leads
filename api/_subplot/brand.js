@@ -23,6 +23,8 @@ export const BRANDS = {
     tagline: "The story under the story. Breakdowns, theories, reactions, opinions, reviews and lore from the people who actually watch it.",
     memberWord: "SubPlotter",
     signup: "curated",              // approved list in CREATORS, edited by us
+    googleAuth: false,              // no Google sign-in, so no Google-data disclosure
+    legalUpdated: "3 September 2026",
     audience: "about film, TV, games, comics or anime",
     taking: "We&rsquo;re taking film, TV, games, comics, anime and everything adjacent. Long-form, reactions, breakdowns, lore, interviews.",
     cast: true,                     // the seven characters in cast.js
@@ -63,6 +65,8 @@ export const BRANDS = {
     tagline: "Every video, in writing. Your words, your name, your channel - just for the people who would rather read.",
     memberWord: "Wordie",
     signup: "open",                 // OAuth proves the channel, checks and a human gate it
+    googleAuth: true,               // Google sign-in proves channel ownership at signup
+    legalUpdated: "4 September 2026",
     audience: "on any subject",     // open platform: not an entertainment site
     taking: "We&rsquo;re taking channels on any subject &mdash; tech, travel, finance, fitness, food, history, gaming, film, whatever you make. If there are words in it, it works.",
     cast: false,                    // typographic, no characters - Tom's call, 4 Sep 2026
@@ -146,6 +150,8 @@ export const sections = () => active.sections;              // the site's catego
 export const feedStore = () => active.feedStore;            // which Apify store this brand reads
 export const topics = () => active.topics;                  // how this brand files an article
 export const searchHint = () => active.searchHint;
+export const usesGoogleAuth = () => active.googleAuth === true;
+export const legalUpdated = () => active.legalUpdated;
 
 // Google Fonts URL for whichever type the brand uses.
 export const fontHref = () =>

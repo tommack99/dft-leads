@@ -1,6 +1,6 @@
 // SUBPLOT page templates. Pure functions: (data, base) -> HTML string.
 import { CSS } from "./css.js";
-import { CATS, slug } from "./data.js";
+import { CATS, slug, slugFor } from "./data.js";
 import { ch, CAST_META } from "./cast.js";
 import { headTag as adHead, unit as adUnit } from "./ads.js";
 
@@ -11,8 +11,7 @@ export const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;",
 
 // Article URLs carry the creator's handle: /a/<handle>/<videoId>. The handle segment is what
 // AdSense URL channels key on, so every article's earnings land under exactly one creator.
-export const handleSlug = c => String(c || "").replace(/^@/, "").toLowerCase();
-export const artPath = a => "/a/" + handleSlug(a.c) + "/" + a.id;
+export const artPath = a => "/a/" + slugFor(a.c) + "/" + a.id;
 const fmt = p => new Date(p).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 const dayLabel = p => new Date(p).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
 const dayKey = p => String(p).slice(0, 10);

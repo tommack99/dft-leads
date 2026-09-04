@@ -12,20 +12,40 @@ const TTL_MS = 5 * 60 * 1000;
 // The list is only enforced when SUBPLOT_APPROVED_ONLY is set in the environment. While the
 // site is a private preview it shows everything; setting that env var is the single switch
 // that makes it launch-ready, with no deploy needed.
-export const APPROVED_HANDLES = [
-  "@breakdownsandblockbusters",   // Breakdowns & Blockbusters
-  "@thekristianharloff",          // Kristian Harloff
-  "@chaosgaming",                 // Chaos
-  "@chaostrektv",                 // ChaosTrek
-  "@wesnemo",                     // WesNemo
-  "@film_paradise",               // Film Paradise
-  "@lorereloaded",                // Lore Reloaded
-  "@arealknowitall",              // Mr. Know-It-All (no articles yet; appears when his feed fills)
-  "@coltonogburnchannel",         // Colton Ogburn
-  "@everythingalways",            // Everything Always
-  "@gique_",                      // GIQUE (DFT-owned; dormant channel, evergreen back catalogue)
-  "@downtoearthkh",               // Down to Earth with Kristian Harloff (MSN-banned, but that is platform-side and does not apply here)
+// One record per approved creator. `slug` is the creator's PERMANENT URL segment and the key
+// AdSense URL channels are cut on (subplot.tv/a/<slug>/), so it must never change once money
+// has flowed through it. `handles` is every YouTube handle that resolves to this creator —
+// if someone renames their channel, ADD the new handle here rather than editing the slug.
+// Keeping both on one record makes it impossible to restore a renamed creator to the site
+// without seeing the slug their earnings are attributed to.
+export const CREATORS = [
+  { slug: "breakdownsandblockbusters", handles: ["@breakdownsandblockbusters"] },  // Breakdowns & Blockbusters
+  { slug: "thekristianharloff",        handles: ["@thekristianharloff"] },         // Kristian Harloff
+  { slug: "chaosgaming",               handles: ["@chaosgaming"] },                // Chaos
+  { slug: "chaostrektv",               handles: ["@chaostrektv"] },                // ChaosTrek
+  { slug: "wesnemo",                   handles: ["@wesnemo"] },                    // WesNemo
+  { slug: "film_paradise",             handles: ["@film_paradise"] },              // Film Paradise
+  { slug: "lorereloaded",              handles: ["@lorereloaded"] },               // Lore Reloaded
+  { slug: "arealknowitall",            handles: ["@arealknowitall"] },             // Mr. Know-It-All (no articles yet; appears when his feed fills)
+  { slug: "coltonogburnchannel",       handles: ["@coltonogburnchannel"] },        // Colton Ogburn
+  { slug: "everythingalways",          handles: ["@everythingalways"] },           // Everything Always
+  { slug: "gique_",                    handles: ["@gique_"] },                     // GIQUE (DFT-owned; dormant channel, evergreen back catalogue)
+  { slug: "downtoearthkh",             handles: ["@downtoearthkh"] },              // Down to Earth with Kristian Harloff (MSN-banned, but that is platform-side and does not apply here)
 ];
+
+export const APPROVED_HANDLES = CREATORS.flatMap(c => c.handles);
+
+const SLUG_BY_HANDLE = new Map(CREATORS.flatMap(c => c.handles.map(h => [h.toLowerCase(), c.slug])));
+
+// The pinned slug wins over whatever handle YouTube reports today. An unknown creator falls
+// back to their handle so the site still works, but nothing unpinned should ever earn money.
+export const slugFor = h => SLUG_BY_HANDLE.get(String(h || "").toLowerCase())
+  || String(h || "").replace(/^@/, "").toLowerCase();
+
+// Approved creators with no pinned slug — always empty in normal operation. Surfaced so a
+// renamed or newly added creator cannot quietly start earning under an unattributed URL.
+export const unpinned = arts => [...new Set(arts.map(a => a.c))].filter(h => !SLUG_BY_HANDLE.has(String(h || "").toLowerCase()));
+
 export const APPROVED = process.env.SUBPLOT_APPROVED_ONLY ? APPROVED_HANDLES : null;
 
 export const slug = s => String(s).toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");

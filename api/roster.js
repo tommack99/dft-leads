@@ -18,8 +18,24 @@ const REL_COL = "board_relation_mm49w1a4";   // "Creator" → board 6160485039, 
 const CREATOR_STATE_COL = "dup__of_email";   // "State" on 6160485039
 const STATE_KEY = "__creator_state";         // synthetic column id emitted on each row
 
+// This endpoint returns the whole rates board - names, rates, view guarantees, CPMs,
+// locations - and nothing about it is public. It is reachable on EVERY host attached to
+// this Vercel project, so it must decide for itself who may read it rather than relying
+// on a rewrite to hide it. On 4 Sep 2026 it was answering unauthenticated on subplot.tv,
+// wordie.media and dft-leads.vercel.app because only the "/" rewrite had been
+// host-conditioned. Guard fails CLOSED: an unrecognised or absent host gets a 404.
+const ROSTER_HOSTS = new Set(["roster-viewguarantee.digitalfoxtalent.com"]);
+const hostOf = req => String(
+  (req.headers["x-forwarded-host"] || req.headers.host || "").split(",")[0]
+).toLowerCase().trim().replace(/^www\./, "").split(":")[0];
+
 export default async function handler(req, res) {
   try {
+    if (!ROSTER_HOSTS.has(hostOf(req))) {
+      // 404 not 403: an endpoint that answers "forbidden" confirms it exists.
+      res.setHeader("Cache-Control", "no-store");
+      return res.status(404).json({ error: "Not found" });
+    }
     const token = process.env.MONDAY_API_KEY || process.env.MONDAY_API_TOKEN;
     if (!token) return res.status(500).json({ error: "MONDAY_API_KEY env var not set" });
     const p = PCOLS.concat([REL_COL]).map(x => '"' + x + '"').join(",");

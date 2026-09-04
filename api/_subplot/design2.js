@@ -54,9 +54,17 @@ body{font-size:19px;line-height:1.66;letter-spacing:.002em}
 .meta{font-size:.78rem}
 .daylabel{font-size:.74rem;letter-spacing:.08em;border-bottom:1px solid var(--rule-2);padding:.7rem 0}
 
-/* ---------- 4. headlines ---------- */
+/* ---------- 4. headlines ----------
+   Sizes are stated outright rather than through a token, so a card headline can never fall
+   back to something enormous if a variable does not resolve. Card headlines are deliberately
+   close to body size: at three columns the measure is only ~340px, and anything larger wraps
+   into a wall of text. */
+.grid3 .headline,.card .headline{font-size:1.12rem;line-height:1.22;letter-spacing:-.018em}
+@media (max-width:52rem){.grid3 .headline,.card .headline{font-size:1.08rem}}
+.wire .txt h3{font-size:1.04rem;line-height:1.3;letter-spacing:-.014em}
+
 .headline{font-weight:600;letter-spacing:-.028em;line-height:1.08}
-.lead .headline{font-size:clamp(2.1rem,4.4vw,3.4rem)}
+.lead .headline{font-size:clamp(1.9rem,3.6vw,2.9rem)}
 .thread-top h3{font-weight:600;letter-spacing:-.022em;font-size:1.16rem}
 .takes .tk span{font-family:var(--disp);font-weight:500;letter-spacing:-.008em}
 .takes .tk b{font-weight:600;font-size:.76rem}

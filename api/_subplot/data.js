@@ -2,7 +2,7 @@
 // store youtube-mrss-feeds) and shapes it for the site. Server-side only.
 // Cached per lambda instance for TTL_MS; the CDN caches rendered pages on top.
 
-import { feedStore, sections, topics } from "./brand.js";
+import { feedStore, sections, topics, approvedHandles, brand } from "./brand.js";
 
 const STORE = () => "https://api.apify.com/v2/key-value-stores/" + feedStore();
 const TTL_MS = 5 * 60 * 1000;
@@ -48,7 +48,16 @@ export const slugFor = h => SLUG_BY_HANDLE.get(String(h || "").toLowerCase())
 // renamed or newly added creator cannot quietly start earning under an unattributed URL.
 export const unpinned = arts => [...new Set(arts.map(a => a.c))].filter(h => !SLUG_BY_HANDLE.has(String(h || "").toLowerCase()));
 
-export const APPROVED = process.env.SUBPLOT_APPROVED_ONLY ? APPROVED_HANDLES : null;
+// Which handles may surface, resolved PER REQUEST because it is a brand difference.
+// A brand that names its own approvedHandles gates unconditionally - no env var involved,
+// so it cannot fail open in an environment where that var happens not to be set. SUBPLOT
+// names none and keeps its original behaviour: enforced only when SUBPLOT_APPROVED_ONLY is
+// present. Returning null means "no gate".
+export const approvedNow = () => {
+  const own = approvedHandles();
+  if (own) return own;
+  return process.env.SUBPLOT_APPROVED_ONLY ? APPROVED_HANDLES : null;
+};
 
 export const slug = s => String(s).toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
@@ -251,7 +260,8 @@ async function load() {
   arts.sort((x, y) => new Date(y.p) - new Date(x.p));
   await addViews(arts);
   const removed = await pruneMissing(arts);
-  if (APPROVED) { const kept = arts.filter(a => APPROVED.includes(a.c)); arts.length = 0; arts.push(...kept); }
+  const gate = approvedNow();
+  if (gate) { const kept = arts.filter(a => gate.includes(a.c)); arts.length = 0; arts.push(...kept); }
 
   // creators
   const byC = new Map();
@@ -323,7 +333,9 @@ async function load() {
 }
 
 export async function getData() {
-  const key = feedStore();
+  // Keyed by brand AND store. The approved-handle filter is baked in by load(), so two
+  // brands sharing one store must not share one cached copy of it.
+  const key = brand().key + "|" + feedStore();
   const cache = cacheFor(key);
   const now = Date.now();
   if (cache.data && now - cache.at < TTL_MS) return cache.data;

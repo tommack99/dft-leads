@@ -35,6 +35,9 @@ export const BRANDS = {
     wordmark: null,                 // null = the plain wordmark in css.js
     assets: "subplot",              // which pair in images.js
     feedStore: "5yFLBuHJj59ySXY9e", // Apify KV store the publisher writes to
+    // null = fall back to the SUBPLOT_APPROVED_ONLY env var, which is how this brand has
+    // always gated. A brand that names its own list instead gates unconditionally.
+    approvedHandles: null,
     // How an article gets filed. Order matters - first hit wins - and `fallback` catches
     // anything unmatched, so every article lands in a section that exists in `sections`.
     topics: {
@@ -81,8 +84,25 @@ export const BRANDS = {
     favicon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#0F7B6C"/><circle cx="24" cy="27" r="9.5" fill="#fff"/><circle cx="44" cy="27" r="9.5" fill="#fff"/><circle cx="25.8" cy="28.6" r="5.1" fill="#12121C"/><circle cx="45.8" cy="28.6" r="5.1" fill="#12121C"/><path d="M27 41 C30 38 38 38 41 41 L34 51 Z" fill="#F0A202"/></svg>',
     layout: "grid",                 // thumbnail grid, the idiom YouTubers already read
     wordmark: { head: "Word", tail: "ie" },   // two-tone, sentence case
-    feedStore: "YhkBlKFJ0wkpaOmck", // Wordie's OWN store. SUBPLOT's creators agreed to
-                                    // SUBPLOT, not to Wordie - their work must not appear here
+    // TEMPORARY PREVIEW, 4 Sep 2026, on Tom's instruction. REVERT BEFORE LAUNCH.
+    // Wordie's own store (YhkBlKFJ0wkpaOmck) is empty and the actor cannot fill it until its
+    // three API keys are set, so Wordie reads SUBPLOT's store to review the layout against
+    // real articles. Recorded as "Temp - preview only" on board 18429671241. None of these
+    // creators has granted Wordie anything: the Creator Agreement licenses a named brand on
+    // a named domain. noindex is not the same as unpublished - do not share the URL or lift
+    // noindex while this reads 5yFLBuHJj59ySXY9e. Revert: put YhkBlKFJ0wkpaOmck back.
+    feedStore: "5yFLBuHJj59ySXY9e",
+    // Named explicitly rather than leaning on SUBPLOT_APPROVED_ONLY, because that variable is
+    // Production-scoped and wordie.media is a Preview deployment - so the env-var gate was
+    // simply absent here and resolved to "show everything". On 4 Sep that put seven creators
+    // on wordie.media who are not on this list, including one who has explicitly never
+    // approved article publication anywhere. This list gates unconditionally. Never widen it
+    // to make more content appear; it is the whole safety mechanism for the preview.
+    approvedHandles: [
+      "@breakdownsandblockbusters", "@thekristianharloff", "@chaosgaming", "@chaostrektv",
+      "@wesnemo", "@film_paradise", "@lorereloaded", "@arealknowitall",
+      "@coltonogburnchannel", "@everythingalways", "@gique_", "@downtoearthkh",
+    ],
     topics: {
       // Narrow before broad: a Formula 1 video is sport, not cars-as-tech, so sport is
       // tested before tech. `screen` is the fallback because a video about a film or show
@@ -148,6 +168,7 @@ export const layout = () => active.layout || "editorial";
 export const wordmark = () => active.wordmark;              // null = plain single-colour
 export const sections = () => active.sections;              // the site's categories, per brand
 export const feedStore = () => active.feedStore;            // which Apify store this brand reads
+export const approvedHandles = () => active.approvedHandles; // null = use the env-var gate instead
 export const topics = () => active.topics;                  // how this brand files an article
 export const searchHint = () => active.searchHint;
 export const usesGoogleAuth = () => active.googleAuth === true;

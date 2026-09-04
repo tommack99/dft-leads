@@ -3,7 +3,7 @@
 // Private preview: every response is noindex/nofollow and robots.txt disallows all.
 // Optional gate: set SUBPLOT_PASS in Vercel env to require a password (user "subplot").
 import { getData } from "./_subplot/data.js";
-import { homePage, articlePage, creatorPage, joinPage, aboutPage, threadPage, rssFeed, notFound, legalPage } from "./_subplot/render.js";
+import { homePage, articlePage, creatorPage, joinPage, aboutPage, threadPage, rssFeed, notFound, legalPage, artPath } from "./_subplot/render.js";
 import { CAST } from "./_subplot/cast.js";
 import { adsTxt } from "./_subplot/ads.js";
 import { OG_PNG, APPLE_PNG } from "./_subplot/images.js";
@@ -61,7 +61,18 @@ export default async function handler(req, res) {
   const pg = Math.max(1, parseInt(req.query.p, 10) || 1);
   if (path === "/") html = homePage(data, base, "all", pg);
   else if (path.startsWith("/s/") && CATS.has(path.slice(3))) html = homePage(data, base, path.slice(3), pg);
-  else if (path.startsWith("/a/")) { const a = data.arts.find(x => x.id === path.slice(3)); html = a ? articlePage(a, data, base) : null; }
+  else if (path.startsWith("/a/")) {
+    // /a/<handle>/<videoId> is canonical; the old /a/<videoId> form 301s to it, as does a
+    // stale handle, so an article's earnings only ever accrue under one URL channel.
+    const seg = path.slice(3).split("/");
+    const a = data.arts.find(x => x.id === seg[seg.length - 1]);
+    if (!a) html = null;
+    else {
+      const want = base + artPath(a);
+      if (path === artPath(a)) html = articlePage(a, data, base);
+      else { res.setHeader("Location", want); return res.status(301).end(); }
+    }
+  }
   else if (path.startsWith("/c/")) html = creatorPage(decodeURIComponent(path.slice(3)), data, base);
   else if (path.startsWith("/t/")) html = threadPage(path.slice(3), data, base);
   else if (path === "/join") html = joinPage(data, base);

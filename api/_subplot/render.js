@@ -8,6 +8,11 @@ const BRAND = "SUBPLOT";
 const TAG = "The story under the story. Breakdowns, theories, reactions, opinions, reviews and lore from the people who actually watch it.";
 
 export const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+// Article URLs carry the creator's handle: /a/<handle>/<videoId>. The handle segment is what
+// AdSense URL channels key on, so every article's earnings land under exactly one creator.
+export const handleSlug = c => String(c || "").replace(/^@/, "").toLowerCase();
+export const artPath = a => "/a/" + handleSlug(a.c) + "/" + a.id;
 const fmt = p => new Date(p).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 const dayLabel = p => new Date(p).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
 const dayKey = p => String(p).slice(0, 10);
@@ -281,7 +286,7 @@ document.addEventListener('click', e => {
 }
 
 const card = (a, base) => `
-  <a class="card" href="${base}/a/${esc(a.id)}">
+  <a class="card" href="${base}${artPath(a)}">
     <span class="thumb"><img alt="" loading="lazy" src="${esc(a.thumbSmall)}"></span>
     <span class="kicker">${esc(CATS[a.k])}</span>
     <span class="headline">${esc(a.h)}</span>
@@ -297,7 +302,7 @@ function wire(list, base) {
   return groups.map((g, gi) => (gi === 1 ? adSlot("in-feed", "336×280", "300×250", "ad-infeed") : "") + `
     <section class="daygroup"><div class="daylabel">${esc(dayLabel(g.p))}</div><ul class="wire">
     ${g.items.map(a => `
-      <li><a href="${base}/a/${esc(a.id)}">
+      <li><a href="${base}${artPath(a)}">
         <span class="wthumb"><img src="${esc(a.thumbSmall)}" alt="" loading="lazy" decoding="async"></span>
         <span class="txt"><h3>${esc(a.h)}</h3>
           <span class="sub"><b>${esc(a.c)}</b><span>${esc(CATS[a.k])}</span></span></span>
@@ -314,7 +319,7 @@ function evergreenBox(data, base) {
         <h2>Always worth reading</h2>
         <p class="note">Lore, trivia and explainers that don&rsquo;t date. Rotates through the day.</p>
         <ul class="evlist">${list.map(a => `
-          <li><a href="${base}/a/${esc(a.id)}">
+          <li><a href="${base}${artPath(a)}">
             <span class="evtx"><b>${esc(a.h)}</b><span>${esc(a.c)}</span></span></a></li>`).join("")}
         </ul>
       </div>`;
@@ -387,7 +392,7 @@ export function homePage(data, base, section = "all", page = 1) {
 <main class="homeview">
   <div class="wrap">
     ${page > 1 ? `<div class="rule-h" style="margin-top:2rem"><h2>${section === "all" ? "Older stories" : "Older in " + esc(CATS[section])}</h2><span class="note">page ${page} of ${pages}</span></div>` : `
-    <a class="lead" href="${base}/a/${esc(lead.id)}">
+    <a class="lead" href="${base}${artPath(lead)}">
       <span class="plate"><img alt="" src="${esc(lead.thumb)}" onerror="this.onerror=null;this.src='${esc(lead.thumbSmall.replace("mqdefault","hqdefault"))}'"></span>
       <span class="leadgrid">
         <span><span class="kicker">${esc(CATS[lead.k])}</span>
@@ -405,7 +410,7 @@ export function homePage(data, base, section = "all", page = 1) {
           <div class="thread-top"><span class="kicker">Thread</span><h3><a href="${base}/t/${esc(t.slug)}" style="color:inherit;text-decoration:none">${esc(t.t)}</a></h3>
             <span class="count">${t.n} articles · ${t.c} creators</span></div>
           <ul class="takes">${t.items.map(byId).filter(Boolean).map(a => `
-            <li><a href="${base}/a/${esc(a.id)}"><span class="stripe"></span>
+            <li><a href="${base}${artPath(a)}"><span class="stripe"></span>
               <span class="tk"><b>${esc(a.b)}</b><span>${esc(a.h)}</span></span></a></li>`).join("")}
           </ul>
         </section>`).join("")}
@@ -434,7 +439,7 @@ export function articlePage(a, data, base) {
     author: { "@type": "Person", name: a.b, alternateName: a.c, url: "https://www.youtube.com/" + a.c },
     publisher: { "@type": "Organization", name: BRAND },
     isBasedOn: "https://www.youtube.com/watch?v=" + a.v,
-    mainEntityOfPage: "https://subplot.tv" + base + "/a/" + a.id,
+    mainEntityOfPage: "https://subplot.tv" + base + artPath(a),
   }).replace(/</g, "\\u003c")}</script>`;
   const body = `
 <article class="artview" style="display:block">
@@ -598,7 +603,7 @@ export function threadPage(sl, data, base) {
 
 export function rssFeed(data, base) {
   const site = "https://subplot.tv" + base;
-  const items = data.arts.slice(0, 50).map(a => `<item><title>${esc(a.h)}</title><link>${site}/a/${a.id}</link><guid isPermaLink="true">${site}/a/${a.id}</guid><pubDate>${new Date(a.p).toUTCString()}</pubDate><dc:creator>${esc(a.c)}</dc:creator><category>${esc(CATS[a.k])}</category><description>${esc(a.s)}</description><enclosure url="${esc(a.thumb)}" type="image/jpeg" length="0"/></item>`).join("");
+  const items = data.arts.slice(0, 50).map(a => `<item><title>${esc(a.h)}</title><link>${site}${artPath(a)}</link><guid isPermaLink="true">${site}${artPath(a)}</guid><pubDate>${new Date(a.p).toUTCString()}</pubDate><dc:creator>${esc(a.c)}</dc:creator><category>${esc(CATS[a.k])}</category><description>${esc(a.s)}</description><enclosure url="${esc(a.thumb)}" type="image/jpeg" length="0"/></item>`).join("");
   return `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>${BRAND}</title><link>${site}/</link><description>${esc(TAG)}</description><language>en</language><atom:link href="${site}/feed.xml" rel="self" type="application/rss+xml"/>${items}</channel></rss>`;
 }
 

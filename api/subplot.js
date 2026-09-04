@@ -114,8 +114,9 @@ export default async function handler(req, res) {
 
   let html = null; let status = 200;
   const pg = Math.max(1, parseInt(req.query.p, 10) || 1);
-  if (path === "/") html = homePage(data, base, "all", pg);
-  else if (path.startsWith("/s/") && CATS.has(path.slice(3))) html = homePage(data, base, path.slice(3), pg);
+  const q = String(req.query.q || "").trim().slice(0, 120);
+  if (path === "/") html = homePage(data, base, "all", pg, q);
+  else if (path.startsWith("/s/") && CATS.has(path.slice(3))) html = homePage(data, base, path.slice(3), pg, q);
   else if (path.startsWith("/a/")) {
     // /a/<handle>/<videoId> is canonical; the old /a/<videoId> form 301s to it, as does a
     // stale handle, so an article's earnings only ever accrue under one URL channel.

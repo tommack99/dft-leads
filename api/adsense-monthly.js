@@ -1,7 +1,7 @@
 // SUBPLOT monthly revenue statement.
 //
 // Pulls last month's AdSense earnings broken down by URL channel, maps each channel to the
-// creator whose articles sit under that URL prefix, applies the 50/50 split, and writes one
+// creator whose articles sit under that URL prefix, applies the 60/40 split, and writes one
 // row per creator onto Platform Revenue - Money In (all platforms), the same board MSN and
 // Meta already report into.
 //
@@ -15,6 +15,10 @@
 //     own row rather than quietly absorbed or spread across creators.
 //   - An approved creator with no URL channel is an ALARM, not a zero. Their earnings were
 //     never attributed and Google cannot backfill them.
+//   - THE RATE CARD IS THE SOURCE OF TRUTH FOR THE SPLIT, not this file. Rates are read live
+//     from the Platform Rate Card board so there is one place a rate can be changed. If the
+//     rate card cannot be read, or a creator who earned money has no rate on it, we ARCHIVE
+//     the month and write NO payout rows. Guessing a split is how someone gets paid wrongly.
 //
 // Env: GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, ADSENSE_REFRESH_TOKEN, MONDAY_API_KEY.
 // Manual run: /api/adsense-monthly?month=2026-08&dry=1  (dry returns the statement, writes nothing)
@@ -23,9 +27,16 @@ import { CREATORS } from "./_subplot/data.js";
 import { archiveMonth } from "./_subplot/archive.js";
 
 const BOARD = 18427528293;
+const RATE_CARD = 18427503050;                  // Platform Rate Card — Creator x Platform
 const PLATFORM = "SUBPLOT";
-const CREATOR_SHARE = 0.5;
 const HOUSE_ROW = "House (non-article pages)";
+
+// The rate card's columns. Platform Brand ID holds the SUBPLOT slug — it is the join key,
+// pinned to match CREATORS[].slug in _subplot/data.js and the AdSense URL channel.
+const RC = {
+  platform: "color_mm6d5f1f", slug: "text_mm6dv6p5", pct: "numeric_mm6d3mjj",
+  fee: "numeric_mm6dsmpa", status: "color_mm6dg8xv",
+};
 
 const COL = {
   creator: "text_mm6dvz37", platform: "color_mm6dh8fr", period: "date_mm6dk5y1",
@@ -108,6 +119,38 @@ const createItem = (name, vals) => monday(
   `mutation($b:ID!,$n:String!,$v:JSON!){create_item(board_id:$b,item_name:$n,column_values:$v){id}}`,
   { b: String(BOARD), n: name, v: JSON.stringify(vals) });
 
+// Read the SUBPLOT rates off the rate card. Returns slug -> { pct, fee, status, row }.
+// SUBPLOT is deliberately 60% with NO fee — the fee field is read anyway rather than assumed,
+// so if the terms ever change the board changes and this job follows it without a deploy.
+async function rateCard() {
+  const q = `query($b:ID!){boards(ids:[$b]){items_page(limit:500,query_params:{rules:[
+    {column_id:"${RC.platform}",compare_value:["${PLATFORM}"]}]}){items{id name column_values(
+    ids:["${RC.slug}","${RC.pct}","${RC.fee}","${RC.status}"]){id text}}}}}`;
+  const d = await monday(q, { b: String(RATE_CARD) });
+  const items = d.boards?.[0]?.items_page?.items || [];
+  const card = new Map();
+  for (const it of items) {
+    const v = Object.fromEntries((it.column_values || []).map(c => [c.id, (c.text || "").trim()]));
+    const slug = v[RC.slug];
+    if (!slug) continue;                                    // no join key, cannot be trusted
+    card.set(slug, {
+      row: it.id, name: it.name,
+      pct: Number(v[RC.pct]),
+      fee: Number(v[RC.fee] || 0),
+      status: v[RC.status] || "",
+    });
+  }
+  return card;
+}
+
+// The rate card's own formula, verbatim: payout = max(0, round(gross x pct, 2) - fee).
+// It floors at zero — a creator never owes DFT.
+function payoutFor(gross, rate) {
+  if (!rate || rate.status === "Internal — no share") return { pct: 0, fee: 0, payout: 0 };
+  const pct = Number.isFinite(rate.pct) ? rate.pct : NaN;
+  return { pct, fee: rate.fee, payout: Math.max(0, money(gross * (pct / 100)) - rate.fee) };
+}
+
 // ---- handler
 
 export default async function handler(req, res) {
@@ -156,12 +199,26 @@ export default async function handler(req, res) {
     // Every approved creator should have a channel. One that does not is unrecoverable money.
     const noChannel = CREATORS.filter(c => !earned.has(c.slug)).map(c => c.slug);
 
-    const statements = [...earned.values()].map(e => ({
-      creator: e.creator.name, slug: e.creator.slug,
-      revenue: e.earnings, payout: money(e.earnings * CREATOR_SHARE),
-      dftNet: money(e.earnings - e.earnings * CREATOR_SHARE),
-      pageViews: e.pageViews, impressions: e.impressions, clicks: e.clicks,
-    })).sort((a, b) => b.revenue - a.revenue);
+    // Rates come off the rate card, never from a constant in this file.
+    const card = await rateCard();
+    const noRate = [];                                        // earned money, no usable rate
+
+    const statements = [...earned.values()].map(e => {
+      const rate = card.get(e.creator.slug);
+      const { pct, fee, payout } = payoutFor(e.earnings, rate);
+      if (!rate) noRate.push({ slug: e.creator.slug, why: "no SUBPLOT row on the rate card" });
+      else if (rate.status !== "Internal — no share" && !Number.isFinite(rate.pct))
+        noRate.push({ slug: e.creator.slug, why: `rate card row ${rate.row} has no Creator %` });
+      else if (rate.status !== "Active" && rate.status !== "Internal — no share")
+        noRate.push({ slug: e.creator.slug, why: `rate card row ${rate.row} is "${rate.status || "blank"}", not Active` });
+      return {
+        creator: e.creator.name, slug: e.creator.slug,
+        revenue: e.earnings, creatorPct: pct, dftFee: fee,
+        payout: money(payout), dftNet: money(e.earnings - payout),
+        rateCardRow: rate?.row || null, rateCardStatus: rate?.status || null,
+        pageViews: e.pageViews, impressions: e.impressions, clicks: e.clicks,
+      };
+    }).sort((a, b) => b.revenue - a.revenue);
 
     const summary = {
       month: label, currency: "USD", siteTotal: total, attributed, house,
@@ -169,6 +226,7 @@ export default async function handler(req, res) {
       warnings: {
         creatorsWithNoChannel: noChannel,          // must be empty once every creator is set up
         unrecognisedChannels: unknown,             // a channel we could not map to a creator
+        creatorsWithNoRate: noRate,                // BLOCKS the write — see below
         reconciles: money(attributed + house) === total,
       },
     };
@@ -178,6 +236,17 @@ export default async function handler(req, res) {
     // leaving nothing half-written, and a retry starts clean. The archive keeps the raw rows
     // Google returned as well as the computed split, so a statement can always be rebuilt.
     const archived = await archiveMonth(label, { ...summary, raw: { byChannel, siteTotal } });
+
+    // The month's data is now safe. Only now do we decide whether it can be PAID from.
+    // A missing or unusable rate is not a zero and not a 60% guess — it stops the write.
+    // The archive stands, so nothing is lost and a rerun after fixing the board completes it.
+    if (noRate.length) {
+      return res.status(409).json({
+        ...summary, archived, written: [],
+        error: "rate card incomplete — no payout rows written",
+        fix: `Add or correct the SUBPLOT rows on board ${RATE_CARD}, then re-run this endpoint.`,
+      });
+    }
 
     const already = await existing(period);
     const source = `AdSense URL channels, ${label}, pulled ${new Date().toISOString().slice(0, 10)}`;
@@ -189,10 +258,10 @@ export default async function handler(req, res) {
         [COL.platform]: { label: PLATFORM },
         [COL.period]: { date: period },
         [COL.total]: s.revenue,
-        [COL.creatorPct]: CREATOR_SHARE * 100,
+        [COL.creatorPct]: s.creatorPct,
         [COL.payout]: s.payout,
         [COL.dftNet]: s.dftNet,
-        [COL.source]: source,
+        [COL.source]: `${source} · rate card row ${s.rateCardRow} (${s.creatorPct}%, fee $${s.dftFee})`,
         [COL.bill]: { label: s.payout > 0 ? "To raise" : "Not required" },
       });
       written.push(s.creator);

@@ -2,6 +2,9 @@
 import { CSS, GRID_CSS } from "./css.js";
 import { cats, slug, slugFor } from "./data.js";
 import { brand, brandCss, member, joinCta, mail, siteUrl, hasCast, audience, taking, fontHref, hasShareCard, layout, wordmark, searchHint } from "./brand.js";
+import { design } from "./design.js";
+import { promoRail, promoCss, joinBlock } from "./promo.js";
+import { CSS2, FONTS2 } from "./design2.js";
 import { ch, CAST_META } from "./cast.js";
 import { headTag as adHead, unit as adUnit } from "./ads.js";
 
@@ -27,7 +30,7 @@ const mark = (name, url) => url
 const slugH = h => h.replace(/^@/, "");
 
 // ---- Ad slots. Placeholders for now; each becomes one network tag at launch.
-// Names are stable so reports (and the 50/50 attribution by page) can key on them.
+// Names are stable so reports (and the per-creator attribution by page) can key on them.
 export function adSlot(name, desktop, mobile = desktop, extraClass = "") {
   const live = adUnit(name, extraClass);
   if (live) return live;
@@ -91,12 +94,14 @@ a.lead,a.card,.takes a,.wire a,.roster a{text-decoration:none;color:inherit}
 body.has-anchor{padding-bottom:56px}
 .artwrap{display:grid;grid-template-columns:minmax(0,43rem) 300px;gap:clamp(2rem,5vw,4rem);justify-content:center;align-items:start}
 .artwrap .artmain{margin:0}
-@media (max-width:72rem){.artwrap{grid-template-columns:minmax(0,43rem)}.artwrap .ad-rail{display:none}}
+.artrail{position:sticky;top:1.2rem;display:flex;flex-direction:column;gap:1.8rem;width:300px}
+.artrail .ad-rail{position:static}
+@media (max-width:72rem){.artwrap{grid-template-columns:minmax(0,43rem)}.artrail{display:none}}
 @media (min-width:48rem){.ad-anchor{display:none}body.has-anchor{padding-bottom:0}}
 @media (max-width:48rem){.ad-leader{height:50px;max-width:320px}}
 body[data-ads="off"] .ad{display:none}
 .ad.live{display:block;border:0;background:none;min-height:0;height:auto;place-items:initial}
-.ad.live::before{content:"Advertisement";display:block;font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);text-align:center;margin:0 0 .4rem}
+.ad.live::before{content:"Advertisement";display:none;font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);text-align:center;margin:0 0 .4rem}
 .ad.live.ad-leader{height:auto}
 .ad.live.ad-inline{height:auto;max-width:100%;margin:2rem auto}
 .ad.live.ad-infeed{height:auto;max-width:100%}
@@ -104,6 +109,7 @@ body[data-ads="off"] .ad{display:none}
 .ad.live.ad-anchor{height:auto;padding:.2rem 0 .1rem}
 .ad.live.ad-anchor::before{display:none}
 .ad.live:has(ins[data-ad-status="unfilled"]){display:none}
+.ad.live:has(ins[data-ad-status="filled"])::before{display:block}
 /* cast-influenced: soft corners, thin ink line, pill buttons */
 .thumb,.lead .plate,.player,.thread,.box,.ad,.honest,.terms,.done,.source,.field input,.field select,.field .handle span,.band,.step{border-radius:14px}
 .thumb,.player{overflow:hidden}
@@ -296,8 +302,8 @@ ${hasShareCard() ? `<meta property="og:image" content="https://${brand().domain}
 ${jsonld}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="${fontHref()}">
-<style>${CSS}${EXTRA_CSS}${layout() === "grid" ? GRID_CSS : ""}${brandCss()}</style>
+<link rel="stylesheet" href="${design() === 2 ? FONTS2 : fontHref()}">
+<style>${CSS}${EXTRA_CSS}${promoCss}${layout() === "grid" ? GRID_CSS : ""}${brandCss()}${design() === 2 ? CSS2 : ""}</style>
 <script defer src="/_vercel/insights/script.js"></script>
 ${adHead()}
 </head>`;
@@ -395,6 +401,7 @@ function evergreenBox(data, base) {
 function rail(panel, base, data) {
   return `
     <aside class="rail" id="panel">
+      ${promoRail(base)}
       <div class="box">
         <h2>The Panel</h2>
         <p class="note">Every article is adapted from one creator&rsquo;s own video and runs under their name. No anonymous bylines. <a href="${base}/about" style="color:var(--blue);font-weight:700;text-decoration:none">How it works &rarr;</a></p>
@@ -423,7 +430,7 @@ const band = base => `
       ${hasCast() ? `<div class="mascot">${ch("reactor", 120)}</div>` : ""}
       <div class="band-body">
         <div class="band-top"><h2>Make videos? Get read.</h2><a class="cta" href="${base}/join">${joinCta()}</a></div>
-        <p>${BRAND_()} turns the videos you already make into articles, under your name, with a link back to every one.<br>We split what they earn down the middle. Apply with your YouTube handle.</p>
+        <p>${BRAND_()} turns the videos you already make into articles, under your name, with a link back to every one.<br>You keep 60% of what they earn. Apply with your YouTube handle.</p>
       </div>
     </section>`;
 
@@ -633,8 +640,13 @@ export function articlePage(a, data, base) {
       <div class="tags">${a.t.map(t => `<span>${esc(t)}</span>`).join("")}</div>
       ${thr.length ? `<section class="next"><div class="rule-h"><h2>Also on ${esc(inThread.t)}</h2><span class="note"><a href="${base}/t/${esc(inThread.slug)}" style="color:var(--blue)">${inThread.c} creators, ${inThread.n} takes &rarr;</a></span></div><div class="grid3">${thr.map(x => card(x, base)).join("")}</div></section>` : ""}
       ${more.length ? `<section class="next"><div class="rule-h"><h2>More from ${esc(a.c)}</h2><span class="note"><a href="${base}/c/${esc(slugH(a.c))}" style="color:var(--blue)">All &rarr;</a></span></div><div class="grid3">${more.map(x => card(x, base)).join("")}</div></section>` : ""}
+      ${joinBlock(base)}
     </div>
-    ${adSlot("article-rail", "300×600", "-", "ad-rail")}
+    <aside class="artrail">
+      ${promoRail(base)}
+      ${adSlot("article-rail", "300×600", "-", "ad-rail")}
+      ${evergreenBox(data, base)}
+    </aside>
     </div>
   </div>
 </article>`;
@@ -692,7 +704,7 @@ export function joinPage(data, base) {
       <div><h3>What you get</h3><ul>
         <li><b>An audience on top of your views, not instead of them.</b> Google and Discover surface articles, so these are readers your video wasn&rsquo;t going to reach - and every article points them at the video.</li>
         <li><b>A link back on every piece.</b> Each article points at the video it came from.</li>
-        <li><b>Half of what your articles earn.</b> A straight 50/50 split. No fees, no minimum term, no exclusivity. Paid monthly once your balance clears $50.</li>
+        <li><b>60% of what your articles earn.</b> Sixty to you, forty to us. No fees, no minimum term, no exclusivity. Paid monthly once your balance clears $50.</li>
         <li><b>Company.</b> Your take sits alongside other creators covering the same thing - see Threads on the front page.</li></ul></div>
       <div><h3>What we ask</h3><ul>
         <li><b>The videos are yours.</b> You own them, or hold the rights to have them adapted.</li>
@@ -719,9 +731,11 @@ export function joinPage(data, base) {
             <select id="f-size" name="size"><option value="">Rather not say</option><option>Under 10k</option><option>10k &ndash; 100k</option><option>100k &ndash; 500k</option><option>500k &ndash; 1M</option><option>Over 1M</option></select></div>
         </div>
         <div class="terms"><span class="lbl">Standard terms</span>
-          <p><b>50 / 50</b> on everything your articles earn &middot; non-exclusive, so run them anywhere else you like &middot; no fees, no minimum term &middot; leave any time and we take the articles down &middot; paid monthly from $50.</p></div>
+          <p><b>60% to you</b> on everything your articles earn &middot; non-exclusive, so run them anywhere else you like &middot; no fees, no minimum term &middot; leave any time and we take the articles down &middot; paid monthly from $50.</p></div>
         <label class="consent"><input type="checkbox" name="consent" value="yes" required><span>I own these videos, or hold the rights to have them adapted. <b>By applying I give ${BRAND_()} permission to turn my public videos into articles, drafted with AI from my transcripts, and publish them under my handle on the standard terms above and the <a href="${base}/creators" target="_blank" style="color:var(--blue)">Creator Agreement</a>.</b> I can withdraw at any time and the articles come down.</span></label>
         <input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
+        <input type="hidden" name="source" id="f-source" value="direct">
+        <script>(function(){var v=new URLSearchParams(location.search).get("v");if(v)document.getElementById("f-source").value=String(v).slice(0,40);})();</script>
         <button class="submit" type="submit" id="f-submit">Send application</button>
         <p class="formnote" id="formnote">Applying is the agreement - there&rsquo;s no second contract. We check the channel and captions first; if it&rsquo;s a fit, your first articles appear within a week and we email you the links.</p>
       </form>
@@ -803,7 +817,7 @@ export function aboutPage(data, base) {
     <aside class="aboutrail">
       <div class="box">
         <h2>Want in?</h2>
-        <p class="note">Make videos ${audience()}? Your videos, in writing, under your name - and half of what they earn.</p>
+        <p class="note">Make videos ${audience()}? Your videos, in writing, under your name - and 60% of what they earn.</p>
         <div style="padding:0 1.3rem 1.2rem"><a class="cta" href="${base}/join">${joinCta()}</a></div>
       </div>
       <div class="box">

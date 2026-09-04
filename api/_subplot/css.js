@@ -62,7 +62,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;text-align:
 
 /* ============ lead ============ */
 .lead{padding:2.6rem 0 0;cursor:pointer;display:block;width:100%}
-.lead .plate{display:block;aspect-ratio:24/9;position:relative;overflow:hidden;background:var(--paper-3);border:4px solid var(--orange)}
+.lead .plate{display:block;aspect-ratio:24/9;position:relative;overflow:hidden;background:var(--paper-3)}
 .lead .plate img{width:100%;height:100%;object-fit:cover;object-position:50% 32%}
 
 .leadgrid{display:grid;grid-template-columns:1.5fr 1fr;gap:1.6rem clamp(2rem,5vw,4rem);padding:1.8rem 0 .6rem;align-items:end}

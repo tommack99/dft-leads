@@ -3,7 +3,7 @@
 // Private preview: every response is noindex/nofollow and robots.txt disallows all.
 // Optional gate: set SUBPLOT_PASS in Vercel env to require a password (user "subplot").
 import { getData, cats } from "./_subplot/data.js";
-import { brandFor, setBrand } from "./_subplot/brand.js";
+import { brandFor, setBrand, BRANDS } from "./_subplot/brand.js";
 import { runHealth } from "./_subplot/health.js";
 import { setDesign } from "./_subplot/design.js";
 import { listMonths, readMonth } from "./_subplot/archive.js";
@@ -29,8 +29,15 @@ function unauthorised(res) {
 export default async function handler(req, res) {
   res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive, nosnippet");
 
-  // Which publication is this? Resolved from the host before anything renders.
-  setBrand(brandFor(req.headers["x-forwarded-host"] || req.headers.host || ""));
+  // Which publication is this? Resolved from the host before anything renders. brandFor
+  // returns null for a host this project does not publish on, and that is NOT the same as
+  // "probably SUBPLOT" - an unnamed host gets nothing. The /subplot base path is the one
+  // explicit exception: it names the brand in the request itself.
+  const wantsSubplotBase = req.query.base === "subplot";
+  const resolved = wantsSubplotBase ? BRANDS.subplot : brandFor(req.headers["x-forwarded-host"] || req.headers.host || "");
+  // The health cron calls this function on whatever host Vercel schedules it from, so it must
+  // still have a brand to read a store with. It gets one; a page request on that host does not.
+  setBrand(resolved || BRANDS.subplot);
 
   const pass = process.env.SUBPLOT_PASS;
   if (pass) {
@@ -65,6 +72,9 @@ export default async function handler(req, res) {
     res.setHeader("Cache-Control", "no-store");
     return runHealth(req, res);
   }
+
+  // Past this line everything renders a publication, so an unnamed host stops here.
+  if (!resolved) { res.setHeader("Cache-Control", "no-store"); return res.status(404).send("Not found"); }
 
   // The revenue archive is money data: its own gate, and it FAILS CLOSED. No password set in
   // the environment means the page does not exist, whatever the rest of the site is doing.

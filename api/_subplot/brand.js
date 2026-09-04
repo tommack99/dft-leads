@@ -81,8 +81,22 @@ export const BRANDS = {
     favicon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#0F7B6C"/><circle cx="24" cy="27" r="9.5" fill="#fff"/><circle cx="44" cy="27" r="9.5" fill="#fff"/><circle cx="25.8" cy="28.6" r="5.1" fill="#12121C"/><circle cx="45.8" cy="28.6" r="5.1" fill="#12121C"/><path d="M27 41 C30 38 38 38 41 41 L34 51 Z" fill="#F0A202"/></svg>',
     layout: "grid",                 // thumbnail grid, the idiom YouTubers already read
     wordmark: { head: "Word", tail: "ie" },   // two-tone, sentence case
-    feedStore: "YhkBlKFJ0wkpaOmck", // Wordie's OWN store. SUBPLOT's creators agreed to
-                                    // SUBPLOT, not to Wordie - their work must not appear here
+    // TEMPORARY PREVIEW, set 4 Sep 2026 on Tom's instruction. REVERT BEFORE LAUNCH.
+    //
+    // Wordie's own store (YhkBlKFJ0wkpaOmck) is empty, and the article actor cannot fill it
+    // until its three API keys are set. To see the grid layout working against real material,
+    // Wordie is reading SUBPLOT's store instead. SUBPLOT_APPROVED_ONLY still gates this to the
+    // twelve creators in CREATORS, so nobody outside that list can surface here.
+    //
+    // Those twelve approved SUBPLOT. The Creator Agreement grants a licence to a named brand
+    // on a named domain, so this is NOT a Wordie licence and none of them has been asked.
+    // It is recorded as "Temp - preview only" on Wordie Article Rights (board 18429671241).
+    // wordie.media is noindex at three layers, but noindex is not the same as unpublished:
+    // anyone given the URL can read it. DO NOT share the URL, launch, or lift noindex while
+    // this line reads 5yFLBuHJj59ySXY9e.
+    //
+    // To revert: put "YhkBlKFJ0wkpaOmck" back. That is the whole change.
+    feedStore: "5yFLBuHJj59ySXY9e",
     topics: {
       // Narrow before broad: a Formula 1 video is sport, not cars-as-tech, so sport is
       // tested before tech. `screen` is the fallback because a video about a film or show

@@ -183,16 +183,22 @@ async function pruneMissing(arts) {
   const key = process.env.YOUTUBE_API_KEY;
   if (!key) return [];
   const gone = [];
-  for (let i = 0; i < arts.length; i += 50) {
-    const batch = arts.slice(i, i + 50).filter(a => a.v);
+  // Ask about BOTH ids we hold for a piece: `v` from the feed and `id`, the one its URL uses.
+  // They should agree, but the store has been wrong before, and a stale `v` would otherwise
+  // read as a dead video and pull a perfectly good article. An article is only removed when
+  // NEITHER id comes back alive.
+  const ids = a => [...new Set([a.v, a.id].filter(Boolean))];
+  for (let i = 0; i < arts.length; i += 25) {
+    const batch = arts.slice(i, i + 25).filter(a => ids(a).length);
     if (!batch.length) continue;
     try {
-      const r = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=id&id=${batch.map(a => a.v).join(",")}&key=${key}`);
+      const ask = [...new Set(batch.flatMap(ids))];
+      const r = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=id&id=${ask.join(",")}&key=${key}`);
       if (!r.ok) continue;
       const j = await r.json();
       const live = new Set((j.items || []).map(it => it.id));
       if (!live.size) continue;                 // whole batch missing = suspect the API, not the videos
-      for (const a of batch) if (!live.has(a.v)) gone.push(a);
+      for (const a of batch) if (!ids(a).some(id => live.has(id))) gone.push(a);
     } catch { /* leave the batch alone */ }
   }
   if (gone.length) {

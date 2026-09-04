@@ -28,6 +28,8 @@ export const BRANDS = {
     accent: null,                   // null = the default palette in css.js
     type: null,                     // null = the default type in css.js
     favicon: null,                  // null = the cast favicon in cast.js
+    layout: "editorial",            // lead story, wire list, rail
+    wordmark: null,                 // null = the plain wordmark in css.js
     assets: "subplot",              // which pair in images.js
   },
   wordie: {
@@ -41,13 +43,15 @@ export const BRANDS = {
     cast: false,                    // typographic, no characters - Tom's call, 4 Sep 2026
     accent: { ink: "#12121C", tint: "#0F7B6C", tintInk: "#0A5A4E", wash: "#E6F4F1", warm: "#F0A202" },
     type: {
-      disp: '"Lora",Georgia,"Times New Roman",serif',
+      disp: '"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif',
       body: '"Inter",ui-sans-serif,system-ui,-apple-system,sans-serif',
       mono: '"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace',
-      google: "family=Lora:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500",
+      google: "family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500",
     },
     // A drawn mark, not type: a serif W muddies at 16px. Stroked W over a short amber rule.
-    favicon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="13" fill="#0F7B6C"/><path d="M13 19 L23 46 L32 27 L41 46 L51 19" fill="none" stroke="#FFFFFF" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 52 H34" stroke="#F0A202" stroke-width="4" stroke-linecap="round"/></svg>',
+    favicon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#0F7B6C"/><circle cx="24" cy="27" r="9.5" fill="#fff"/><circle cx="44" cy="27" r="9.5" fill="#fff"/><circle cx="25.8" cy="28.6" r="5.1" fill="#12121C"/><circle cx="45.8" cy="28.6" r="5.1" fill="#12121C"/><path d="M27 41 C30 38 38 38 41 41 L34 51 Z" fill="#F0A202"/></svg>',
+    layout: "grid",                 // thumbnail grid, the idiom YouTubers already read
+    wordmark: { head: "Word", tail: "ie" },   // two-tone, sentence case
     // No share card yet. Rather than serve SUBPLOT's - cast, clapperboard and all -
     // Wordie advertises no og:image and 404s /og.png until it has its own.
     assets: null,
@@ -58,7 +62,9 @@ const HOSTS = { "subplot.tv": "subplot", "wordie.media": "wordie" };
 
 export function brandFor(host = "") {
   const h = String(host).toLowerCase().replace(/^www\./, "").split(":")[0];
-  return BRANDS[HOSTS[h]] || (h.startsWith("wordie") ? BRANDS.wordie : BRANDS.subplot);
+  // "contains" not "startsWith": Vercel branch previews are dft-leads-git-wordie-<team>
+  // .vercel.app, and they need to render as Wordie so the brand can be reviewed safely.
+  return BRANDS[HOSTS[h]] || (h.includes("wordie") ? BRANDS.wordie : BRANDS.subplot);
 }
 
 let active = BRANDS.subplot;
@@ -75,6 +81,8 @@ export const audience = () => active.audience;
 export const faviconSvg = () => active.favicon;              // null = fall back to the cast favicon
 export const assetKey = () => active.assets;                 // null = this brand has no card yet
 export const hasShareCard = () => !!active.assets;
+export const layout = () => active.layout || "editorial";
+export const wordmark = () => active.wordmark;              // null = plain single-colour
 
 // Google Fonts URL for whichever type the brand uses.
 export const fontHref = () =>

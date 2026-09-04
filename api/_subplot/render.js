@@ -1,7 +1,7 @@
 // SUBPLOT page templates. Pure functions: (data, base) -> HTML string.
-import { CSS } from "./css.js";
+import { CSS, GRID_CSS } from "./css.js";
 import { CATS, slug, slugFor } from "./data.js";
-import { brand, brandCss, member, joinCta, mail, siteUrl, hasCast, audience, fontHref, hasShareCard } from "./brand.js";
+import { brand, brandCss, member, joinCta, mail, siteUrl, hasCast, audience, fontHref, hasShareCard, layout, wordmark } from "./brand.js";
 import { ch, CAST_META } from "./cast.js";
 import { headTag as adHead, unit as adUnit } from "./ads.js";
 
@@ -213,10 +213,71 @@ body[data-ads="off"] .ad{display:none}
 .wire .sub a:hover{text-decoration:underline}
 `;
 
+const BIRDIE_SM = '<svg class="birdie" viewBox="0 0 160 170" width="30" height="32" aria-hidden="true"><g stroke="#12121C" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"><path d="M30 100 C12 94 4 78 9 66 C18 71 27 84 33 94 Z" fill="#0A5A4E"/><path d="M80 18 C116 18 132 46 130 80 C128 117 112 146 80 148 C48 146 32 117 30 80 C28 46 44 18 80 18 Z" fill="#0F7B6C"/><path d="M80 88 C101 88 110 106 108 121 C106 136 96 145 80 146 C64 145 54 136 52 121 C50 106 59 88 80 88 Z" fill="#7FCBBE" stroke="none"/><path d="M114 74 C129 80 133 100 125 116 C117 128 103 124 100 111 C98 98 104 82 114 74 Z" fill="#0A5A4E"/><path d="M71 19 C68 6 77 0 84 4 C89 8 87 15 82 19" fill="#F0A202"/><circle cx="62" cy="56" r="13.5" fill="#FFF" stroke-width="2"/><circle cx="98" cy="56" r="13.5" fill="#FFF" stroke-width="2"/><circle cx="64.5" cy="58" r="7.2" fill="#12121C" stroke="none"/><circle cx="100.5" cy="58" r="7.2" fill="#12121C" stroke="none"/><circle cx="67.5" cy="54.5" r="2.5" fill="#FFF" stroke="none"/><circle cx="103.5" cy="54.5" r="2.5" fill="#FFF" stroke="none"/><path d="M71 70 C74 66 86 66 89 70 L80 83 Z" fill="#F0A202"/><path d="M65 147 L61 158 M65 147 L69 158 M65 147 L65 159" stroke="#F0A202" stroke-width="3.4"/><path d="M95 147 L91 158 M95 147 L99 158 M95 147 L95 159" stroke="#F0A202" stroke-width="3.4"/></g></svg>';
+const GOOGLE_G = '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22 12c0-.7-.06-1.37-.18-2H12v3.8h5.6a4.8 4.8 0 0 1-2.08 3.15v2.6h3.36C20.84 17.7 22 15.1 22 12z"/><path fill="#34A853" d="M12 22c2.7 0 4.96-.9 6.62-2.43l-3.23-2.5A6.2 6.2 0 0 1 12 18a6 6 0 0 1-5.64-4.15H3.06v2.6A10 10 0 0 0 12 22z"/><path fill="#FBBC05" d="M6.36 13.85A6 6 0 0 1 6.36 10.2V7.6H3.06a10 10 0 0 0 0 8.85z"/><path fill="#EA4335" d="M12 6a5.4 5.4 0 0 1 3.82 1.5l2.86-2.86A9.6 9.6 0 0 0 12 2a10 10 0 0 0-8.94 5.6l3.3 2.6A6 6 0 0 1 12 6z"/></svg>';
+
+// ---------------------------------------------------------------------------
+// Platform chrome. Only a brand with layout:"grid" uses any of this; SUBPLOT's
+// path below is untouched. Creator identity appears on every item by design.
+const avatarOf = (data, a) => (data && data.avatars && data.avatars[a.c]) || "";
+const initials2 = n => {
+  const t = String(n || "").replace(/^@/, "").trim();
+  const words = t.split(/[\s_.-]+/).filter(Boolean);
+  if (words.length > 1) return (words[0][0] + words[1][0]).toUpperCase();
+  const caps = t.replace(/[^A-Za-z]/g, "").match(/[A-Z]/g);
+  if (caps && caps.length > 1) return (caps[0] + caps[1]).toUpperCase();
+  return t.replace(/[^A-Za-z0-9]/g, "").slice(0, 2).toUpperCase();
+};
+
+// One byline, one shape, everywhere: avatar, then name + @handle, then quiet meta.
+function pby(data, a, extra = "") {
+  const av = avatarOf(data, a);
+  const face = av ? `<img src="${esc(av)}" alt="" loading="lazy">` : `<span class="ini">${esc(initials2(a.b))}</span>`;
+  const meta = [`${a.rt} min read`, ...(extra ? [extra] : [])].join(" &middot; ");
+  return `<span class="pby">${face}<span class="who"><span class="cn">${esc(a.b)}</span><span class="hd">${esc(a.c)}</span></span><span class="mt">${meta}</span></span>`;
+}
+const thumbOf = a => `<img alt="" loading="lazy" src="${esc(a.thumb)}" onerror="this.onerror=null;this.src='${esc(a.thumbSmall)}'">`;
+
+function pcard(data, a, base) {
+  return `<a class="pcard" href="${base}${artPath(a)}">
+      <span class="pci">${thumbOf(a)}</span>
+      <h3>${esc(a.h)}</h3>${a.s ? `<p class="pstand">${esc(a.s)}</p>` : ""}
+      ${pby(data, a, a.views ? `${fmtViews(a.views)} views` : "")}
+    </a>`;
+}
+
+function platformShell({ base, head, body, current, footNote }) {
+  const w = wordmark() || { head: BRAND_(), tail: "" };
+  const nav = [
+    ["", "Home", "M3 10.5 12 3l9 7.5V21H3z"],
+    ["s/trending", "Trending", "M3 17l6-6 4 4 8-8"],
+  ];
+  return `${head}
+<body class="grid">
+<header class="pbar"><div class="pbar-in">
+  <a class="plogo" href="${base}/">${hasCast() ? "" : BIRDIE_SM}<b>${esc(w.head)}<i>${esc(w.tail)}</i></b></a>
+  <form class="psearch" action="${base}/" method="get"><input name="q" placeholder="Search creators, shows, franchises" aria-label="Search"></form>
+  <a class="pjoin" href="${base}/join">${joinCta()}</a>
+</div></header>
+<div class="pshell">
+  <aside class="prail">
+    ${nav.map(([href, label, d]) => `<a class="pnav" href="${base}/${href}" ${label.toLowerCase() === current ? 'aria-current="true"' : ""}><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg><span>${label}</span></a>`).join("")}
+    ${Object.entries(CATS).length ? `<h4>Sections</h4>${Object.entries(CATS).map(([k, n]) => `<a class="pnav" href="${base}/s/${k}" ${k === current ? 'aria-current="true"' : ""}><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8"/></svg><span>${esc(n)}</span></a>`).join("")}` : ""}
+    <div class="pcta"><b>Make videos?</b><p>Your uploads become articles under your name. You write nothing, and we split the ad revenue 50/50.</p><a href="${base}/join">${joinCta()}</a></div>
+  </aside>
+  <main class="pmain">${body}</main>
+</div>
+<footer class="pfoot">
+  <span>${esc(BRAND_())} &middot; ${esc(TAG_().split(".")[0])}. ${footNote || ""}</span>
+  <span><a href="${base}/about">About</a><a href="${base}/join">${joinCta()}</a><a href="${base}/contact">Contact</a><a href="${base}/terms">Terms</a><a href="${base}/privacy">Privacy</a><a href="${base}/creators">Creator agreement</a></span>
+</footer>
+</body></html>`;
+}
+
 function shell({ base, title, desc, body, current = "all", bodyClass = "", rule = "", trending = [], jsonld = "" }) {
   const nav = [["all", "All"], ...Object.entries(CATS)].map(([k, n]) =>
     `<a href="${base}/${k === "all" ? "" : "s/" + k}" ${k === current ? 'aria-current="true"' : ""}>${esc(n)}</a>`).join("");
-  return `<!doctype html>
+  const head = `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -236,10 +297,13 @@ ${jsonld}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="${fontHref()}">
-<style>${CSS}${EXTRA_CSS}${brandCss()}</style>
+<style>${CSS}${EXTRA_CSS}${layout() === "grid" ? GRID_CSS : ""}${brandCss()}</style>
 <script defer src="/_vercel/insights/script.js"></script>
 ${adHead()}
-</head>
+</head>`;
+  // A layout:"grid" brand gets the platform chrome instead of the masthead and wire.
+  if (layout() === "grid") return platformShell({ base, head, body, current, footNote: "" });
+  return `${head}
 <body class="${bodyClass}">
 <header class="top">
   <div class="wrap top-in">
@@ -376,7 +440,67 @@ function pickLead(list, data) {
   return recent.find(a => inThread.has(a.id)) || list.find(a => a.w >= 600) || list[0];
 }
 const fmtViews = n => n >= 1e6 ? (n / 1e6).toFixed(n >= 1e7 ? 0 : 1) + "M" : n >= 1e3 ? Math.round(n / 1e3) + "K" : String(n);
+// The grid front page: one hero, two stacked seconds, a card grid, then a creator strip.
+// Image-led, but every headline is complete and carries its standfirst.
+function gridHome(data, base, section, page) {
+  const list = data.arts.filter(a => section === "all" || a.k === section);
+  if (!list.length) return shell({ base, current: section, title: `${BRAND_()} - ${CATS[section] || "Home"}`, desc: TAG_(),
+    body: `<div class="psech"><h2>Nothing here yet</h2></div><p class="pstand">No articles in this section so far. ${joinCta()} and yours could be the first.</p>` });
+
+  const lead = pickLead(list, data);
+  const rest = list.filter(a => a !== lead);
+  const seconds = page === 1 ? rest.slice(0, 2) : [];
+  const after = rest.filter(a => !seconds.includes(a));
+  const pages = Math.max(1, Math.ceil(after.length / PAGE));
+  page = Math.min(Math.max(1, page), pages);
+  const cards = after.slice((page - 1) * PAGE, page * PAGE);
+  const sectionPath = section === "all" ? "" : "s/" + section;
+  const pageHref = n => `${base}/${sectionPath}${n > 1 ? "?p=" + n : ""}`;
+
+  // Creator strip, busiest first. Their YouTube subscriber count is not ours to quote,
+  // so this counts what they have actually published here.
+  const strip = data.panel.slice(0, 5).map(c => {
+    const av = data.avatars[c.handle] || "";
+    const face = av ? `<img src="${esc(av)}" alt="" loading="lazy">` : `<span class="ini">${esc(initials2(c.name))}</span>`;
+    return `<a class="pcr" href="${base}/c/${encodeURIComponent(c.handle.replace(/^@/, ""))}">
+        ${face}<b>${esc(c.name)}</b><span class="hd">${esc(c.handle)}</span>
+        <span class="crm">${c.n} article${c.n === 1 ? "" : "s"} here</span><span class="fl">Follow</span></a>`;
+  }).join("");
+
+  const body = `
+    ${page > 1 ? `<div class="psech"><h2>${section === "all" ? "More stories" : "More in " + esc(CATS[section])}</h2><span class="hd">page ${page} of ${pages}</span></div>` : `
+    <section class="phero">
+      <a class="pbig" href="${base}${artPath(lead)}">
+        ${thumbOf(lead)}
+        <span class="pbigtxt">
+          <span class="pkick">${esc(CATS[lead.k] || "Latest")}</span>
+          <h2>${esc(lead.h)}</h2>
+          ${lead.s ? `<p class="pstand">${esc(lead.s)}</p>` : ""}
+          ${pby(data, lead, lead.views ? `${fmtViews(lead.views)} views` : "")}
+        </span>
+      </a>
+      <div class="psubs">${seconds.map(a => `
+        <a class="psub" href="${base}${artPath(a)}">
+          <span class="psubimg">${thumbOf(a)}</span>
+          <span><h3>${esc(a.h)}</h3>${pby(data, a)}</span>
+        </a>`).join("")}</div>
+    </section>`}
+
+    <div class="psech"><h2>${page > 1 ? "Articles" : "Latest"}</h2>${pages > 1 && page < pages ? `<a href="${pageHref(page + 1)}">Older &rarr;</a>` : ""}</div>
+    <section class="pgrid">${cards.map(a => pcard(data, a, base)).join("")}</section>
+    ${pages > 1 ? `<div class="psech"><span class="hd">Page ${page} of ${pages}</span><span>${page > 1 ? `<a href="${pageHref(page - 1)}">&larr; Newer</a> ` : ""}${page < pages ? `<a href="${pageHref(page + 1)}">Older &rarr;</a>` : ""}</span></div>` : ""}
+
+    ${page === 1 && strip ? `<div class="psech"><h2>Creators on ${esc(BRAND_())}</h2><a href="${base}/about">Browse all ${data.panel.length} &rarr;</a></div>
+    <section class="pcrs">${strip}</section>` : ""}`;
+
+  return shell({ base, current: section, body,
+    title: section === "all" ? `${BRAND_()} - ${TAG_().split(".")[0]}` : `${CATS[section]} - ${BRAND_()}`,
+    desc: TAG_() })
+    .replace('<span id="panelcount-slot"></span>', "");
+}
+
 export function homePage(data, base, section = "all", page = 1) {
+  if (layout() === "grid") return gridHome(data, base, section, page);
   const list = data.arts.filter(a => section === "all" || a.k === section);
   if (!list.length) return shell({ base, title: `${BRAND_()} - ${CATS[section] || "Front Page"}`, desc: TAG_(), current: section,
     body: `<main class="homeview"><div class="wrap"><div class="emptystate">${ch("reactor", 150)}<p class="empty">Nothing in this section yet - the Reactor is as surprised as you are.</p></div></div></main>` });

@@ -19,18 +19,18 @@ const TTL_MS = 5 * 60 * 1000;
 // Keeping both on one record makes it impossible to restore a renamed creator to the site
 // without seeing the slug their earnings are attributed to.
 export const CREATORS = [
-  { slug: "breakdownsandblockbusters", handles: ["@breakdownsandblockbusters"] },  // Breakdowns & Blockbusters
-  { slug: "thekristianharloff",        handles: ["@thekristianharloff"] },         // Kristian Harloff
-  { slug: "chaosgaming",               handles: ["@chaosgaming"] },                // Chaos
-  { slug: "chaostrektv",               handles: ["@chaostrektv"] },                // ChaosTrek
-  { slug: "wesnemo",                   handles: ["@wesnemo"] },                    // WesNemo
-  { slug: "film_paradise",             handles: ["@film_paradise"] },              // Film Paradise
-  { slug: "lorereloaded",              handles: ["@lorereloaded"] },               // Lore Reloaded
-  { slug: "arealknowitall",            handles: ["@arealknowitall"] },             // Mr. Know-It-All (no articles yet; appears when his feed fills)
-  { slug: "coltonogburnchannel",       handles: ["@coltonogburnchannel"] },        // Colton Ogburn
-  { slug: "everythingalways",          handles: ["@everythingalways"] },           // Everything Always
-  { slug: "gique_",                    handles: ["@gique_"] },                     // GIQUE (DFT-owned; dormant channel, evergreen back catalogue)
-  { slug: "downtoearthkh",             handles: ["@downtoearthkh"] },              // Down to Earth with Kristian Harloff (MSN-banned, but that is platform-side and does not apply here)
+  { slug: "breakdownsandblockbusters", name: "Breakdowns & Blockbusters",           handles: ["@breakdownsandblockbusters"] },  // Breakdowns & Blockbusters
+  { slug: "thekristianharloff", name: "Kristian Harloff",                           handles: ["@thekristianharloff"] },         // Kristian Harloff
+  { slug: "chaosgaming", name: "Chaos",                                             handles: ["@chaosgaming"] },                // Chaos
+  { slug: "chaostrektv", name: "ChaosTrek",                                         handles: ["@chaostrektv"] },                // ChaosTrek
+  { slug: "wesnemo", name: "WesNemo",                                               handles: ["@wesnemo"] },                    // WesNemo
+  { slug: "film_paradise", name: "Film Paradise",                                   handles: ["@film_paradise"] },              // Film Paradise
+  { slug: "lorereloaded", name: "Lore Reloaded",                                    handles: ["@lorereloaded"] },               // Lore Reloaded
+  { slug: "arealknowitall", name: "Mr. Know-It-All",                                handles: ["@arealknowitall"] },             // Mr. Know-It-All (no articles yet; appears when his feed fills)
+  { slug: "coltonogburnchannel", name: "Colton Ogburn",                             handles: ["@coltonogburnchannel"] },        // Colton Ogburn
+  { slug: "everythingalways", name: "Everything Always",                            handles: ["@everythingalways"] },           // Everything Always
+  { slug: "gique_", name: "GIQUE",                                                  handles: ["@gique_"] },                     // GIQUE (DFT-owned; dormant channel, evergreen back catalogue)
+  { slug: "downtoearthkh", name: "Down to Earth with Kristian Harloff",             handles: ["@downtoearthkh"] },              // Down to Earth with Kristian Harloff (MSN-banned, but that is platform-side and does not apply here)
 ];
 
 export const APPROVED_HANDLES = CREATORS.flatMap(c => c.handles);

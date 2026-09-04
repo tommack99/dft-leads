@@ -3,6 +3,7 @@ import { CSS } from "./css.js";
 import { CATS, slug, slugFor } from "./data.js";
 import { brand, brandCss, member, joinCta, mail, siteUrl, hasCast, audience, fontHref, hasShareCard } from "./brand.js";
 import { design } from "./design.js";
+import { promoRail, promoCss } from "./promo.js";
 import { CSS2, FONTS2 } from "./design2.js";
 import { ch, CAST_META } from "./cast.js";
 import { headTag as adHead, unit as adUnit } from "./ads.js";
@@ -240,7 +241,7 @@ ${jsonld}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="${design() === 2 ? FONTS2 : fontHref()}">
-<style>${CSS}${EXTRA_CSS}${brandCss()}${design() === 2 ? CSS2 : ""}</style>
+<style>${CSS}${EXTRA_CSS}${promoCss}${brandCss()}${design() === 2 ? CSS2 : ""}</style>
 <script defer src="/_vercel/insights/script.js"></script>
 ${adHead()}
 </head>
@@ -472,6 +473,7 @@ export function articlePage(a, data, base) {
       ${more.length ? `<section class="next"><div class="rule-h"><h2>More from ${esc(a.c)}</h2><span class="note"><a href="${base}/c/${esc(slugH(a.c))}" style="color:var(--blue)">All &rarr;</a></span></div><div class="grid3">${more.map(x => card(x, base)).join("")}</div></section>` : ""}
     </div>
     <aside class="artrail">
+      ${promoRail(base)}
       ${adSlot("article-rail", "300×600", "-", "ad-rail")}
       ${evergreenBox(data, base)}
     </aside>
@@ -562,6 +564,8 @@ export function joinPage(data, base) {
           <p><b>50 / 50</b> on everything your articles earn &middot; non-exclusive, so run them anywhere else you like &middot; no fees, no minimum term &middot; leave any time and we take the articles down &middot; paid monthly from $50.</p></div>
         <label class="consent"><input type="checkbox" name="consent" value="yes" required><span>I own these videos, or hold the rights to have them adapted. <b>By applying I give ${BRAND_()} permission to turn my public videos into articles, drafted with AI from my transcripts, and publish them under my handle on the standard terms above and the <a href="${base}/creators" target="_blank" style="color:var(--blue)">Creator Agreement</a>.</b> I can withdraw at any time and the articles come down.</span></label>
         <input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
+        <input type="hidden" name="source" id="f-source" value="direct">
+        <script>(function(){var v=new URLSearchParams(location.search).get("v");if(v)document.getElementById("f-source").value=String(v).slice(0,40);})();</script>
         <button class="submit" type="submit" id="f-submit">Send application</button>
         <p class="formnote" id="formnote">Applying is the agreement - there&rsquo;s no second contract. We check the channel and captions first; if it&rsquo;s a fit, your first articles appear within a week and we email you the links.</p>
       </form>

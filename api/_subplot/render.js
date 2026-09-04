@@ -1,11 +1,13 @@
 // SUBPLOT page templates. Pure functions: (data, base) -> HTML string.
 import { CSS } from "./css.js";
 import { CATS, slug, slugFor } from "./data.js";
+import { brand, brandCss } from "./brand.js";
 import { ch, CAST_META } from "./cast.js";
 import { headTag as adHead, unit as adUnit } from "./ads.js";
 
-const BRAND = "SUBPLOT";
-const TAG = "The story under the story. Breakdowns, theories, reactions, opinions, reviews and lore from the people who actually watch it.";
+// Brand-dependent strings resolve per request; see brand.js.
+const BRAND_ = () => brand().name;
+const TAG_ = () => brand().tagline;
 
 export const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
@@ -222,17 +224,17 @@ function shell({ base, title, desc, body, current = "all", bodyClass = "", rule 
 <meta name="description" content="${esc(desc)}">
 <link rel="icon" type="image/svg+xml" href="${base}/favicon.svg">
 <link rel="apple-touch-icon" href="${base}/apple-touch-icon.png">
-<meta property="og:site_name" content="${BRAND}">
+<meta property="og:site_name" content="${BRAND_()}">
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(desc)}">
-<meta property="og:image" content="https://subplot.tv/og.png">
+<meta property="og:image" content="https://${brand().domain}/og.png">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="alternate" type="application/rss+xml" title="${BRAND}" href="${base}/feed.xml">
+<link rel="alternate" type="application/rss+xml" title="${BRAND_()}" href="${base}/feed.xml">
 ${jsonld}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Mono:wght@400;500&family=Mulish:wght@400;600;700&display=swap">
-<style>${CSS}${EXTRA_CSS}</style>
+<style>${CSS}${EXTRA_CSS}${brandCss()}</style>
 <script defer src="/_vercel/insights/script.js"></script>
 ${adHead()}
 </head>
@@ -240,9 +242,9 @@ ${adHead()}
 <header class="top">
   <div class="wrap top-in">
     <a class="brandblock" href="${base}/">
-      <span class="wordmark">${BRAND}</span>
+      <span class="wordmark">${BRAND_()}</span>
       <span class="plotline"><span class="castline">${["lorekeeper","goblin","theorist","critic","speedrunner","reactor","subplot"].map(n => ch(n, 62)).join("")}</span></span>
-      <span class="tagline">${esc(TAG)}</span>
+      <span class="tagline">${esc(TAG_())}</span>
     </a>
     <div class="top-meta">
       <b>${esc(new Date().toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "long", year: "numeric", timeZone: "Europe/London" }))}</b>
@@ -258,7 +260,7 @@ ${rule ? `<div class="artrule" style="background:${rule}"></div>` : ""}
 ${body}
 <footer class="foot">
   <div class="wrap foot-in">
-    <div><p class="fm">${ch("subplot", 44)}${BRAND}</p><p>${esc(TAG)}</p></div>
+    <div><p class="fm">${ch("subplot", 44)}${BRAND_()}</p><p>${esc(TAG_())}</p></div>
     <div><h3>About</h3><ul><li><a href="${base}/join">Become a SubPlotter</a></li><li><a href="${base}/about">Who we are</a></li><li><a href="${base}/about#standards">Editorial standards</a></li><li><a href="${base}/about#ai">How we use AI</a></li></ul></div>
     <div><h3>Sections</h3><ul>${Object.entries(CATS).map(([k, n]) => `<li><a href="${base}/s/${k}">${esc(n)}</a></li>`).join("")}</ul></div>
     <div><h3>Contact</h3><p>hello@subplot.tv</p><p>corrections@subplot.tv</p><p class="legal"><a href="${base}/contact">Contact</a> &middot; <a href="${base}/terms">Terms</a> &middot; <a href="${base}/privacy">Privacy</a> &middot; <a href="${base}/creators">Creator agreement</a></p></div>
@@ -374,7 +376,7 @@ function pickLead(list, data) {
 const fmtViews = n => n >= 1e6 ? (n / 1e6).toFixed(n >= 1e7 ? 0 : 1) + "M" : n >= 1e3 ? Math.round(n / 1e3) + "K" : String(n);
 export function homePage(data, base, section = "all", page = 1) {
   const list = data.arts.filter(a => section === "all" || a.k === section);
-  if (!list.length) return shell({ base, title: `${BRAND} - ${CATS[section] || "Front Page"}`, desc: TAG, current: section,
+  if (!list.length) return shell({ base, title: `${BRAND_()} - ${CATS[section] || "Front Page"}`, desc: TAG_(), current: section,
     body: `<main class="homeview"><div class="wrap"><div class="emptystate">${ch("reactor", 150)}<p class="empty">Nothing in this section yet - the Reactor is as surprised as you are.</p></div></div></main>` });
   const lead = pickLead(list, data); const rest = list.filter(a => a !== lead);
   const seconds = page === 1 ? rest.filter(a => a.w >= 400).slice(0, 3) : [];
@@ -424,7 +426,7 @@ export function homePage(data, base, section = "all", page = 1) {
     ${band(base)}
   </div>
 </main>`;
-  return shell({ base, title: section === "all" ? `${BRAND}` : `${CATS[section]} - ${BRAND}`, desc: TAG, current: section, body, trending: data.threads })
+  return shell({ base, title: section === "all" ? `${BRAND_()}` : `${CATS[section]} - ${BRAND_()}`, desc: TAG_(), current: section, body, trending: data.threads })
     .replace('<span id="panelcount-slot"></span>', `<span>${data.panel.length} creators writing here</span>`);
 }
 
@@ -436,7 +438,7 @@ export function articlePage(a, data, base) {
     "@context": "https://schema.org", "@type": "Article", headline: a.h, description: a.s,
     datePublished: a.p, dateModified: a.p, image: [a.thumb], wordCount: a.w, articleSection: CATS[a.k], keywords: a.t.join(", "),
     author: { "@type": "Person", name: a.b, alternateName: a.c, url: "https://www.youtube.com/" + a.c },
-    publisher: { "@type": "Organization", name: BRAND },
+    publisher: { "@type": "Organization", name: BRAND_() },
     isBasedOn: "https://www.youtube.com/watch?v=" + a.v,
     mainEntityOfPage: "https://subplot.tv" + base + artPath(a),
   }).replace(/</g, "\\u003c")}</script>`;
@@ -467,7 +469,7 @@ export function articlePage(a, data, base) {
     </div>
   </div>
 </article>`;
-  return shell({ base, title: `${a.h} - ${BRAND}`, desc: a.s, current: a.k, body, rule: "var(--blue)", trending: data.threads, jsonld })
+  return shell({ base, title: `${a.h} - ${BRAND_()}`, desc: a.s, current: a.k, body, rule: "var(--blue)", trending: data.threads, jsonld })
     .replace('<span id="panelcount-slot"></span>', `<span>${data.panel.length} creators writing here</span>`);
 }
 
@@ -481,7 +483,7 @@ export function creatorPage(handle, data, base) {
     <div class="chead">
       ${mark(name, data.avatars && data.avatars[h])}
       <div><h1>${esc(h)}</h1>
-        <p>${list.length} article${list.length === 1 ? "" : "s"} on ${BRAND} &middot; <a class="yt" href="https://www.youtube.com/${esc(h)}" target="_blank" rel="noopener">Channel on YouTube</a></p>
+        <p>${list.length} article${list.length === 1 ? "" : "s"} on ${BRAND_()} &middot; <a class="yt" href="https://www.youtube.com/${esc(h)}" target="_blank" rel="noopener">Channel on YouTube</a></p>
         <span class="meta">Every piece below is adapted from one of ${esc(name)}&rsquo;s own videos, with the video at the end.</span></div>
     </div>
     <section class="grid3">${list.slice(0, 3).map(a => card(a, base)).join("")}</section>
@@ -491,7 +493,7 @@ export function creatorPage(handle, data, base) {
     </div>
   </div>
 </main>`;
-  return shell({ base, title: `${name} - ${BRAND}`, desc: `${name}'s videos, in writing.`, body, trending: data.threads })
+  return shell({ base, title: `${name} - ${BRAND_()}`, desc: `${name}'s videos, in writing.`, body, trending: data.threads })
     .replace('<span id="panelcount-slot"></span>', `<span>${data.panel.length} creators writing here</span>`);
 }
 
@@ -576,7 +578,7 @@ export function joinPage(data, base) {
   });
 })();
 </script>`;
-  return shell({ base, title: `Become a SubPlotter - ${BRAND}`, desc: "Your videos, in writing. Under your name.", body, rule: "var(--orange)" })
+  return shell({ base, title: `Become a SubPlotter - ${BRAND_()}`, desc: "Your videos, in writing. Under your name.", body, rule: "var(--orange)" })
     .replace('<span id="panelcount-slot"></span>', `<span>${data.panel.length} creators writing here</span>`);
 }
 
@@ -596,14 +598,14 @@ export function threadPage(sl, data, base) {
     </div>
   </div>
 </main>`;
-  return shell({ base, title: `${s.t} - ${BRAND}`, desc: `${list.length} takes on ${s.t} from ${creators.length} creators.`, body, trending: data.threads })
+  return shell({ base, title: `${s.t} - ${BRAND_()}`, desc: `${list.length} takes on ${s.t} from ${creators.length} creators.`, body, trending: data.threads })
     .replace('<span id="panelcount-slot"></span>', `<span>${data.panel.length} creators writing here</span>`);
 }
 
 export function rssFeed(data, base) {
   const site = "https://subplot.tv" + base;
   const items = data.arts.slice(0, 50).map(a => `<item><title>${esc(a.h)}</title><link>${site}${artPath(a)}</link><guid isPermaLink="true">${site}${artPath(a)}</guid><pubDate>${new Date(a.p).toUTCString()}</pubDate><dc:creator>${esc(a.c)}</dc:creator><category>${esc(CATS[a.k])}</category><description>${esc(a.s)}</description><enclosure url="${esc(a.thumb)}" type="image/jpeg" length="0"/></item>`).join("");
-  return `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>${BRAND}</title><link>${site}/</link><description>${esc(TAG)}</description><language>en</language><atom:link href="${site}/feed.xml" rel="self" type="application/rss+xml"/>${items}</channel></rss>`;
+  return `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>${BRAND_()}</title><link>${site}/</link><description>${esc(TAG_())}</description><language>en</language><atom:link href="${site}/feed.xml" rel="self" type="application/rss+xml"/>${items}</channel></rss>`;
 }
 
 export function aboutPage(data, base) {
@@ -614,7 +616,7 @@ export function aboutPage(data, base) {
     <div class="aboutcols">
     <div class="abouttext">
     <h1 class="headline" style="font-size:clamp(1.9rem,4vw,2.8rem);margin-top:1rem">Who we are</h1>
-    <p>${BRAND} is a publication written by the people who actually watch the things it covers. Every article here started life as a video by one of the ${data.panel.length} creators on <a href="${base}/#panel" style="color:var(--blue)">The Panel</a>, and runs under that creator&rsquo;s name with a link to the video it came from. We don&rsquo;t have staff writers. We don&rsquo;t have anonymous bylines.</p>
+    <p>${BRAND_()} is a publication written by the people who actually watch the things it covers. Every article here started life as a video by one of the ${data.panel.length} creators on <a href="${base}/#panel" style="color:var(--blue)">The Panel</a>, and runs under that creator&rsquo;s name with a link to the video it came from. We don&rsquo;t have staff writers. We don&rsquo;t have anonymous bylines.</p>
     <p>The name is the idea: the story under the story. Breakdowns, theories, reactions, opinions, reviews and lore - the second layer that people who love this stuff actually talk about.</p>
 
     <h2 id="standards">Editorial standards</h2>
@@ -654,12 +656,12 @@ export function aboutPage(data, base) {
     <div class="castgrid">${Object.entries(CAST_META).map(([k, m]) => `<figure>${ch(k, 150)}<b>${esc(m.name)}</b><span>${esc(m.line)}</span></figure>`).join("")}</div>
   </div>
 </main>`;
-  return shell({ base, title: `About - ${BRAND}`, desc: "Who we are, our editorial standards, and how we use AI.", body, current: "about" })
+  return shell({ base, title: `About - ${BRAND_()}`, desc: "Who we are, our editorial standards, and how we use AI.", body, current: "about" })
     .replace('<span id="panelcount-slot"></span>', `<span>${data.panel.length} creators writing here</span>`);
 }
 
 export function notFound(base) {
-  return shell({ base, title: `Not found - ${BRAND}`, desc: "", body: `<main class="homeview"><div class="wrap"><div class="notfound">${ch("goblin", 200)}<div><h1>That page isn&rsquo;t here.</h1><p>The goblin already knows how it ends, and isn&rsquo;t telling.</p><a href="${base}/">Back to the front page &rarr;</a></div></div></div></main>` })
+  return shell({ base, title: `Not found - ${BRAND_()}`, desc: "", body: `<main class="homeview"><div class="wrap"><div class="notfound">${ch("goblin", 200)}<div><h1>That page isn&rsquo;t here.</h1><p>The goblin already knows how it ends, and isn&rsquo;t telling.</p><a href="${base}/">Back to the front page &rarr;</a></div></div></div></main>` })
     .replace('<span id="panelcount-slot"></span>', "");
 }
 
@@ -668,7 +670,7 @@ import { contactBody, privacyBody, termsBody, creatorsBody } from "./legal.js";
 const LEGAL = { contact: ["Contact", "How to reach SUBPLOT.", contactBody], privacy: ["Privacy", "How SUBPLOT handles your data.", privacyBody], terms: ["Terms of use", "The rules for using SUBPLOT.", termsBody], creators: ["Creator Agreement", "The deal for SubPlotters, in full.", creatorsBody] };
 export function legalPage(kind, data, base) {
   const d = LEGAL[kind]; if (!d) return null;
-  return shell({ base, title: `${d[0]} - ${BRAND}`, desc: d[1], body: d[2](base), current: kind === "contact" ? "about" : "" });
+  return shell({ base, title: `${d[0]} - ${BRAND_()}`, desc: d[1], body: d[2](base), current: kind === "contact" ? "about" : "" });
 }
 
 // ---- Revenue archive (private). Reads the append-only archive, not monday, so this page and
@@ -708,7 +710,7 @@ export function revenuePage(months, month, data, base) {
     <p class="meta" style="margin-top:1.2rem">Archived ${esc(String(m.archivedAt || "").slice(0, 10))}. Records are written once and never rewritten.</p>`}
   </div>
 </main>`;
-  return shell({ base, title: `Revenue - ${BRAND}`, body: `<style>
+  return shell({ base, title: `Revenue - ${BRAND_()}`, body: `<style>
 .revtbl{width:100%;border-collapse:collapse;font-size:.92rem}
 .revtbl th{text-align:left;font-family:var(--disp);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);padding:.7rem 1rem;border-bottom:1.5px solid var(--ink)}
 .revtbl td{padding:.85rem 1rem;border-bottom:1px solid var(--rule)}

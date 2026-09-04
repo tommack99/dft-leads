@@ -3,6 +3,7 @@
 // Private preview: every response is noindex/nofollow and robots.txt disallows all.
 // Optional gate: set SUBPLOT_PASS in Vercel env to require a password (user "subplot").
 import { getData } from "./_subplot/data.js";
+import { brandFor, setBrand } from "./_subplot/brand.js";
 import { listMonths, readMonth } from "./_subplot/archive.js";
 import { homePage, articlePage, creatorPage, joinPage, aboutPage, threadPage, rssFeed, notFound, legalPage, artPath, revenuePage } from "./_subplot/render.js";
 import { CAST } from "./_subplot/cast.js";
@@ -19,6 +20,9 @@ function unauthorised(res) {
 
 export default async function handler(req, res) {
   res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive, nosnippet");
+
+  // Which publication is this? Resolved from the host before anything renders.
+  setBrand(brandFor(req.headers["x-forwarded-host"] || req.headers.host || ""));
 
   const pass = process.env.SUBPLOT_PASS;
   if (pass) {

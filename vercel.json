@@ -75,6 +75,26 @@
       "destination": "/api/subplot?path=:path"
     },
     {
+      "source": "/api/apply",
+      "has": [
+        {
+          "type": "host",
+          "value": "wordie.tv"
+        }
+      ],
+      "destination": "/api/apply"
+    },
+    {
+      "source": "/:path((?!api/).*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "wordie.tv"
+        }
+      ],
+      "destination": "/api/subplot?path=:path"
+    },
+    {
       "source": "/subplot/api/apply",
       "destination": "/api/apply"
     },

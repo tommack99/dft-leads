@@ -84,6 +84,7 @@ body{font-size:19px;line-height:1.66;letter-spacing:.002em}
 .thumb,.lead .plate,.player,.wire .wthumb{border-radius:8px}
 .thread,.box,.ad,.honest,.terms,.done,.source,.band,.step{border-radius:0}
 .promo{border-radius:4px}
+.joinblock{border-radius:4px}
 .player{border:0}
 .wire .wthumb{width:168px;border:0;border-radius:8px;margin:1.15rem 0}
 @media (max-width:34rem){.wire .wthumb{width:104px}}

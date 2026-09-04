@@ -53,6 +53,15 @@ export const promoCss = String.raw`
 .promo .pc{position:relative;display:inline-block;margin-top:.85rem;font-family:var(--disp);font-weight:700;font-size:.78rem;color:var(--pedge,var(--blue))}
 .promo:hover .pc{text-decoration:underline}
 .promo[hidden]{display:none}
+.joinblock{position:relative;overflow:hidden;margin:3.4rem 0 1rem;padding:2rem 2.2rem 2.1rem;background:var(--blue-wash);border-top:3px solid var(--blue);border-radius:12px;display:grid;grid-template-columns:1fr auto;gap:1.5rem;align-items:end}
+.joinblock .jtx{max-width:44rem}
+.joinblock h2{font-family:var(--disp);font-weight:700;font-size:clamp(1.2rem,2.2vw,1.6rem);line-height:1.16;letter-spacing:-.022em;margin:.5rem 0 .5rem}
+.joinblock p{margin:0;color:var(--ink-2);font-size:.95rem;line-height:1.6}
+.joinblock .jcta{display:inline-block;margin-top:1.1rem;font-family:var(--disp);font-weight:700;font-size:.84rem;color:#fff;background:var(--blue);padding:.75rem 1.1rem;border-radius:8px;text-decoration:none}
+.joinblock .jcta:hover{background:var(--ink)}
+.joinblock .jfig{align-self:end;margin-bottom:-1.4rem}
+.joinblock .jfig svg{width:128px;height:auto;display:block}
+@media (max-width:44rem){.joinblock{grid-template-columns:1fr;padding:1.6rem 1.4rem}.joinblock .jfig{display:none}}
 @media (prefers-color-scheme:dark){.promo{background:var(--paper-2)}.promo p{color:var(--ink-2)}}
 `;
 
@@ -78,4 +87,20 @@ export function promoRail(base) {
   ev('subplotter_promo_view');
   pick.addEventListener('click',function(){ev('subplotter_promo_click');});
 })();</script></div>`;
+}
+
+// The wide version, for the foot of an article. Someone who has just finished reading a
+// creator's piece is the warmest audience this site has for the pitch, so it gets more room
+// than the rail card and states the deal outright rather than teasing it.
+export function joinBlock(base) {
+  return `
+  <section class="joinblock">
+    <span class="jfig" aria-hidden="true">${ch("subplot", 128)}</span>
+    <div class="jtx">
+      <span class="pk">Write for SUBPLOT</span>
+      <h2>Make videos? Your next one could be an article here.</h2>
+      <p>We turn your videos into articles under your name, linked back to the original. Fifty-fifty on what they earn, non-exclusive, no fees, and you can leave whenever you like.</p>
+      <a class="jcta" href="${base}/join?v=footer">Become a SubPlotter &rarr;</a>
+    </div>
+  </section>`;
 }

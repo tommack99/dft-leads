@@ -3,7 +3,7 @@ import { CSS } from "./css.js";
 import { CATS, slug, slugFor } from "./data.js";
 import { brand, brandCss, member, joinCta, mail, siteUrl, hasCast, audience, fontHref, hasShareCard } from "./brand.js";
 import { design } from "./design.js";
-import { promoRail, promoCss } from "./promo.js";
+import { promoRail, promoCss, joinBlock } from "./promo.js";
 import { CSS2, FONTS2 } from "./design2.js";
 import { ch, CAST_META } from "./cast.js";
 import { headTag as adHead, unit as adUnit } from "./ads.js";
@@ -337,6 +337,7 @@ function evergreenBox(data, base) {
 function rail(panel, base, data) {
   return `
     <aside class="rail" id="panel">
+      ${promoRail(base)}
       <div class="box">
         <h2>The Panel</h2>
         <p class="note">Every article is adapted from one creator&rsquo;s own video and runs under their name. No anonymous bylines. <a href="${base}/about" style="color:var(--blue);font-weight:700;text-decoration:none">How it works &rarr;</a></p>
@@ -472,6 +473,7 @@ export function articlePage(a, data, base) {
       <div class="tags">${a.t.map(t => `<span>${esc(t)}</span>`).join("")}</div>
       ${thr.length ? `<section class="next"><div class="rule-h"><h2>Also on ${esc(inThread.t)}</h2><span class="note"><a href="${base}/t/${esc(inThread.slug)}" style="color:var(--blue)">${inThread.c} creators, ${inThread.n} takes &rarr;</a></span></div><div class="grid3">${thr.map(x => card(x, base)).join("")}</div></section>` : ""}
       ${more.length ? `<section class="next"><div class="rule-h"><h2>More from ${esc(a.c)}</h2><span class="note"><a href="${base}/c/${esc(slugH(a.c))}" style="color:var(--blue)">All &rarr;</a></span></div><div class="grid3">${more.map(x => card(x, base)).join("")}</div></section>` : ""}
+      ${joinBlock(base)}
     </div>
     <aside class="artrail">
       ${promoRail(base)}

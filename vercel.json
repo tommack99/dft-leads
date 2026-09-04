@@ -121,11 +121,21 @@
       ]
     },
     {
+      "source": "/roster.html",
+      "destination": "/roster.html",
+      "has": [
+        {
+          "type": "host",
+          "value": "roster-viewguarantee.digitalfoxtalent.com"
+        }
+      ]
+    },
+    {
       "source": "/api/apply",
       "destination": "/api/apply"
     },
     {
-      "source": "/:path((?!api/|_vercel/|roster.html).*)",
+      "source": "/:path((?!api/|_vercel/).*)",
       "destination": "/api/subplot?path=:path"
     }
   ],

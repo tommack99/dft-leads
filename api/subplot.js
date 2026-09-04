@@ -46,7 +46,9 @@ export default async function handler(req, res) {
   if (path === "/__health") {
     const secret = process.env.CRON_SECRET;
     const fromCron = req.headers["x-vercel-cron"] || (secret && req.headers.authorization === "Bearer " + secret);
-    if (!fromCron && req.query.key !== secret) return res.status(404).send("Not found");
+    // Fails closed: with no CRON_SECRET set there is no way to authorise, so the route does
+    // not exist. (An earlier version compared undefined to undefined and let anyone through.)
+    if (!fromCron && !(secret && req.query.key === secret)) return res.status(404).send("Not found");
     res.setHeader("Cache-Control", "no-store");
     return runHealth(req, res);
   }

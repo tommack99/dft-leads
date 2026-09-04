@@ -93,7 +93,9 @@ a.lead,a.card,.takes a,.wire a,.roster a{text-decoration:none;color:inherit}
 body.has-anchor{padding-bottom:56px}
 .artwrap{display:grid;grid-template-columns:minmax(0,43rem) 300px;gap:clamp(2rem,5vw,4rem);justify-content:center;align-items:start}
 .artwrap .artmain{margin:0}
-@media (max-width:72rem){.artwrap{grid-template-columns:minmax(0,43rem)}.artwrap .ad-rail{display:none}}
+.artrail{position:sticky;top:1.2rem;display:flex;flex-direction:column;gap:1.8rem;width:300px}
+.artrail .ad-rail{position:static}
+@media (max-width:72rem){.artwrap{grid-template-columns:minmax(0,43rem)}.artrail{display:none}}
 @media (min-width:48rem){.ad-anchor{display:none}body.has-anchor{padding-bottom:0}}
 @media (max-width:48rem){.ad-leader{height:50px;max-width:320px}}
 body[data-ads="off"] .ad{display:none}
@@ -469,7 +471,10 @@ export function articlePage(a, data, base) {
       ${thr.length ? `<section class="next"><div class="rule-h"><h2>Also on ${esc(inThread.t)}</h2><span class="note"><a href="${base}/t/${esc(inThread.slug)}" style="color:var(--blue)">${inThread.c} creators, ${inThread.n} takes &rarr;</a></span></div><div class="grid3">${thr.map(x => card(x, base)).join("")}</div></section>` : ""}
       ${more.length ? `<section class="next"><div class="rule-h"><h2>More from ${esc(a.c)}</h2><span class="note"><a href="${base}/c/${esc(slugH(a.c))}" style="color:var(--blue)">All &rarr;</a></span></div><div class="grid3">${more.map(x => card(x, base)).join("")}</div></section>` : ""}
     </div>
-    ${adSlot("article-rail", "300×600", "-", "ad-rail")}
+    <aside class="artrail">
+      ${adSlot("article-rail", "300×600", "-", "ad-rail")}
+      ${evergreenBox(data, base)}
+    </aside>
     </div>
   </div>
 </article>`;

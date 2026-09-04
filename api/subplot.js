@@ -2,7 +2,7 @@
 // host (and, for preview, the /subplot path on the roster host).
 // Private preview: every response is noindex/nofollow and robots.txt disallows all.
 // Optional gate: set SUBPLOT_PASS in Vercel env to require a password (user "subplot").
-import { getData } from "./_subplot/data.js";
+import { getData, cats } from "./_subplot/data.js";
 import { brandFor, setBrand } from "./_subplot/brand.js";
 import { runHealth } from "./_subplot/health.js";
 import { listMonths, readMonth } from "./_subplot/archive.js";
@@ -16,7 +16,8 @@ import { OG_PNG, APPLE_PNG } from "./_subplot/images.js";
 const OG = { subplot: OG_PNG };
 const TOUCH = { subplot: APPLE_PNG };
 
-const CATS = new Set(["marvel", "dc", "scifi", "gaming", "anime", "screen"]);
+// Valid /s/<section> routes come from whichever brand is answering, not a fixed list.
+const isSection = k => Object.prototype.hasOwnProperty.call(cats(), k);
 
 function unauthorised(res) {
   res.setHeader("WWW-Authenticate", 'Basic realm="SUBPLOT preview"');
@@ -116,7 +117,7 @@ export default async function handler(req, res) {
   const pg = Math.max(1, parseInt(req.query.p, 10) || 1);
   const q = String(req.query.q || "").trim().slice(0, 120);
   if (path === "/") html = homePage(data, base, "all", pg, q);
-  else if (path.startsWith("/s/") && CATS.has(path.slice(3))) html = homePage(data, base, path.slice(3), pg, q);
+  else if (path.startsWith("/s/") && isSection(path.slice(3))) html = homePage(data, base, path.slice(3), pg, q);
   else if (path.startsWith("/a/")) {
     // /a/<handle>/<videoId> is canonical; the old /a/<videoId> form 301s to it, as does a
     // stale handle, so an article's earnings only ever accrue under one URL channel.

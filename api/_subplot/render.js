@@ -269,7 +269,7 @@ function platformShell({ base, head, body, current, footNote, searchQ }) {
   <aside class="prail">
     ${nav.map(([href, label, d]) => `<a class="pnav" href="${base}/${href}" ${label.toLowerCase() === current ? 'aria-current="true"' : ""}><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg><span>${label}</span></a>`).join("")}
     ${Object.entries(cats()).length ? `<h4>Sections</h4>${Object.entries(cats()).map(([k, n]) => `<a class="pnav" href="${base}/s/${k}" ${k === current ? 'aria-current="true"' : ""}><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8"/></svg><span>${esc(n)}</span></a>`).join("")}` : ""}
-    <div class="pcta"><b>Make videos?</b><p>Your uploads become articles under your name. You write nothing, and we split the ad revenue 50/50.</p><a href="${base}/join">${joinCta()}</a></div>
+    <div class="pcta"><b>Make videos?</b><p>Your uploads become articles under your name. You write nothing, and you keep 60% of what they earn.</p><a href="${base}/join">${joinCta()}</a></div>
   </aside>
   <main class="pmain">${body}</main>
 </div>
@@ -465,8 +465,8 @@ function launchState(base) {
         <a class="pbtn-2" href="${base}/about">How it works</a>
       </div>
       <ul class="pproof">
-        <li><b>50/50</b><span>of the ad revenue your articles earn</span></li>
-        <li><b>0 words</b><span>you write &mdash; the article comes from your video</span></li>
+        <li><b>60%</b><span>of the ad revenue your articles earn, kept by you</span></li>
+        <li><b>0 words</b><span>you write - the article comes from your video</span></li>
         <li><b>Non-exclusive</b><span>your videos stay entirely yours</span></li>
       </ul>
       <div class="pscope">

@@ -68,7 +68,7 @@ export const BRANDS = {
     googleAuth: true,               // Google sign-in proves channel ownership at signup
     legalUpdated: "4 September 2026",
     audience: "on any subject",     // open platform: not an entertainment site
-    taking: "We&rsquo;re taking channels on any subject &mdash; tech, travel, finance, fitness, food, history, gaming, film, whatever you make. If there are words in it, it works.",
+    taking: "We&rsquo;re taking channels on any subject - tech, travel, finance, fitness, food, history, gaming, film, whatever you make. If there are words in it, it works.",
     cast: false,                    // typographic, no characters - Tom's call, 4 Sep 2026
     accent: { ink: "#12121C", tint: "#0F7B6C", tintInk: "#0A5A4E", wash: "#E6F4F1", warm: "#F0A202" },
     type: {

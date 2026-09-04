@@ -55,3 +55,24 @@ export async function archiveMonth(label, payload) {
   if (!r.ok) throw new Error("archive write: " + r.status);
   return "archived";
 }
+
+// Generic records for things that are not month statements (health snapshots and the like).
+// These MAY be overwritten - they are running state, not a financial record.
+export async function readRecord(key) {
+  const id = await store();
+  const r = await fetch(`${API}/${id}/records/${key}?token=${tok()}`);
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error("record read: " + r.status);
+  return r.json();
+}
+
+export async function putRecord(key, payload) {
+  const id = await store();
+  const r = await fetch(`${API}/${id}/records/${key}?token=${tok()}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...payload, at: new Date().toISOString() }),
+  });
+  if (!r.ok) throw new Error("record write: " + r.status);
+  return true;
+}

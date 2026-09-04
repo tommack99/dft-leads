@@ -65,8 +65,17 @@ export default async function handler(req, res) {
   if (path === "/robots.txt") {
     res.setHeader("Content-Type", "text/plain");
     res.setHeader("Cache-Control", "public, max-age=3600");
-    // Private preview: block indexing crawlers, but let the ad crawler read pages so ads can be matched.
-    return res.status(200).send("User-agent: Mediapartners-Google\nAllow: /\n\nUser-agent: *\nDisallow: /\n");
+    // Private preview: block indexing crawlers, but let Google's AD crawlers through.
+    // Mediapartners-Google reads pages so ads can be matched; AdsBot-Google and Google-Adstxt
+    // fetch /ads.txt, and blocking them makes AdSense report ads.txt as "Not found" - which
+    // caps what buyers will pay for the inventory. /ads.txt is allowed to everyone: it is a
+    // public declaration by design and carries nothing private.
+    return res.status(200).send([
+      "User-agent: Mediapartners-Google", "Allow: /", "",
+      "User-agent: AdsBot-Google", "Allow: /", "",
+      "User-agent: Google-Adstxt", "Allow: /", "",
+      "User-agent: *", "Allow: /ads.txt", "Disallow: /", "",
+    ].join("\n"));
   }
 
   let data;

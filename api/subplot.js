@@ -9,9 +9,11 @@ import { homePage, articlePage, creatorPage, joinPage, aboutPage, threadPage, rs
 import { CAST } from "./_subplot/cast.js";
 import { faviconSvg, assetKey } from "./_subplot/brand.js";
 import { adsTxt } from "./_subplot/ads.js";
-import { OG_PNG, APPLE_PNG, WORDIE_OG_PNG, WORDIE_APPLE_PNG } from "./_subplot/images.js";
-const OG = { subplot: OG_PNG, wordie: WORDIE_OG_PNG };
-const TOUCH = { subplot: APPLE_PNG, wordie: WORDIE_APPLE_PNG };
+import { OG_PNG, APPLE_PNG } from "./_subplot/images.js";
+// Share-card assets per brand. A brand with no entry here serves no og.png and no touch icon
+// - better than serving another brand's. Wordie joins this map when it has artwork of its own.
+const OG = { subplot: OG_PNG };
+const TOUCH = { subplot: APPLE_PNG };
 
 const CATS = new Set(["marvel", "dc", "scifi", "gaming", "anime", "screen"]);
 

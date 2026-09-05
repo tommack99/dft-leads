@@ -76,6 +76,15 @@ export default async function handler(req, res) {
   // Past this line everything renders a publication, so an unnamed host stops here.
   if (!resolved) { res.setHeader("Cache-Control", "no-store"); return res.status(404).send("Not found"); }
 
+  // Creator signup. /api/auth/google and its callback are rewritten onto this function in
+  // vercel.json rather than added as their own files: api/ sits on exactly twelve serverless
+  // functions and Vercel Hobby fails the whole build at thirteen. The module is imported only
+  // when one of these two routes is hit, so a normal page render never pays for it.
+  if (path === "/__auth" || path === "/__auth/callback") {
+    const auth = await import("./_subplot/auth.js");
+    return path === "/__auth" ? auth.start(req, res) : auth.callback(req, res);
+  }
+
   // The revenue archive is money data: its own gate, and it FAILS CLOSED. No password set in
   // the environment means the page does not exist, whatever the rest of the site is doing.
   if (path === "/revenue") {

@@ -89,6 +89,26 @@
       "destination": "/api/apply"
     },
     {
+      "source": "/api/auth/google/callback",
+      "has": [
+        {
+          "type": "host",
+          "value": "wordie.media"
+        }
+      ],
+      "destination": "/api/subplot?path=__auth/callback"
+    },
+    {
+      "source": "/api/auth/google",
+      "has": [
+        {
+          "type": "host",
+          "value": "wordie.media"
+        }
+      ],
+      "destination": "/api/subplot?path=__auth"
+    },
+    {
       "source": "/:path((?!api/).*)",
       "has": [
         {

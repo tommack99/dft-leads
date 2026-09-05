@@ -1,7 +1,7 @@
 // SUBPLOT page templates. Pure functions: (data, base) -> HTML string.
 import { CSS, GRID_CSS } from "./css.js";
 import { cats, slug, slugFor } from "./data.js";
-import { brand, brandCss, member, joinCta, mail, siteUrl, hasCast, audience, taking, fontHref, hasShareCard, layout, wordmark, searchHint } from "./brand.js";
+import { brand, brandCss, member, joinCta, mail, siteUrl, hasCast, audience, taking, fontHref, hasShareCard, layout, wordmark, searchHint, usesGoogleAuth } from "./brand.js";
 import { design } from "./design.js";
 import { promoRail, promoCss, joinBlock } from "./promo.js";
 import { CSS2, FONTS2 } from "./design2.js";
@@ -678,6 +678,27 @@ export function creatorPage(handle, data, base) {
     .replace('<span id="panelcount-slot"></span>', `<span>${data.panel.length} creators writing here</span>`);
 }
 
+// An OPEN platform cannot take an application on trust: the byline, the channel link and the
+// money all point at a person we have never met. So on a brand with googleAuth the form is not
+// an application, it is a proof - the creator signs in with the Google account that owns the
+// channel, and the licence is ticked BEFORE the handshake so no verified channel can exist
+// without a recorded yes. Everything else about the page is identical.
+function googleSignup(base) {
+  return `
+      <form class="form" id="signupform" method="get" action="/api/auth/google">
+        <div class="field"><label for="f-email">Email</label>
+          <input id="f-email" name="email" type="email" placeholder="you@example.com" required autocomplete="email">
+          <p class="formnote" style="margin:.5rem 0 0">Only for telling you when your articles go up, or when something needs you.</p></div>
+        <div class="terms"><span class="lbl">Standard terms</span>
+          <p><b>60% to you</b> on everything your articles earn &middot; non-exclusive, so run them anywhere else you like &middot; no fees, no minimum term &middot; leave any time and we take the articles down &middot; paid monthly from $50.</p></div>
+        <label class="consent"><input type="checkbox" name="consent" value="yes" required><span>I own these videos, or hold the rights to have them adapted. <b>I give ${BRAND_()} permission to turn my public videos into articles, drafted with AI from my transcripts, and publish them under my channel name on the standard terms above and the <a href="${base}/terms" target="_blank">Creator Agreement</a>.</b> I can withdraw at any time and the articles come down.</span></label>
+        <input type="hidden" name="source" id="f-source" value="direct">
+        <script>(function(){var v=new URLSearchParams(location.search).get("v");if(v)document.getElementById("f-source").value=String(v).slice(0,40);})();</script>
+        <button class="submit" type="submit">Continue with Google</button>
+        <p class="formnote">Google will ask for one read-only permission so we can confirm the channel is yours. We use it once, at that moment, and never keep the key - we cannot read your analytics, your private videos, your subscribers or your comments, and we can never post to your channel. <a href="${base}/privacy" target="_blank">How that works</a>.</p>
+      </form>`;
+}
+
 export function joinPage(data, base) {
   const body = `
 <section class="joinview" style="display:block">
@@ -717,6 +738,7 @@ export function joinPage(data, base) {
         <p>That&rsquo;s all we really need - we look at the channel, the captions and the kind of videos you make, and if it&rsquo;s a fit we start.</p>
         <p>The terms are the same for everyone and they&rsquo;re on the form. Applying is the agreement, so there&rsquo;s nothing to negotiate, nothing to sign later, and nothing hidden.</p>
         <p>${taking()}</p></div>
+      ${usesGoogleAuth() ? googleSignup(base) : `
       <form class="form" id="applyform" method="post" action="${base}/api/apply">
         <div class="field"><label for="f-handle">YouTube handle</label>
           <div class="handle"><span>youtube.com/</span><input id="f-handle" name="handle" placeholder="@yourchannel" required autocomplete="off"></div></div>
@@ -738,7 +760,7 @@ export function joinPage(data, base) {
         <script>(function(){var v=new URLSearchParams(location.search).get("v");if(v)document.getElementById("f-source").value=String(v).slice(0,40);})();</script>
         <button class="submit" type="submit" id="f-submit">Send application</button>
         <p class="formnote" id="formnote">Applying is the agreement - there&rsquo;s no second contract. We check the channel and captions first; if it&rsquo;s a fit, your first articles appear within a week and we email you the links.</p>
-      </form>
+      </form>`}
       <div class="done" id="applydone" hidden>${ch("reactor", 110)}<div><b>Got it - you&rsquo;re in the queue.</b><p>We&rsquo;ll check the channel and captions. If it&rsquo;s a fit, your first articles appear within a week and we&rsquo;ll email you the links. Change your mind at any point and they come down.</p></div></div>
     </div>
   </div>
@@ -746,6 +768,7 @@ export function joinPage(data, base) {
 <script>
 (function(){
   const form = document.getElementById('applyform');
+  if (!form) return;                       // googleAuth brands post nowhere: the button is a link to Google
   form.addEventListener('submit', async e => {
     e.preventDefault();
     const btn = document.getElementById('f-submit'); btn.disabled = true; btn.textContent = 'Sending…';

@@ -252,10 +252,15 @@ async function recordConsent(rec) {
   };
 
   const note = `Signed up at ${brandName()} ${rec.at.slice(0, 10)}. Channel ownership proved by the creator's own Google sign-in (youtube.readonly, used once, token discarded). Email ${rec.email}. Source ${rec.src}.`;
+
+  // Every other row on this board states plainly what its status does NOT mean. Match that.
+  // A creator agreeing and Wordie accepting them are two different events, and this column is
+  // where the next person to read the row finds out which one has happened.
+  const source = `CREATOR CONSENT GIVEN - this is NOT ${brandName()} acceptance. Signup ${rec.at.slice(0, 10)}: the creator ticked the licence on /join and proved they own this channel by their own Google sign-in, on the terms of ${rec.terms}. That is their permission to us. It is not an approval to publish - a human still sets Wordie Articles to Approved after the channel checks, and nothing runs under this byline until they do.`;
   const values = {
     [RCOL.wordie]: { label: "Pending - asked" },
     [RCOL.channelId]: rec.channelId,
-    [RCOL.consentSource]: `Wordie signup, OAuth-verified, ${rec.at.slice(0, 10)}, terms of ${rec.terms}`,
+    [RCOL.consentSource]: source.slice(0, 500),
     [RCOL.notes]: note.slice(0, 500),
   };
 

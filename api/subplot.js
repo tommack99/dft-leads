@@ -1,6 +1,6 @@
 // SUBPLOT — server-rendered site. Routed here by vercel.json for the SUBPLOT
 // host (and, for preview, the /subplot path on the roster host).
-// Private preview: every response is noindex/nofollow and robots.txt disallows all.
+// Private preview: every response is noindex, and robots.txt lets Google crawl but nobody else.
 // Optional gate: set SUBPLOT_PASS in Vercel env to require a password (user "subplot").
 import { getData } from "./_subplot/data.js";
 import { brandFor, setBrand } from "./_subplot/brand.js";
@@ -26,7 +26,11 @@ function unauthorised(res) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive, nosnippet");
+  // NOINDEX keeps SUBPLOT out of search results and is the only part that matters for that.
+  // NOFOLLOW was dropped 6 Sep 2026: it tells a crawler not to follow links out of the page,
+  // which would leave an AdSense reviewer looking at the home page and nothing else. Under
+  // noindex nothing gets indexed however far it crawls, so following links costs nothing.
+  res.setHeader("X-Robots-Tag", "noindex, noarchive, nosnippet");
 
   // Which publication is this? Resolved from the host before anything renders.
   setBrand(brandFor(req.headers["x-forwarded-host"] || req.headers.host || ""));
@@ -100,15 +104,39 @@ export default async function handler(req, res) {
   if (path === "/robots.txt") {
     res.setHeader("Content-Type", "text/plain");
     res.setHeader("Cache-Control", "public, max-age=3600");
-    // Private preview: block indexing crawlers, but let Google's AD crawlers through.
-    // Mediapartners-Google reads pages so ads can be matched; AdsBot-Google and Google-Adstxt
-    // fetch /ads.txt, and blocking them makes AdSense report ads.txt as "Not found" - which
-    // caps what buyers will pay for the inventory. /ads.txt is allowed to everyone: it is a
-    // public declaration by design and carries nothing private.
+    // CRAWLABLE BY GOOGLE, STILL NOT INDEXED. These are different things and the distinction
+    // is the whole point of this block.
+    //
+    // Every page also sends X-Robots-Tag "noindex, noarchive, nosnippet" (see above),
+    // and that is what keeps SUBPLOT out of search results. robots.txt only decides who may
+    // FETCH a page. Until 6 Sep 2026 this file said "User-agent: * / Disallow: /" with
+    // exceptions only for the ad crawlers, so Googlebot itself could not read a single page -
+    // and an AdSense site review that cannot read the site cannot pass it. The review sat at
+    // "Getting ready" for three days with the site's "last updated" stamp frozen, which is
+    // what prompted the change.
+    //
+    // So: Google's crawlers may fetch everything, and the noindex header still keeps every
+    // page out of Search. Everyone else stays blocked, because opening the review is the
+    // only thing this is meant to achieve - it is not a launch.
+    //
+    // WHEN THE SITE ACTUALLY LAUNCHES the change is to DROP the noindex header, not to touch
+    // this file. If you find yourself adding indexers here while the header still says
+    // noindex, you are solving the wrong half.
+    //
+    // /ads.txt stays open to everyone: it is a public declaration by design and carries
+    // nothing private. Blocking Google-Adstxt is what made AdSense report it as "Not found",
+    // which caps what buyers pay for the inventory.
+    const googleAgents = [
+      "Googlebot",              // the site reviewer and general crawler
+      "Googlebot-Image",        // thumbnails
+      "Google-InspectionTool",  // Search Console / review tooling
+      "Mediapartners-Google",   // reads pages so ads can be matched
+      "AdsBot-Google",          // ad landing-page quality
+      "AdsBot-Google-Mobile",
+      "Google-Adstxt",          // fetches /ads.txt
+    ];
     return res.status(200).send([
-      "User-agent: Mediapartners-Google", "Allow: /", "",
-      "User-agent: AdsBot-Google", "Allow: /", "",
-      "User-agent: Google-Adstxt", "Allow: /", "",
+      ...googleAgents.flatMap(a => ["User-agent: " + a, "Allow: /", ""]),
       "User-agent: *", "Allow: /ads.txt", "Disallow: /", "",
     ].join("\n"));
   }

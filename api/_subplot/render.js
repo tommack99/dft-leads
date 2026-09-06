@@ -227,7 +227,7 @@ function shell({ base, title, desc, body, current = "all", bodyClass = "", rule 
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="robots" content="noindex,noarchive">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}">
 <link rel="icon" type="image/svg+xml" href="${base}/favicon.svg">
